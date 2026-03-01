@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="theme-color" content="#0f1117" id="meta-theme" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="description" content="MyWorkLog – ניהול נוכחות ומשימות" />
+  <title>MyWorkLog</title>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;700;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+<div id="offline-banner" class="offline-banner hidden" aria-live="polite">
+  <span data-i18n="offlineBanner">אין חיבור לאינטרנט</span>
+</div>
+
+<div id="splash">
+  <div class="splash-inner">
+    <img src="icons/logo.png" alt="MyWorkLog Logo" class="splash-logo-img" />
+    <h1 class="splash-title">MyWorkLog</h1>
+    <p class="splash-tagline" data-i18n="appTagline">ניהול נוכחות ומשימות</p>
+  </div>
+</div>
+
+<div id="app" class="hidden">
+
+  <div id="menu-overlay" class="menu-overlay hidden"></div>
+  <aside id="side-menu" class="side-menu" aria-hidden="true">
+    <div class="side-menu-header">
+      <img src="icons/logo.png" alt="Logo" class="menu-logo" />
+      <span class="menu-app-name">MyWorkLog</span>
+      <button class="icon-btn" id="btn-close-menu" aria-label="Close menu">✕</button>
+    </div>
+    <nav class="side-menu-nav">
+      <button class="menu-item" data-tab="report" data-i18n="menuReport">דיווח</button>
+      <button class="menu-item" data-tab="history" data-i18n="menuHistory">היסטוריה</button>
+      <button class="menu-item" data-tab="summary" data-i18n="menuSummary">סיכום</button>
+      <hr class="menu-divider" />
+      <button class="menu-item" id="menu-settings-btn" data-i18n="menuSettings">הגדרות</button>
+    </nav>
+    <div class="side-menu-footer">
+      <span id="menu-version-badge" class="version-badge clickable" title="לחץ לאיפוס">v1.0.0</span>
+    </div>
+  </aside>
+
+  <header class="app-header">
+    <div class="header-inner">
+      <button class="icon-btn hamburger-btn" id="btn-hamburger" aria-label="Menu">☰</button>
+      <div class="header-brand">
+        <img src="icons/logo.png" alt="Logo" class="header-logo" />
+        <span class="brand-name">MyWorkLog</span>
+      </div>
+      <div class="header-actions">
+        <span id="version-badge" class="version-badge clickable" title="לחץ לאיפוס">v1.0.0</span>
+        <button class="icon-btn" id="btn-theme" title="Toggle theme" aria-label="Toggle theme">🌙</button>
+        <button class="icon-btn" id="btn-settings" title="Settings" aria-label="Settings">⚙️</button>
+      </div>
+    </div>
+  </header>
+
+  <nav class="tab-nav" role="tablist">
+    <button class="tab-btn active" data-tab="report" role="tab" data-i18n="tabReport">דיווח</button>
+    <button class="tab-btn" data-tab="history" role="tab" data-i18n="tabHistory">היסטוריה</button>
+    <button class="tab-btn" data-tab="summary" role="tab" data-i18n="tabSummary">סיכום</button>
+  </nav>
+
+  <div id="ptr-indicator" class="ptr-indicator hidden"><span class="ptr-spinner">↻</span></div>
+
+  <main id="main-scroll" class="main-scroll">
+
+    <!-- REPORT TAB -->
+    <section class="tab-content active" id="tab-report" role="tabpanel">
+      <div class="section-card">
+        <label class="section-label" data-i18n="labelReportType">סוג דיווח</label>
+        <div class="category-btns">
+          <button class="cat-btn active" data-cat="entry" data-i18n="catEntry">🟢 כניסה</button>
+          <button class="cat-btn" data-cat="exit" data-i18n="catExit">🔴 יציאה</button>
+          <button class="cat-btn" data-cat="task" data-i18n="catTask">📋 משימה</button>
+        </div>
+      </div>
+
+      <div class="section-card">
+        <label class="section-label" data-i18n="labelDatetime">תאריך ושעה</label>
+        <div class="datetime-row">
+          <div class="field-group">
+            <label class="field-label" data-i18n="labelDate">תאריך</label>
+            <input type="date" id="report-date" class="field-input" />
+          </div>
+          <div class="field-group">
+            <label class="field-label" data-i18n="labelTime">שעה</label>
+            <input type="time" id="report-time" class="field-input" />
+          </div>
+        </div>
+        <button class="btn-ghost btn-sm" id="btn-now" data-i18n="btnNow">🕐 עכשיו</button>
+      </div>
+
+      <div class="section-card" id="task-fields" style="display:none">
+        <label class="section-label" data-i18n="labelTaskDetails">פרטי משימה</label>
+        <div class="field-group">
+          <label class="field-label" data-i18n="labelDescription">תיאור</label>
+          <textarea id="task-desc" class="field-input" rows="3" placeholder="מה בוצע..." data-i18n="placeholderDesc" data-i18n-attr="placeholder"></textarea>
+        </div>
+        <div class="field-group">
+          <label class="field-label" data-i18n="labelProject">פרויקט</label>
+          <input type="text" id="task-project" class="field-input" placeholder="שם הפרויקט (אופציונלי)" list="projects-list" data-i18n="placeholderProj" data-i18n-attr="placeholder" />
+          <datalist id="projects-list"></datalist>
+        </div>
+        <div class="field-group">
+          <label class="field-label" data-i18n="labelDuration">משך / טווח שעות</label>
+          <div class="task-duration-toggle">
+            <button class="toggle-btn active" data-mode="duration" data-i18n="modeDuration">משך זמן</button>
+            <button class="toggle-btn" data-mode="range" data-i18n="modeRange">טווח שעות</button>
+          </div>
+        </div>
+        <div id="duration-mode">
+          <div class="datetime-row">
+            <div class="field-group">
+              <label class="field-label" data-i18n="labelHours">שעות</label>
+              <input type="number" id="dur-hours" class="field-input" min="0" max="24" value="0" />
+            </div>
+            <div class="field-group">
+              <label class="field-label" data-i18n="labelMinutes">דקות</label>
+              <input type="number" id="dur-minutes" class="field-input" min="0" max="59" step="15" value="0" />
+            </div>
+          </div>
+        </div>
+        <div id="range-mode" style="display:none">
+          <div class="datetime-row">
+            <div class="field-group">
+              <label class="field-label" data-i18n="labelStart">התחלה</label>
+              <input type="time" id="range-start" class="field-input" />
+            </div>
+            <div class="field-group">
+              <label class="field-label" data-i18n="labelEnd">סיום</label>
+              <input type="time" id="range-end" class="field-input" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="submit-area">
+        <button class="btn-primary" id="btn-submit">
+          <span class="btn-text" data-i18n="btnSubmit">שלח דיווח</span>
+          <span class="btn-icon">→</span>
+        </button>
+      </div>
+
+      <div id="pending-section" class="section-card hidden">
+        <div class="pending-row">
+          <span>⏳ <span data-i18n="pendingTitle">ממתינים לשליחה</span> (<span id="pending-count">0</span>)</span>
+          <button class="btn-ghost btn-sm" id="btn-sync" data-i18n="btnSync">🔄 סנכרן עכשיו</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- HISTORY TAB -->
+    <section class="tab-content" id="tab-history" role="tabpanel">
+      <div class="section-card">
+        <label class="section-label" data-i18n="historyTitle">5 הדיווחים האחרונים</label>
+        <div id="history-list" class="history-list">
+          <p class="empty-state" data-i18n="historyEmpty">אין דיווחים עדיין</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- SUMMARY TAB -->
+    <section class="tab-content" id="tab-summary" role="tabpanel">
+      <div class="section-card">
+        <div class="summary-tabs">
+          <button class="sum-tab active" data-period="day" data-i18n="sumPeriodDay">יום</button>
+          <button class="sum-tab" data-period="month" data-i18n="sumPeriodMonth">חודש</button>
+        </div>
+        <div class="date-nav">
+          <button class="icon-btn" id="sum-prev">‹</button>
+          <span id="sum-period-label" class="period-label"></span>
+          <button class="icon-btn" id="sum-next">›</button>
+        </div>
+      </div>
+      <div class="stats-grid">
+        <div class="stat-card"><span class="stat-label" data-i18n="statEntries">כניסות</span><span class="stat-value" id="stat-entries">0</span></div>
+        <div class="stat-card"><span class="stat-label" data-i18n="statExits">יציאות</span><span class="stat-value" id="stat-exits">0</span></div>
+        <div class="stat-card"><span class="stat-label" data-i18n="statTasks">משימות</span><span class="stat-value" id="stat-tasks">0</span></div>
+        <div class="stat-card"><span class="stat-label" data-i18n="statHours">שעות משימות</span><span class="stat-value" id="stat-hours">0</span></div>
+      </div>
+      <div class="section-card">
+        <label class="section-label" data-i18n="summaryDetail">פירוט דיווחים</label>
+        <div id="summary-list" class="history-list">
+          <p class="empty-state" data-i18n="summaryEmpty">אין דיווחים בתקופה זו</p>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div><!-- /app -->
+
+<!-- SETTINGS MODAL -->
+<div id="modal-settings" class="modal-overlay hidden" role="dialog" aria-modal="true">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h2 data-i18n="settingsTitle">⚙️ הגדרות</h2>
+      <button class="icon-btn" id="btn-close-settings" aria-label="Close">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="field-group">
+        <label class="field-label" data-i18n="settingsLangLabel">שפה</label>
+        <div class="lang-toggle">
+          <button class="lang-btn active" data-lang="he">עברית</button>
+          <button class="lang-btn" data-lang="en">English</button>
+        </div>
+      </div>
+      <div class="field-group">
+        <label class="field-label" data-i18n="settingsEndpointLabel">כתובת Google Apps Script</label>
+        <input type="url" id="settings-endpoint" class="field-input" placeholder="https://script.google.com/macros/s/.../exec" />
+        <p class="field-hint" data-i18n="settingsEndpointHint">הדבק את ה-URL של ה-Web App מ-Google Apps Script</p>
+      </div>
+      <div class="field-group">
+        <label class="field-label" data-i18n="settingsProjectsLabel">פרויקטים שמורים</label>
+        <div class="projects-input-row">
+          <input type="text" id="new-project" class="field-input" placeholder="הוסף פרויקט..." data-i18n="placeholderNewProject" data-i18n-attr="placeholder" />
+          <button class="btn-ghost" id="btn-add-project" aria-label="Add">+</button>
+        </div>
+        <div id="projects-chips" class="chips-container"></div>
+      </div>
+      <div class="field-group">
+        <label class="section-label" data-i18n="settingsPrefTitle">העדפות</label>
+        <div class="pref-list">
+          <label class="pref-row"><span data-i18n="prefVibration">רטט</span><input type="checkbox" id="pref-vibration" class="pref-toggle" checked /></label>
+          <label class="pref-row"><span data-i18n="prefAnimations">אנימציות</span><input type="checkbox" id="pref-animations" class="pref-toggle" checked /></label>
+          <label class="pref-row"><span data-i18n="prefPullRefresh">משיכה לרענון</span><input type="checkbox" id="pref-pull-refresh" class="pref-toggle" /></label>
+        </div>
+      </div>
+      <div class="field-group">
+        <label class="field-label" data-i18n="settingsDataLabel">ניהול נתונים</label>
+        <button class="btn-danger btn-sm" id="btn-clear-data" data-i18n="btnClearData">🗑 מחק כל הנתונים המקומיים</button>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-primary" id="btn-save-settings" data-i18n="btnSaveSettings">שמור הגדרות</button>
+    </div>
+  </div>
+</div>
+
+<!-- RESET MODAL -->
+<div id="modal-reset" class="modal-overlay hidden" role="dialog" aria-modal="true">
+  <div class="modal-box modal-box-sm">
+    <div class="modal-header">
+      <h2 data-i18n="resetTitle">⚠️ איפוס אפליקציה</h2>
+      <button class="icon-btn" id="btn-close-reset">✕</button>
+    </div>
+    <div class="modal-body">
+      <p class="reset-desc" data-i18n="resetBody">בחר מה לשמור לפני האיפוס:</p>
+      <div class="pref-list">
+        <label class="pref-row"><span data-i18n="resetKeepReports">שמור היסטוריית דיווחים</span><input type="checkbox" id="reset-keep-reports" class="pref-toggle" checked /></label>
+        <label class="pref-row"><span data-i18n="resetKeepSettings">שמור הגדרות</span><input type="checkbox" id="reset-keep-settings" class="pref-toggle" checked /></label>
+        <label class="pref-row"><span data-i18n="resetKeepQueue">שמור תור ממתין</span><input type="checkbox" id="reset-keep-queue" class="pref-toggle" /></label>
+      </div>
+    </div>
+    <div class="modal-footer modal-footer-split">
+      <button class="btn-ghost" id="btn-reset-cancel" data-i18n="btnResetCancel">ביטול</button>
+      <button class="btn-danger" id="btn-reset-confirm" data-i18n="btnResetConfirm">🗑 אפס הכל</button>
+    </div>
+  </div>
+</div>
+
+<!-- UPDATE PROMPT -->
+<div id="update-prompt" class="update-prompt hidden">
+  <div class="update-inner">
+    <span class="update-icon">🔄</span>
+    <span class="update-msg" data-i18n="updateAvailable">גרסה חדשה זמינה! עדכן עכשיו</span>
+  </div>
+  <div class="update-actions">
+    <button class="btn-ghost btn-sm" id="btn-update-dismiss" data-i18n="btnUpdateDismiss">לא עכשיו</button>
+    <button class="btn-primary btn-sm" id="btn-update-now" data-i18n="btnUpdate">עדכן</button>
+  </div>
+</div>
+
+<!-- INSTALL BANNER -->
+<div id="install-banner" class="install-banner hidden">
+  <div class="install-inner">
+    <img src="icons/logo.png" alt="Logo" class="install-logo" />
+    <div class="install-text">
+      <strong data-i18n="installTitle">התקן את האפליקציה</strong>
+      <span data-i18n="installBody">גישה מהירה וללא אינטרנט</span>
+    </div>
+  </div>
+  <div class="install-actions">
+    <button class="btn-ghost btn-sm" id="btn-install-dismiss" data-i18n="btnInstallDismiss">אחר כך</button>
+    <button class="btn-primary btn-sm" id="btn-install-confirm" data-i18n="btnInstall">התקן</button>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
+
+<script src="js/i18n.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
