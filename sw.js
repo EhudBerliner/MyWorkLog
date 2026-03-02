@@ -1,5 +1,5 @@
-// MyWorkLog Service Worker v1.0.0
-const APP_VERSION = '1.0.0';
+// MyWorkLog Service Worker v1.1.0
+const APP_VERSION = '1.1.0';
 const CACHE_NAME  = `mwl-${APP_VERSION}`;
 
 const ASSETS = [

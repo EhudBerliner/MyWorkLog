@@ -49,6 +49,15 @@ function doPost(e) {
 }
 
 function doGet(e) {
+  // Handle delete via GET (used by app since POST is no-cors)
+  if (e && e.parameter && e.parameter.action === 'delete' && e.parameter.id) {
+    try {
+      deleteById(e.parameter.id);
+      return ContentService.createTextOutput(JSON.stringify({ status: 'ok', message: 'נמחק' })).setMimeType(ContentService.MimeType.JSON);
+    } catch(err) {
+      return ContentService.createTextOutput(JSON.stringify({ status: 'error', message: err.toString() })).setMimeType(ContentService.MimeType.JSON);
+    }
+  }
   return ContentService
     .createTextOutput(JSON.stringify({ status: 'ok', app: 'MyWorkLog' }))
     .setMimeType(ContentService.MimeType.JSON);
