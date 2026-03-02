@@ -310,7 +310,20 @@ textarea.fi{resize:vertical;min-height:72px}
 #toast.error{border-color:var(--red);color:var(--red)}
 #toast.warn{border-color:var(--amber);color:var(--amber)}
 
-/* ─ UTILS ─ */
+/* ─ CLOCK UI ─ */
+.clock-ui{display:flex;flex-direction:column;align-items:center;gap:12px;padding:8px 0}
+.clock-display{display:flex;align-items:center;gap:4px;font-family:'Syne',monospace;font-size:2.6rem;font-weight:800;color:var(--text)}
+.clock-sep{color:var(--text3);animation:blink 1s step-end infinite}
+@keyframes blink{50%{opacity:0}}
+.clock-spinner{display:flex;flex-direction:column;align-items:center;gap:4px}
+.clock-val{font-family:'Syne',monospace;font-size:2.6rem;font-weight:800;color:var(--lime);min-width:2.5ch;text-align:center;cursor:default;user-select:none}
+.clock-arrows{display:flex;flex-direction:column;gap:2px}
+.clock-arr{background:none;border:none;color:var(--text2);font-size:1.1rem;cursor:pointer;padding:2px 8px;border-radius:6px;transition:background .15s;line-height:1}
+.clock-arr:hover{background:var(--glass2);color:var(--lime)}
+.clock-presets{display:flex;gap:6px;flex-wrap:wrap;justify-content:center}
+.clock-preset{padding:5px 12px;border-radius:20px;border:1.5px solid var(--border);background:none;color:var(--text2);font-size:.75rem;font-weight:600;cursor:pointer;transition:all .15s}
+.clock-preset:hover{border-color:var(--blue);color:var(--blue)}
+
 .hidden{display:none!important}
 .reset-desc{font-size:.85rem;color:var(--text2)}
 </style>
@@ -408,16 +421,16 @@ textarea.fi{resize:vertical;min-height:72px}
       <div class="card" id="task-fields" style="display:none">
         <div class="card-lbl" data-i18n="labelTaskDetails">פרטי משימה</div>
         <div class="fg">
-          <label class="flbl" data-i18n="labelDescription">תיאור</label>
+          <label class="flbl" data-i18n="labelDescription">תיאור <span style="color:var(--text3);font-weight:400">(אופציונלי)</span></label>
           <textarea id="task-desc" class="fi" rows="3"
             data-i18n="placeholderDesc" data-i18n-attr="placeholder"
             placeholder="מה בוצע..."></textarea>
         </div>
         <div class="fg">
-          <label class="flbl" data-i18n="labelProject">פרויקט</label>
+          <label class="flbl" data-i18n="labelProject">פרויקט <span style="color:var(--red);font-size:.75rem">*</span></label>
           <input type="text" id="task-project" class="fi" list="projects-list"
             data-i18n="placeholderProj" data-i18n-attr="placeholder"
-            placeholder="שם הפרויקט (אופציונלי)"/>
+            placeholder="שם הפרויקט (חובה)"/>
           <datalist id="projects-list"></datalist>
         </div>
         <div class="fg">
@@ -428,16 +441,33 @@ textarea.fi{resize:vertical;min-height:72px}
           </div>
         </div>
         <div id="duration-mode">
-          <div class="row2">
-            <div class="fg">
-              <label class="flbl" data-i18n="labelHours">שעות</label>
-              <input type="number" id="dur-hours" class="fi" min="0" max="24" value="0"/>
+          <div class="clock-ui">
+            <div class="clock-display">
+              <div class="clock-spinner">
+                <div class="clock-arrows"><button class="clock-arr" id="dur-h-up">▲</button></div>
+                <div class="clock-val" id="dur-h-val">00</div>
+                <div class="clock-arrows"><button class="clock-arr" id="dur-h-dn">▼</button></div>
+              </div>
+              <span class="clock-sep">:</span>
+              <div class="clock-spinner">
+                <div class="clock-arrows"><button class="clock-arr" id="dur-m-up">▲</button></div>
+                <div class="clock-val" id="dur-m-val">00</div>
+                <div class="clock-arrows"><button class="clock-arr" id="dur-m-dn">▼</button></div>
+              </div>
+              <span style="font-size:1rem;color:var(--text2);margin-right:6px">שע׳:דק׳</span>
             </div>
-            <div class="fg">
-              <label class="flbl" data-i18n="labelMinutes">דקות</label>
-              <input type="number" id="dur-minutes" class="fi" min="0" max="59" step="15" value="0"/>
+            <div class="clock-presets">
+              <button class="clock-preset" data-dur="0:15">15 דק׳</button>
+              <button class="clock-preset" data-dur="0:30">30 דק׳</button>
+              <button class="clock-preset" data-dur="1:00">1 שעה</button>
+              <button class="clock-preset" data-dur="1:30">1.5 שעה</button>
+              <button class="clock-preset" data-dur="2:00">2 שעות</button>
+              <button class="clock-preset" data-dur="4:00">4 שעות</button>
             </div>
           </div>
+          <!-- hidden inputs for compat -->
+          <input type="hidden" id="dur-hours" value="0"/>
+          <input type="hidden" id="dur-minutes" value="0"/>
         </div>
         <div id="range-mode" style="display:none">
           <div class="row2">
@@ -471,7 +501,7 @@ textarea.fi{resize:vertical;min-height:72px}
     <!-- HISTORY TAB -->
     <section class="tab-panel" id="tab-history" role="tabpanel">
       <div class="card">
-        <div class="card-lbl" data-i18n="historyTitle">5 הדיווחים האחרונים</div>
+        <div class="card-lbl" data-i18n="historyTitle">דיווחים - 30 ימים אחרונים</div>
         <div id="history-list" class="hlist">
           <p class="empty" data-i18n="historyEmpty">אין דיווחים עדיין</p>
         </div>
@@ -495,7 +525,9 @@ textarea.fi{resize:vertical;min-height:72px}
         <div class="stat-card"><div class="stat-lbl" data-i18n="statEntries">כניסות</div><div class="stat-val" id="stat-entries">0</div></div>
         <div class="stat-card"><div class="stat-lbl" data-i18n="statExits">יציאות</div><div class="stat-val" id="stat-exits">0</div></div>
         <div class="stat-card"><div class="stat-lbl" data-i18n="statTasks">משימות</div><div class="stat-val" id="stat-tasks">0</div></div>
-        <div class="stat-card"><div class="stat-lbl" data-i18n="statHours">שעות</div><div class="stat-val" id="stat-hours">0</div></div>
+        <div class="stat-card"><div class="stat-lbl" data-i18n="statHours">שעות משימות</div><div class="stat-val" id="stat-hours">0</div></div>
+        <div class="stat-card" id="stat-workday-card"><div class="stat-lbl" id="stat-workday-lbl">משך יום</div><div class="stat-val" id="stat-workday" style="font-size:1.4rem">-</div></div>
+        <div class="stat-card" id="stat-days-card" style="display:none"><div class="stat-lbl">ימים מדווחים</div><div class="stat-val" id="stat-days">0</div></div>
       </div>
       <div class="card">
         <div class="card-lbl" data-i18n="summaryDetail">פירוט דיווחים</div>
@@ -530,6 +562,12 @@ textarea.fi{resize:vertical;min-height:72px}
         <p class="fhint" data-i18n="settingsEndpointHint">הדבק את ה-URL של ה-Web App</p>
       </div>
       <div class="fg">
+        <label class="flbl">כתובת גיליון Google Sheets</label>
+        <input type="url" id="settings-sheet-url" class="fi"
+          placeholder="https://docs.google.com/spreadsheets/d/.../edit"/>
+        <p class="fhint">הדבק את ה-URL של הגיליון (לקישור ישיר)</p>
+      </div>
+      <div class="fg">
         <label class="flbl" data-i18n="settingsProjectsLabel">פרויקטים שמורים</label>
         <div class="proj-row">
           <input type="text" id="new-project" class="fi"
@@ -550,6 +588,14 @@ textarea.fi{resize:vertical;min-height:72px}
       <div class="fg">
         <label class="flbl" data-i18n="settingsDataLabel">ניהול נתונים</label>
         <button class="btn-d sm" id="btn-clear-data" data-i18n="btnClearData">🗑 מחק כל הנתונים המקומיים</button>
+      </div>
+      <div class="fg" id="sheet-link-section" style="display:none">
+        <label class="flbl">גיליון Google Sheets</label>
+        <a id="sheet-link" href="#" target="_blank" rel="noopener"
+          style="display:flex;align-items:center;gap:8px;padding:10px 13px;background:var(--bg3);border:1.5px solid var(--border);border-radius:var(--rs);color:var(--blue);font-size:.85rem;text-decoration:none;transition:border-color .2s"
+          onmouseover="this.style.borderColor='var(--blue)'" onmouseout="this.style.borderColor='var(--border)'">
+          📊 <span>פתח גיליון הדיווחים</span>
+        </a>
       </div>
     </div>
     <div class="mfoot">
@@ -698,7 +744,7 @@ function applyLang(lang){
 ───────────────────────────────────────────────────── */
 const VER='1.0.0';
 const K={ep:'mwl_endpoint',reps:'mwl_reports',q:'mwl_queue',proj:'mwl_projects',
-  lang:'mwl_lang',theme:'mwl_theme',prefs:'mwl_prefs',ver:'mwl_version',inst:'mwl_install_dismissed'};
+  lang:'mwl_lang',theme:'mwl_theme',prefs:'mwl_prefs',ver:'mwl_version',inst:'mwl_install_dismissed',sheetUrl:'mwl_sheet_url'};
 const ST={cat:'entry',dur:'duration',sumPer:'day',sumOff:0,
   swReg:null,install:null,swX:0,swY:0,pullY:0,pulling:false};
 
@@ -713,6 +759,7 @@ function store(key,val){
 const getP=()=>store(K.prefs)||{vibration:true,animations:true,pullRefresh:false};
 const buzz=(p=[30])=>{if(getP().vibration&&navigator.vibrate)navigator.vibrate(p)};
 const fmtD=d=>{const[y,m,day]=d.split('-');return`${day}/${m}/${y}`};
+const fmtT=t=>{if(!t)return'';if(t.includes('-'))return t;const[h,m]=t.split(':');return`${pad(parseInt(h))}:${pad(parseInt(m||0))}`};
 const catLbl=cat=>t({entry:'catEntry',exit:'catExit',task:'catTask'}[cat])||cat;
 
 function toast(msg,type='success',ms=2800){
@@ -725,7 +772,7 @@ function toast(msg,type='success',ms=2800){
 /* BOOT */
 document.addEventListener('DOMContentLoaded',()=>{
   verCheck();themeInit();langInit();prefsApply();
-  splashInit();dtInit();tabsInit();catInit();durInit();
+  splashInit();dtInit();tabsInit();catInit();durInit();clockInit();
   submitInit();settingsInit();summaryInit();
   $('btn-now').addEventListener('click',()=>{
     const n=new Date();$('report-date').value=isoD(n);$('report-time').value=timeS(n);
@@ -843,7 +890,20 @@ function durInit(){
   }));
 }
 
-/* SUBMIT */
+/* CLOCK UI */
+let _ch=0,_cm=0;
+function clockUpdate(){$('dur-h-val').textContent=pad(_ch);$('dur-m-val').textContent=pad(_cm);$('dur-hours').value=_ch;$('dur-minutes').value=_cm}
+function clockInit(){
+  $('dur-h-up').addEventListener('click',()=>{_ch=(_ch+1)%25;clockUpdate();buzz([10])});
+  $('dur-h-dn').addEventListener('click',()=>{_ch=(_ch-1+25)%25;clockUpdate();buzz([10])});
+  $('dur-m-up').addEventListener('click',()=>{_cm=(_cm+15)%60;clockUpdate();buzz([10])});
+  $('dur-m-dn').addEventListener('click',()=>{_cm=(_cm-15+60)%60;clockUpdate();buzz([10])});
+  // touch swipe on clock vals
+  document.querySelectorAll('.clock-preset').forEach(btn=>btn.addEventListener('click',()=>{
+    const[h,m]=btn.dataset.dur.split(':').map(Number);_ch=h;_cm=m;clockUpdate();buzz([15]);
+  }));
+}
+
 function submitInit(){
   $('btn-submit').addEventListener('click',async()=>{
     const date=$('report-date').value,time=$('report-time').value;
@@ -861,7 +921,10 @@ function buildRep(date,time){
   const cat=ST.cat;let rTime=time,desc='',proj='';
   if(cat==='task'){
     desc=$('task-desc').value.trim();proj=$('task-project').value.trim();
-    if(!desc){toast(t('toastNoDesc'),'warn');buzz([80]);return null}
+    if(!proj){toast('⚠️ יש לבחור פרויקט','warn');buzz([80]);return null}
+    // auto-save new project
+    const ps=store(K.proj)||[];
+    if(proj&&!ps.includes(proj)){ps.push(proj);store(K.proj,ps);projLoad();}
     if(ST.dur==='duration'){
       const h=parseInt($('dur-hours').value)||0,m=parseInt($('dur-minutes').value)||0;
       if(!h&&!m){toast(t('toastNoDuration'),'warn');buzz([80]);return null}
@@ -912,11 +975,25 @@ function netQInit(){
 
 /* HISTORY */
 function histRender(){
-  const rs=(store(K.reps)||[]).slice(0,5);
-  $('history-list').innerHTML=rs.length?rs.map(hItem).join(''):`<p class="empty">${t('historyEmpty')}</p>`;
+  const now=new Date(),cutoff=new Date(now);cutoff.setDate(cutoff.getDate()-30);
+  const rs=(store(K.reps)||[]).filter(r=>{const d=new Date(r.timestamp||r.report_date);return d>=cutoff}).slice(0,200);
+  $('history-list').innerHTML=rs.length?rs.map(r=>hItem(r,true)).join(''):`<p class="empty">${t('historyEmpty')}</p>`;
 }
-function hItem(r){
-  return`<div class="hitem"><div class="hdot ${r.category}"></div><div class="hmeta"><div class="htitle">${r.description||catLbl(r.category)}</div><div class="hsub">${fmtD(r.report_date)} · ${r.report_time}${r.project?' · '+r.project:''}</div></div><span class="hbadge ${r.category}">${catLbl(r.category)}</span></div>`;
+/* Fix 10: delete report */
+function delReport(id){
+  if(!confirm('למחוק דיווח זה?'))return;
+  store(K.reps,(store(K.reps)||[]).filter(r=>r.id!==id));
+  store(K.q,(store(K.q)||[]).filter(r=>r.id!==id));
+  // delete from sheet
+  const ep=store(K.ep);
+  if(ep&&navigator.onLine){
+    fetch(ep,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'delete',id}),mode:'no-cors'}).catch(()=>{});
+  }
+  histRender();summaryRender();toast('🗑 דיווח נמחק','success');
+}
+function hItem(r,showDel=false){
+  const delBtn=showDel?`<button class="btn-d sm hitem-del" data-id="${r.id}" onclick="delReport('${r.id}')" style="padding:4px 8px;font-size:.7rem;flex-shrink:0">🗑</button>`:'';
+  return`<div class="hitem" data-id="${r.id}"><div class="hdot ${r.category}"></div><div class="hmeta"><div class="htitle">${r.description||catLbl(r.category)}</div><div class="hsub">${fmtD(r.report_date)} · ${fmtT(r.report_time)}${r.project?' · '+r.project:''}${r.workDuration?' · ⏱'+r.workDuration:''}</div></div><span class="hbadge ${r.category}">${catLbl(r.category)}</span>${delBtn}</div>`;
 }
 
 /* SUMMARY */
@@ -933,10 +1010,47 @@ function summaryRender(){
   if(ST.sumPer==='day'){
     const tgt=new Date(now);tgt.setDate(tgt.getDate()+ST.sumOff);
     const ds=isoD(tgt);fil=rs.filter(r=>r.report_date===ds);lbl=fmtD(ds);
+    // compute work duration: first entry -> last exit
+    const entries=fil.filter(r=>r.category==='entry').map(r=>r.report_time).sort();
+    const exits=fil.filter(r=>r.category==='exit').map(r=>r.report_time).sort();
+    let wdStr='-';
+    if(entries.length&&exits.length){
+      const [eh,em]=entries[0].split(':').map(Number);
+      const [xh,xm]=exits[exits.length-1].split(':').map(Number);
+      const diffM=(xh*60+xm)-(eh*60+em);
+      if(diffM>0){const dh=Math.floor(diffM/60),dm=diffM%60;wdStr=`${pad(dh)}:${pad(dm)}`}
+    }
+    $('stat-workday').textContent=wdStr;
+    $('stat-workday-lbl').textContent='משך יום עבודה';
+    $('stat-workday-card').style.display='';
+    $('stat-days-card').style.display='none';
   }else{
     const tgt=new Date(now.getFullYear(),now.getMonth()+ST.sumOff,1);
     const y=tgt.getFullYear(),m=pad(tgt.getMonth()+1);
     fil=rs.filter(r=>r.report_date.startsWith(`${y}-${m}`));lbl=`${m}/${y}`;
+    // total work duration across all days
+    const dayMap={};
+    fil.filter(r=>r.category==='entry'||r.category==='exit').forEach(r=>{
+      if(!dayMap[r.report_date])dayMap[r.report_date]={entries:[],exits:[]};
+      if(r.category==='entry')dayMap[r.report_date].entries.push(r.report_time);
+      else dayMap[r.report_date].exits.push(r.report_time);
+    });
+    let totalMins=0,reportedDays=0;
+    const daysWithData=new Set(fil.map(r=>r.report_date));
+    reportedDays=daysWithData.size;
+    Object.values(dayMap).forEach(({entries,exits})=>{
+      if(!entries.length||!exits.length)return;
+      entries.sort();exits.sort();
+      const[eh,em]=entries[0].split(':').map(Number);
+      const[xh,xm]=exits[exits.length-1].split(':').map(Number);
+      const d=(xh*60+xm)-(eh*60+em);if(d>0)totalMins+=d;
+    });
+    const th=Math.floor(totalMins/60),tm=totalMins%60;
+    $('stat-workday').textContent=totalMins>0?`${pad(th)}:${pad(tm)}`:'-';
+    $('stat-workday-lbl').textContent='סך משך עבודה';
+    $('stat-workday-card').style.display='';
+    $('stat-days-card').style.display='';
+    $('stat-days').textContent=reportedDays;
   }
   $('sum-period-label').textContent=lbl;
   $('stat-entries').textContent=fil.filter(r=>r.category==='entry').length;
@@ -949,7 +1063,7 @@ function summaryRender(){
   });
   const h=Math.floor(mins/60),m=mins%60;
   $('stat-hours').textContent=m>0?`${h}:${pad(m)}`:`${h}`;
-  $('summary-list').innerHTML=fil.length?fil.map(hItem).join(''):`<p class="empty">${t('summaryEmpty')}</p>`;
+  $('summary-list').innerHTML=fil.length?fil.map(r=>hItem(r,false)).join(''):`<p class="empty">${t('summaryEmpty')}</p>`;
 }
 
 /* SETTINGS */
@@ -973,6 +1087,10 @@ function openM(id){
   $(id).classList.remove('hidden');document.body.style.overflow='hidden';
   if(id==='modal-settings'){
     $('settings-endpoint').value=store(K.ep)||'';
+    $('settings-sheet-url').value=store(K.sheetUrl)||'';
+    const sheetUrl=store(K.sheetUrl);
+    $('sheet-link-section').style.display=sheetUrl?'':'none';
+    if(sheetUrl)$('sheet-link').href=sheetUrl;
     prefsLoadUI();projChipsRender();
     const lang=window._lang||'he';
     document.querySelectorAll('.seg-btn[data-lang]').forEach(b=>b.classList.toggle('active',b.dataset.lang===lang));
@@ -982,6 +1100,8 @@ function closeM(id){$(id).classList.add('hidden');document.body.style.overflow='
 function settingsSave(){
   const ep=$('settings-endpoint').value.trim();
   if(ep)store(K.ep,ep);else localStorage.removeItem(K.ep);
+  const su=$('settings-sheet-url').value.trim();
+  if(su)store(K.sheetUrl,su);else localStorage.removeItem(K.sheetUrl);
   prefsSave();toast(t('toastSettingsSaved'),'success');buzz([20,20,40]);closeM('modal-settings');
 }
 
