@@ -253,6 +253,10 @@ textarea.fi{resize:vertical;min-height:72px}
   display:flex;align-items:flex-end;justify-content:center;
   z-index:600;backdrop-filter:blur(8px)}
 .moverlay.hidden{display:none}
+.htab-btn{flex:1;padding:9px 2px;background:none;border:none;border-bottom:2px solid transparent;
+  color:var(--text2);font-family:var(--fhe);font-size:.75rem;font-weight:600;cursor:pointer;transition:color .15s,border-color .15s}
+.htab-btn.active{color:var(--lime);border-bottom-color:var(--lime);font-weight:700}
+.htab-pnl{display:flex;flex-direction:column;gap:8px}
 .mbox{background:var(--bg1);border:1px solid var(--border);
   border-radius:var(--r) var(--r) 0 0;width:100%;max-width:480px;max-height:92vh;
   overflow-y:auto;animation:slideUp .28s cubic-bezier(.4,0,.2,1);
@@ -313,7 +317,7 @@ textarea.fi{resize:vertical;min-height:72px}
 
 /* ─ CLOCK UI ─ */
 .clock-ui{display:flex;flex-direction:column;align-items:center;gap:12px;padding:8px 0}
-.clock-display{display:flex;align-items:center;gap:4px;font-family:'Syne',monospace;font-size:2.6rem;font-weight:800;color:var(--text)}
+.clock-display{display:flex;align-items:center;gap:4px;font-family:'Syne',monospace;font-size:2.6rem;font-weight:800;color:var(--text);direction:ltr}
 .clock-sep{color:var(--text3);animation:blink 1s step-end infinite}
 @keyframes blink{50%{opacity:0}}
 .clock-spinner{display:flex;flex-direction:column;align-items:center;gap:4px}
@@ -371,7 +375,7 @@ textarea.fi{resize:vertical;min-height:72px}
       <a id="menu-sheet-link" href="#" target="_blank" rel="noopener" style="display:none;align-items:center;gap:7px;font-size:.8rem;color:var(--blue);text-decoration:none;padding:3px 2px">
         📊 פתח גיליון הדיווחים
       </a>
-      <span id="menu-vbadge" class="vbadge" title="לחץ לאיפוס">v1.2.0</span>
+      <span id="menu-vbadge" class="vbadge" title="לחץ לאיפוס">v1.3.0</span>
     </div>
   </aside>
 
@@ -383,7 +387,7 @@ textarea.fi{resize:vertical;min-height:72px}
         <span class="hdr-name">MyWorkLog</span>
       </div>
       <div class="hdr-acts">
-        <span id="version-badge" class="vbadge" title="לחץ לאיפוס">v1.2.0</span>
+        <span id="version-badge" class="vbadge" title="לחץ לאיפוס">v1.3.0</span>
       </div>
     </div>
   </header>
@@ -427,17 +431,17 @@ textarea.fi{resize:vertical;min-height:72px}
       <div class="card" id="task-fields" style="display:none">
         <div class="card-lbl" data-i18n="labelTaskDetails">פרטי משימה</div>
         <div class="fg">
-          <label class="flbl" data-i18n="labelDescription">תיאור <span style="color:var(--text3);font-weight:400">(אופציונלי)</span></label>
-          <textarea id="task-desc" class="fi" rows="3"
-            data-i18n="placeholderDesc" data-i18n-attr="placeholder"
-            placeholder="מה בוצע..."></textarea>
-        </div>
-        <div class="fg">
           <label class="flbl" data-i18n="labelProject">פרויקט <span style="color:var(--red);font-size:.75rem">*</span></label>
           <input type="text" id="task-project" class="fi" list="projects-list"
             data-i18n="placeholderProj" data-i18n-attr="placeholder"
             placeholder="שם הפרויקט (חובה)"/>
           <datalist id="projects-list"></datalist>
+        </div>
+        <div class="fg">
+          <label class="flbl" data-i18n="labelDescription">תיאור <span style="color:var(--text3);font-weight:400">(אופציונלי)</span></label>
+          <textarea id="task-desc" class="fi" rows="3"
+            data-i18n="placeholderDesc" data-i18n-attr="placeholder"
+            placeholder="מה בוצע..."></textarea>
         </div>
         <div class="fg">
           <label class="flbl" data-i18n="labelDuration">משך / טווח</label>
@@ -659,41 +663,177 @@ textarea.fi{resize:vertical;min-height:72px}
 <div id="toast" class="hidden" role="status" aria-live="polite"></div>
 <!-- HELP MODAL -->
 <div id="modal-help" class="moverlay hidden" role="dialog" aria-modal="true" style="z-index:650">
-  <div class="mbox">
-    <div class="mhdr">
-      <h2>📄 Google Apps Script</h2>
+  <div class="mbox" style="max-height:92dvh;display:flex;flex-direction:column">
+
+    <div class="mhdr" style="position:sticky;top:0;z-index:2;background:var(--bg1)">
+      <h2 style="font-size:1rem">📖 עזרה ומדריך</h2>
       <button class="ibtn" id="btn-close-help">✕</button>
     </div>
-    <div class="mbody" style="gap:10px">
-      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--rs);padding:12px;font-size:.8rem;line-height:1.8;color:var(--text2)">
-        <div style="font-weight:700;color:var(--lime);font-size:.85rem;margin-bottom:8px">שלבי הגדרה:</div>
-        <ol style="padding-right:18px;display:flex;flex-direction:column;gap:4px">
-          <li>פתח <strong>Google Sheets</strong> חדש</li>
-          <li>לחץ <strong>Extensions → Apps Script</strong></li>
-          <li>מחק קוד קיים → הדבק את קובץ <code style="background:var(--bg0);padding:1px 6px;border-radius:3px;color:var(--lime);font-size:.76rem">google-apps-script.gs</code></li>
-          <li>שמור (Ctrl+S) → <strong>Deploy → New deployment</strong></li>
-          <li>בחר: <em>Execute as: Me</em> | <em>Who: Anyone</em></li>
-          <li>העתק את ה-<strong>Web App URL</strong> → הגדרות אפליקציה</li>
-        </ol>
-      </div>
-      <div style="background:var(--bg3);border:1px solid var(--border2);border-radius:var(--rs);padding:12px">
-        <div style="font-size:.72rem;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">גיליונות שייווצרו אוטומטית</div>
-        <div style="display:flex;flex-direction:column;gap:5px;font-size:.83rem">
-          <span><span style="color:var(--lime)">✅</span> <strong>WorkLog</strong> — כל הדיווחים</span>
-          <span><span style="color:var(--lime)">✅</span> <strong>Attendance</strong> — כניסה, יציאה ומשך יום</span>
-          <span><span style="color:var(--lime)">✅</span> <strong>Tasks</strong> — דיווחי משימות</span>
+
+    <!-- help tab bar -->
+    <div id="help-tabbar" style="display:flex;border-bottom:1px solid var(--border);background:var(--bg1);flex-shrink:0">
+      <button class="htab-btn active" data-htab="guide"  onclick="hTab(this)">מדריך</button>
+      <button class="htab-btn"        data-htab="types"  onclick="hTab(this)">סוגי דיווח</button>
+      <button class="htab-btn"        data-htab="setup"  onclick="hTab(this)">הגדרה</button>
+      <button class="htab-btn"        data-htab="sheets" onclick="hTab(this)">גיליונות</button>
+    </div>
+
+    <div class="mbody" style="flex:1;overflow-y:auto;gap:8px;padding:14px 16px">
+
+      <!-- ══ TAB: GUIDE ══ -->
+      <div id="htab-guide" class="htab-pnl">
+
+        <div style="font-size:.7rem;font-weight:700;color:var(--lime);text-transform:uppercase;letter-spacing:1.5px;margin:10px 0 6px 0">איך משתמשים</div>
+        <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--rs);padding:11px 13px;font-size:.81rem;color:var(--text2);line-height:1.65">
+          <strong style="color:var(--text)">1. בחר סוג דיווח</strong> — כניסה / יציאה / משימה<br/>
+          <strong style="color:var(--text)">2. בדוק תאריך ושעה</strong> — ברירת מחדל: עכשיו. לחץ <em>עכשיו</em> לעדכון<br/>
+          <strong style="color:var(--text)">3. למשימה</strong> — בחר פרויקט (חובה) והוסף תיאור<br/>
+          <strong style="color:var(--text)">4. לחץ שלח</strong> — הדיווח נשמר ונשלח לגיליון
+        </div>
+
+        <div style="font-size:.7rem;font-weight:700;color:var(--lime);text-transform:uppercase;letter-spacing:1.5px;margin:10px 0 6px 0">לוגיקות מרכזיות</div>
+        <div style="display:flex;flex-direction:column;gap:6px">
+
+          <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--rs);padding:11px 13px;font-size:.81rem;color:var(--text2);line-height:1.65">
+            <span style="color:var(--amber);font-weight:700">⏱ חישוב משך יום</span><br/>
+            כניסה ויציאה <strong>לאותו תאריך</strong> נכתבות בגיליון Attendance באותה שורה. משך היום מחושב אוטומטית: יציאה פחות כניסה (פורמט HH:MM).
+          </div>
+
+          <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--rs);padding:11px 13px;font-size:.81rem;color:var(--text2);line-height:1.65">
+            <span style="color:var(--amber);font-weight:700">📴 מצב לא מקוון</span><br/>
+            דיווחים שנכשלו נשמרים בתור מקומי. בחזרת חיבור — מסונכרנים אוטומטית. לחץ <strong>סנכרן</strong> לסנכרון ידני.
+          </div>
+
+          <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--rs);padding:11px 13px;font-size:.81rem;color:var(--text2);line-height:1.65">
+            <span style="color:var(--amber);font-weight:700">🗑 מחיקה</span><br/>
+            מחיקה בהיסטוריה מוחקת מהאפליקציה <em>ומהגיליון</em>. אם אין חיבור — המחיקה בגיליון תבוצע בחיבור הבא.
+          </div>
+
+          <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--rs);padding:11px 13px;font-size:.81rem;color:var(--text2);line-height:1.65">
+            <span style="color:var(--amber);font-weight:700">🔄 איפוס אפליקציה</span><br/>
+            לחיצה על מספר הגרסה פותחת תפריט איפוס. ניתן לבחור מה לשמור: היסטוריה, הגדרות (Endpoint, גיליון, פרויקטים) ותור ממתין.
+          </div>
+
+          <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--rs);padding:11px 13px;font-size:.81rem;color:var(--text2);line-height:1.65">
+            <span style="color:var(--amber);font-weight:700">📋 פרויקטים</span><br/>
+            פרויקטים נשמרים אוטומטית בהזנתם. לניהול הרשימה: הגדרות → פרויקטים שמורים.
+          </div>
+
+          <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--rs);padding:11px 13px;font-size:.81rem;color:var(--text2);line-height:1.65">
+            <span style="color:var(--amber);font-weight:700">💾 שמירה מקומית</span><br/>
+            כל הדיווחים נשמרים תמיד במכשיר (localStorage). הגיליון הוא סנכרון נוסף — לא תאבד נתונים אם אין חיבור.
+          </div>
+        </div>
+
+        <div style="font-size:.7rem;font-weight:700;color:var(--lime);text-transform:uppercase;letter-spacing:1.5px;margin:10px 0 6px 0">ניווט</div>
+        <div style="display:flex;flex-direction:column;gap:5px">
+          <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--rs);padding:11px 13px;font-size:.81rem;color:var(--text2);line-height:1.65"><strong style="color:var(--text)">☰ תפריט</strong> — ניווט בין לשוניות, מצב כהה/בהיר, הגדרות, עזרה</div>
+          <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--rs);padding:11px 13px;font-size:.81rem;color:var(--text2);line-height:1.65"><strong style="color:var(--text)">היסטוריה</strong> — 30 יום אחרונים, עד 200 דיווחים, עם מחיקה</div>
+          <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--rs);padding:11px 13px;font-size:.81rem;color:var(--text2);line-height:1.65"><strong style="color:var(--text)">סיכום</strong> — נתונים יומיים/חודשיים: כניסות, יציאות, משימות, שעות</div>
+          <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--rs);padding:11px 13px;font-size:.81rem;color:var(--text2);line-height:1.65"><strong style="color:var(--text)">החלקה</strong> — החלק ימינה/שמאלה בין לשוניות</div>
         </div>
       </div>
-      <div style="background:var(--amberDim);border:1px solid var(--amber);border-radius:var(--rs);padding:10px;font-size:.78rem;color:var(--amber);display:flex;gap:8px;align-items:flex-start">
-        <span>⚠️</span><span>לאחר שינוי קוד — צור <strong>New Deployment</strong> (לא עדכון!)</span>
+
+      <!-- ══ TAB: REPORT TYPES ══ -->
+      <div id="htab-types" class="htab-pnl" style="display:none">
+
+        <div style="background:var(--limeDim);border:1px solid rgba(200,241,53,.3);border-radius:var(--rs);padding:12px;font-size:.82rem">
+          <div style="font-weight:700;color:var(--lime);font-size:.88rem;margin-bottom:5px">🟢 כניסה</div>
+          <div style="color:var(--text2);line-height:1.65">
+            דיווח תחילת יום עבודה.<br/>
+            נרשם ב-<strong>WorkLog</strong> וב-<strong>Attendance</strong> בעמודת שעת הכניסה לאותו תאריך.
+          </div>
+        </div>
+
+        <div style="background:var(--redDim);border:1px solid rgba(255,77,106,.3);border-radius:var(--rs);padding:12px;font-size:.82rem">
+          <div style="font-weight:700;color:var(--red);font-size:.88rem;margin-bottom:5px">🔴 יציאה</div>
+          <div style="color:var(--text2);line-height:1.65">
+            דיווח סיום יום עבודה.<br/>
+            נרשם ב-<strong>Attendance</strong> בשורה של אותו תאריך ומחשב אוטומטית <strong>משך היום</strong>.
+          </div>
+        </div>
+
+        <div style="background:var(--blueDim);border:1px solid rgba(77,171,255,.3);border-radius:var(--rs);padding:12px;font-size:.82rem">
+          <div style="font-weight:700;color:var(--blue);font-size:.88rem;margin-bottom:5px">📋 משימה</div>
+          <div style="color:var(--text2);line-height:1.65">
+            דיווח עבודה על משימה ספציפית.<br/>
+            <strong>פרויקט</strong> — חובה. <strong>תיאור</strong> — אופציונלי.<br/>
+            <strong>משך זמן</strong> — שעות ודקות (00:15 עד 24:00).<br/>
+            <strong>טווח שעות</strong> — שעת התחלה &#8592; שעת סיום.<br/>
+            נרשם ב-<strong>WorkLog</strong> וב-<strong>Tasks</strong>.
+          </div>
+        </div>
+
+        <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--rs);padding:11px 13px;font-size:.81rem;color:var(--text2);line-height:1.65">
+          <span style="color:var(--amber);font-weight:700">📅 דיווח רטרואקטיבי</span><br/>
+          שנה את התאריך והשעה לפני השליחה כדי לדווח על פעולה שהתרחשה בעבר.
+        </div>
       </div>
-      <button onclick="downloadGS()" class="btn-p sm" style="text-align:center">
-        ⬇️ הורד google-apps-script.gs
-      </button>
-    </div>
+
+      <!-- ══ TAB: SETUP ══ -->
+      <div id="htab-setup" class="htab-pnl" style="display:none">
+
+        <div style="font-size:.7rem;font-weight:700;color:var(--lime);text-transform:uppercase;letter-spacing:1.5px;margin:10px 0 6px 0">שלבי הגדרת Google Apps Script</div>
+        <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--rs);padding:11px 13px;font-size:.81rem;color:var(--text2);line-height:1.65;padding:12px 13px">
+          <ol style="padding-right:18px;display:flex;flex-direction:column;gap:5px;margin:0">
+            <li>פתח <strong style="color:var(--text)">Google Sheets</strong> חדש</li>
+            <li>לחץ <strong style="color:var(--text)">Extensions → Apps Script</strong></li>
+            <li>מחק קוד קיים — הדבק קוד מהקובץ <code style="background:var(--bg0);padding:1px 5px;border-radius:3px;color:var(--lime);font-size:.76rem">google-apps-script.gs</code></li>
+            <li>שמור (Ctrl+S)</li>
+            <li><strong style="color:var(--text)">Deploy → New deployment</strong></li>
+            <li>Type: <em>Web App</em></li>
+            <li>Execute as: <strong style="color:var(--text)">Me</strong></li>
+            <li>Who has access: <strong style="color:var(--text)">Anyone</strong></li>
+            <li>לחץ <strong style="color:var(--text)">Deploy</strong> ← אשר הרשאות</li>
+            <li>העתק את <strong style="color:var(--lime)">Web App URL</strong></li>
+            <li>הגדרות אפליקציה → הדבק URL → שמור</li>
+          </ol>
+        </div>
+
+        <div style="background:var(--amberDim);border:1px solid var(--amber);border-radius:var(--rs);padding:10px 12px;font-size:.78rem;color:var(--amber);display:flex;gap:8px">
+          <span style="flex-shrink:0">⚠️</span>
+          <span>לאחר שינוי קוד — יש ליצור <strong>New Deployment</strong> ולא לעדכן קיים. ה-URL ישתנה!</span>
+        </div>
+
+        <button onclick="downloadGS()" class="btn-p sm" style="text-align:center;width:100%">
+          ⬇️ הורד google-apps-script.gs
+        </button>
+      </div>
+
+      <!-- ══ TAB: SHEETS ══ -->
+      <div id="htab-sheets" class="htab-pnl" style="display:none">
+
+        <div style="font-size:.7rem;font-weight:700;color:var(--lime);text-transform:uppercase;letter-spacing:1.5px;margin:10px 0 6px 0">גיליונות שנוצרים אוטומטית</div>
+
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--rs);padding:11px 13px;font-size:.81rem;color:var(--text2);line-height:1.65;padding:12px 13px">
+            <div style="font-weight:700;color:var(--lime);margin-bottom:5px">📋 WorkLog</div>
+            כל הדיווחים — כניסה, יציאה ומשימות.<br/>
+            <span style="font-size:.76rem;color:var(--text3)">עמודות: Timestamp · Report_Date · Report_Time · Category · Description · Project · Record_ID</span>
+          </div>
+          <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--rs);padding:11px 13px;font-size:.81rem;color:var(--text2);line-height:1.65;padding:12px 13px">
+            <div style="font-weight:700;color:var(--blue);margin-bottom:5px">🕐 Attendance</div>
+            כניסה + יציאה לכל יום — <strong>באותה שורה</strong>. משך היום מחושב אוטומטית.<br/>
+            <span style="font-size:.76rem;color:var(--text3)">עמודות: Report_Date · שעת כניסה · שעת יציאה · משך יום עבודה</span>
+          </div>
+          <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--rs);padding:11px 13px;font-size:.81rem;color:var(--text2);line-height:1.65;padding:12px 13px">
+            <div style="font-weight:700;color:var(--amber);margin-bottom:5px">✅ Tasks</div>
+            דיווחי משימות בלבד.<br/>
+            <span style="font-size:.76rem;color:var(--text3)">עמודות: Report_Date · משך/טווח · Project · Description</span>
+          </div>
+        </div>
+
+        <div style="font-size:.7rem;font-weight:700;color:var(--lime);text-transform:uppercase;letter-spacing:1.5px;margin:10px 0 6px 0">זרימת נתונים</div>
+        <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--rs);padding:11px 13px;font-size:.81rem;color:var(--text2);line-height:1.65">
+          דיווח <strong>כניסה/יציאה</strong> → WorkLog + Attendance (אותה שורה לפי תאריך)<br/>
+          דיווח <strong>משימה</strong> → WorkLog + Tasks<br/>
+          <strong>מחיקה</strong> → מוחק מ-WorkLog ומהגיליון המתאים
+        </div>
+      </div>
+
+    </div><!-- /mbody -->
   </div>
 </div>
-
 <!-- GS CODE BLOB (embedded for download) -->
 <pre id="gs-code-blob" style="display:none">// ============================================================
 //  MyWorkLog – Google Apps Script  v2.0
@@ -942,7 +1082,7 @@ function applyLang(lang){
 /* ─────────────────────────────────────────────────────
    App
 ───────────────────────────────────────────────────── */
-const VER='1.2.0';
+const VER='1.3.0';
 const K={ep:'mwl_endpoint',reps:'mwl_reports',q:'mwl_queue',proj:'mwl_projects',
   lang:'mwl_lang',theme:'mwl_theme',prefs:'mwl_prefs',ver:'mwl_version',inst:'mwl_install_dismissed',sheetUrl:'mwl_sheet_url'};
 const ST={cat:'entry',dur:'duration',sumPer:'day',sumOff:0,
@@ -1126,12 +1266,38 @@ function clockInit(){
   }));
 }
 
+
+/* ─ RESET FORM AFTER SUBMIT ─ */
+function resetForm(){
+  // Reset category → entry
+  document.querySelectorAll('.cat-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelector('.cat-btn[data-cat="entry"]').classList.add('active');
+  ST.cat='entry';
+  $('task-fields').style.display='none';
+  // Clear task fields
+  $('task-project').value='';
+  $('task-desc').value='';
+  // Reset clock to 00:00
+  _ch=0;_cm=0;clockUpdate();
+  // Reset duration mode
+  document.querySelectorAll('.seg-btn[data-mode]').forEach(b=>b.classList.remove('active'));
+  document.querySelector('.seg-btn[data-mode="duration"]').classList.add('active');
+  ST.dur='duration';
+  $('duration-mode').style.display='flex';
+  $('range-mode').style.display='none';
+  const rs=$('range-start'),re=$('range-end');
+  if(rs)rs.value='';if(re)re.value='';
+  // Reset date/time to now
+  const n=new Date();
+  $('report-date').value=isoD(n);
+  $('report-time').value=timeS(n);
+}
 function submitInit(){
   $('btn-submit').addEventListener('click',async()=>{
     const date=$('report-date').value,time=$('report-time').value;
     if(!date||!time){toast(t('toastNoTime'),'warn');buzz([80]);return}
     const rep=buildRep(date,time);if(!rep)return;
-    saveLocal(rep);histRender();scrollSave();
+    saveLocal(rep);histRender();resetForm();
     const ep=store(K.ep);
     if(!ep){toast(t('toastNoEndpoint'),'warn');addQ(rep);pendUI();return}
     if(!navigator.onLine){toast(t('toastSavedOffline'),'warn');addQ(rep);pendUI();return}
@@ -1402,6 +1568,14 @@ function ptrInit(){
 }
 
 
+/* ─ HELP TABS ─ */
+function hTab(btn){
+  const id=btn.dataset.htab;
+  document.querySelectorAll('.htab-btn').forEach(b=>b.classList.toggle('active',b===btn));
+  document.querySelectorAll('.htab-pnl').forEach(p=>p.style.display='none');
+  const panel=document.getElementById('htab-'+id);
+  if(panel){panel.style.display='flex';}
+}
 /* DOWNLOAD GS */
 function downloadGS(){
   const code=document.getElementById('gs-code-blob')?.textContent||'';
