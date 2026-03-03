@@ -312,7 +312,7 @@ textarea.fi{resize:vertical;min-height:72px}
 
 /* ─ CLOCK UI ─ */
 .clock-ui{display:flex;flex-direction:column;align-items:center;gap:12px;padding:8px 0}
-.clock-display{display:flex;align-items:center;gap:4px;font-family:'Syne',monospace;font-size:2.6rem;font-weight:800;color:var(--text)}
+.clock-display{display:flex;align-items:center;gap:4px;font-family:'Syne',monospace;font-size:2.6rem;font-weight:800;color:var(--text);direction:ltr}
 .clock-sep{color:var(--text3);animation:blink 1s step-end infinite}
 @keyframes blink{50%{opacity:0}}
 .clock-spinner{display:flex;flex-direction:column;align-items:center;gap:4px}
@@ -566,7 +566,7 @@ textarea.fi{resize:vertical;min-height:72px}
         <input type="url" id="settings-endpoint" class="fi"
           placeholder="https://script.google.com/macros/s/.../exec"/>
         <p class="fhint" data-i18n="settingsEndpointHint">הדבק את ה-URL של ה-Web App</p>
-        <button onclick="openM('modal-help')" type="button"
+        <button onclick="event.stopPropagation();openM('modal-help')" type="button"
           style="display:inline-flex;align-items:center;gap:6px;margin-top:6px;font-size:.75rem;color:var(--blue);background:none;border:none;cursor:pointer;padding:2px 0;font-family:var(--fhe)">
           📄 הוראות התקנה וקוד Google Apps Script
         </button>
@@ -663,7 +663,7 @@ textarea.fi{resize:vertical;min-height:72px}
 <div id="toast" class="hidden" role="status" aria-live="polite"></div>
 
 <!-- HELP MODAL: Google Apps Script -->
-<div id="modal-help" class="moverlay hidden" role="dialog" aria-modal="true">
+<div id="modal-help" class="moverlay hidden" role="dialog" aria-modal="true" style="z-index:650">
   <div class="mbox">
     <div class="mhdr">
       <h2>📄 Google Apps Script — הגדרה</h2>
@@ -900,17 +900,20 @@ function dtInit(){
   setTimeVal(timeS(n));
   // Date display masking: auto-insert / as user types dd/mm/yyyy
   $('report-date-disp').addEventListener('input',function(){
+    if(this._fmt)return;
     let v=this.value.replace(/\D/g,'');
     if(v.length>8)v=v.slice(0,8);
     let fmt='';
     if(v.length>=3&&v.length<=4) fmt=v.slice(0,2)+'/'+v.slice(2);
     else if(v.length>4) fmt=v.slice(0,2)+'/'+v.slice(2,4)+'/'+v.slice(4);
     else fmt=v;
-    this.value=fmt;
+    this._fmt=true; this.value=fmt; this._fmt=false;
     // parse to ISO when complete
     if(v.length===8){
-      const d=v.slice(0,2),m=v.slice(2,4),y=v.slice(4,8);
-      $('report-date').value=y+'-'+m+'-'+d;
+      const dd=v.slice(0,2),mm=v.slice(2,4),yy=v.slice(4,8);
+      const dateObj=new Date(yy+'-'+mm+'-'+dd);
+      if(!isNaN(dateObj.getTime())) $('report-date').value=yy+'-'+mm+'-'+dd;
+      else $('report-date').value='';
     }else{
       $('report-date').value='';
     }
