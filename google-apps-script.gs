@@ -1,5 +1,5 @@
 // ============================================================
-//  MyWorkLog – Google Apps Script  v2.1
+//  MyWorkLog – Google Apps Script  v2.0
 //  הדבק קוד זה ב-Apps Script של הגיליון שלך
 //  לאחר מכן: Deploy > New deployment > Web App
 //  ✅ הרשאות: Anyone (אנונימי) / Execute as: Me
@@ -91,62 +91,11 @@ function updateTasks(ss, data) {
 
 function deleteById(id) {
   const ss    = SpreadsheetApp.getActiveSpreadsheet();
-  // Delete from main WorkLog sheet (column 7 = Record_ID)
   const sheet = ss.getSheetByName(SHEET_NAME);
-  if (sheet) {
-    const data = sheet.getDataRange().getValues();
-    for (let i = data.length - 1; i >= 1; i--) {
-      if (String(data[i][6]) === String(id)) {
-        // Before deleting, check category to clean up Attendance/Tasks
-        const cat = data[i][3]; // column 4 = Category (translated)
-        const date = data[i][1]; // column 2 = Report_Date
-        const time = data[i][2]; // column 3 = Report_Time
-        sheet.deleteRow(i + 1);
-        // If entry/exit: clean up Attendance row
-        if (cat === 'כניסה' || cat === 'יציאה') {
-          cleanAttendanceRow(ss, date, time, cat);
-        }
-        // If task: remove from Tasks sheet
-        if (cat === 'משימה') {
-          cleanTaskRow(ss, date, time);
-        }
-        break;
-      }
-    }
-  }
-}
-
-function cleanAttendanceRow(ss, date, time, cat) {
-  const sheet = ss.getSheetByName(SHEET_ATTENDANCE);
   if (!sheet) return;
-  const data = sheet.getDataRange().getValues();
-  for (let i = 1; i < data.length; i++) {
-    if (String(data[i][0]) === String(date)) {
-      const rowIdx = i + 1;
-      if (cat === 'כניסה' && String(data[i][1]) === String(time)) {
-        sheet.getRange(rowIdx, 2).clearContent(); // clear entry time
-        sheet.getRange(rowIdx, 4).clearContent(); // clear duration
-        // if exit also empty, delete the row
-        if (!data[i][2]) sheet.deleteRow(rowIdx);
-      } else if (cat === 'יציאה' && String(data[i][2]) === String(time)) {
-        sheet.getRange(rowIdx, 3).clearContent(); // clear exit time
-        sheet.getRange(rowIdx, 4).clearContent(); // clear duration
-        if (!data[i][1]) sheet.deleteRow(rowIdx);
-      }
-      break;
-    }
-  }
-}
-
-function cleanTaskRow(ss, date, time) {
-  const sheet = ss.getSheetByName(SHEET_TASKS);
-  if (!sheet) return;
-  const data = sheet.getDataRange().getValues();
+  const data  = sheet.getDataRange().getValues();
   for (let i = data.length - 1; i >= 1; i--) {
-    if (String(data[i][0]) === String(date) && String(data[i][1]) === String(time)) {
-      sheet.deleteRow(i + 1);
-      break;
-    }
+    if (String(data[i][6]) === String(id)) sheet.deleteRow(i + 1);
   }
 }
 

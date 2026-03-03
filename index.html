@@ -91,6 +91,7 @@ html,body{height:100%;background:var(--bg0);color:var(--text);
   cursor:pointer;transition:background .15s,color .15s}
 [dir=ltr] .menu-item{text-align:left}
 .menu-item:hover{background:var(--glass2);color:var(--text)}
+.menu-item.theme-active{color:var(--amber)}
 .menu-div{border:none;border-top:1px solid var(--border);margin:6px 12px}
 .menu-foot{padding:14px 16px;border-top:1px solid var(--border)}
 
@@ -312,7 +313,7 @@ textarea.fi{resize:vertical;min-height:72px}
 
 /* ─ CLOCK UI ─ */
 .clock-ui{display:flex;flex-direction:column;align-items:center;gap:12px;padding:8px 0}
-.clock-display{display:flex;align-items:center;gap:4px;font-family:'Syne',monospace;font-size:2.6rem;font-weight:800;color:var(--text);direction:ltr}
+.clock-display{display:flex;align-items:center;gap:4px;font-family:'Syne',monospace;font-size:2.6rem;font-weight:800;color:var(--text)}
 .clock-sep{color:var(--text3);animation:blink 1s step-end infinite}
 @keyframes blink{50%{opacity:0}}
 .clock-spinner{display:flex;flex-direction:column;align-items:center;gap:4px}
@@ -360,10 +361,17 @@ textarea.fi{resize:vertical;min-height:72px}
       <button class="menu-item" data-tab="history" data-i18n="menuHistory">היסטוריה</button>
       <button class="menu-item" data-tab="summary" data-i18n="menuSummary">סיכום</button>
       <hr class="menu-div"/>
-      <button class="menu-item" id="menu-settings-btn" data-i18n="menuSettings">הגדרות</button>
+      <button class="menu-item" id="menu-theme-btn">🌙 מצב כהה</button>
+      <hr class="menu-div"/>
+      <button class="menu-item" id="menu-settings-btn" data-i18n="menuSettings">⚙️ הגדרות</button>
+      <button class="menu-item" id="menu-help-btn">📄 עזרה — Apps Script</button>
+      <button class="menu-item" id="menu-gs-btn">🔗 קוד google-apps-script.gs</button>
     </nav>
-    <div class="menu-foot">
-      <span id="menu-vbadge" class="vbadge" title="לחץ לאיפוס">v1.1.0</span>
+    <div class="menu-foot" style="display:flex;flex-direction:column;gap:8px">
+      <a id="menu-sheet-link" href="#" target="_blank" rel="noopener" style="display:none;align-items:center;gap:7px;font-size:.8rem;color:var(--blue);text-decoration:none;padding:3px 2px">
+        📊 פתח גיליון הדיווחים
+      </a>
+      <span id="menu-vbadge" class="vbadge" title="לחץ לאיפוס">v1.2.0</span>
     </div>
   </aside>
 
@@ -375,9 +383,7 @@ textarea.fi{resize:vertical;min-height:72px}
         <span class="hdr-name">MyWorkLog</span>
       </div>
       <div class="hdr-acts">
-        <span id="version-badge" class="vbadge" title="לחץ לאיפוס">v1.1.0</span>
-        <button class="ibtn" id="btn-theme" aria-label="ערכת נושא">🌙</button>
-        <button class="ibtn" id="btn-settings" aria-label="הגדרות">⚙️</button>
+        <span id="version-badge" class="vbadge" title="לחץ לאיפוס">v1.2.0</span>
       </div>
     </div>
   </header>
@@ -408,17 +414,11 @@ textarea.fi{resize:vertical;min-height:72px}
         <div class="row2">
           <div class="fg">
             <label class="flbl" data-i18n="labelDate">תאריך</label>
-            <input type="hidden" id="report-date"/>
-            <input type="text" id="report-date-disp" class="fi" placeholder="dd/mm/yyyy"
-              maxlength="10" inputmode="numeric" autocomplete="off"
-              style="direction:ltr;text-align:center;letter-spacing:1px;font-family:'Syne',monospace"/>
+            <input type="date" id="report-date" class="fi"/>
           </div>
           <div class="fg">
             <label class="flbl" data-i18n="labelTime">שעה</label>
-            <input type="hidden" id="report-time"/>
-            <input type="text" id="report-time-disp" class="fi" placeholder="HH:MM"
-              maxlength="5" inputmode="numeric" autocomplete="off"
-              style="direction:ltr;text-align:center;letter-spacing:2px;font-family:'Syne',monospace"/>
+            <input type="time" id="report-time" class="fi"/>
           </div>
         </div>
         <button class="btn-g sm" id="btn-now" data-i18n="btnNow">🕐 עכשיו</button>
@@ -566,10 +566,6 @@ textarea.fi{resize:vertical;min-height:72px}
         <input type="url" id="settings-endpoint" class="fi"
           placeholder="https://script.google.com/macros/s/.../exec"/>
         <p class="fhint" data-i18n="settingsEndpointHint">הדבק את ה-URL של ה-Web App</p>
-        <button onclick="event.stopPropagation();openM('modal-help')" type="button"
-          style="display:inline-flex;align-items:center;gap:6px;margin-top:6px;font-size:.75rem;color:var(--blue);background:none;border:none;cursor:pointer;padding:2px 0;font-family:var(--fhe)">
-          📄 הוראות התקנה וקוד Google Apps Script
-        </button>
       </div>
       <div class="fg">
         <label class="flbl">כתובת גיליון Google Sheets</label>
@@ -661,45 +657,200 @@ textarea.fi{resize:vertical;min-height:72px}
 </div>
 
 <div id="toast" class="hidden" role="status" aria-live="polite"></div>
-
-<!-- HELP MODAL: Google Apps Script -->
+<!-- HELP MODAL -->
 <div id="modal-help" class="moverlay hidden" role="dialog" aria-modal="true" style="z-index:650">
   <div class="mbox">
     <div class="mhdr">
-      <h2>📄 Google Apps Script — הגדרה</h2>
+      <h2>📄 Google Apps Script</h2>
       <button class="ibtn" id="btn-close-help">✕</button>
     </div>
     <div class="mbody" style="gap:10px">
-      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--rs);padding:12px;font-size:.8rem;line-height:1.7;color:var(--text2)">
+      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--rs);padding:12px;font-size:.8rem;line-height:1.8;color:var(--text2)">
         <div style="font-weight:700;color:var(--lime);font-size:.85rem;margin-bottom:8px">שלבי הגדרה:</div>
-        <ol style="padding-right:16px;display:flex;flex-direction:column;gap:5px">
+        <ol style="padding-right:18px;display:flex;flex-direction:column;gap:4px">
           <li>פתח <strong>Google Sheets</strong> חדש</li>
           <li>לחץ <strong>Extensions → Apps Script</strong></li>
-          <li>מחק את הקוד הקיים, הדבק את הקוד מקובץ <code style="background:var(--bg0);padding:1px 5px;border-radius:3px;color:var(--lime);font-size:.78rem">google-apps-script.gs</code></li>
-          <li>שמור (Ctrl+S) ואז <strong>Deploy → New deployment</strong></li>
-          <li>בחר: <em>Execute as: Me</em> | <em>Who has access: Anyone</em></li>
-          <li>לחץ Deploy וקבל את ה-<strong>Web App URL</strong></li>
-          <li>הדבק את ה-URL בהגדרות האפליקציה</li>
+          <li>מחק קוד קיים → הדבק את קובץ <code style="background:var(--bg0);padding:1px 6px;border-radius:3px;color:var(--lime);font-size:.76rem">google-apps-script.gs</code></li>
+          <li>שמור (Ctrl+S) → <strong>Deploy → New deployment</strong></li>
+          <li>בחר: <em>Execute as: Me</em> | <em>Who: Anyone</em></li>
+          <li>העתק את ה-<strong>Web App URL</strong> → הגדרות אפליקציה</li>
         </ol>
       </div>
       <div style="background:var(--bg3);border:1px solid var(--border2);border-radius:var(--rs);padding:12px">
-        <div style="font-size:.75rem;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">גיליונות שייווצרו</div>
-        <div style="display:flex;flex-direction:column;gap:4px;font-size:.82rem">
-          <div style="display:flex;gap:8px;align-items:center"><span style="color:var(--lime)">✅</span><span><strong>WorkLog</strong> — כל הדיווחים</span></div>
-          <div style="display:flex;gap:8px;align-items:center"><span style="color:var(--lime)">✅</span><span><strong>Attendance</strong> — כניסה, יציאה ומשך יום</span></div>
-          <div style="display:flex;gap:8px;align-items:center"><span style="color:var(--lime)">✅</span><span><strong>Tasks</strong> — דיווחי משימות</span></div>
+        <div style="font-size:.72rem;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">גיליונות שייווצרו אוטומטית</div>
+        <div style="display:flex;flex-direction:column;gap:5px;font-size:.83rem">
+          <span><span style="color:var(--lime)">✅</span> <strong>WorkLog</strong> — כל הדיווחים</span>
+          <span><span style="color:var(--lime)">✅</span> <strong>Attendance</strong> — כניסה, יציאה ומשך יום</span>
+          <span><span style="color:var(--lime)">✅</span> <strong>Tasks</strong> — דיווחי משימות</span>
         </div>
       </div>
-      <div style="background:var(--amberDim);border:1px solid var(--amber);border-radius:var(--rs);padding:10px;font-size:.78rem;color:var(--amber);display:flex;gap:8px">
-        <span>⚠️</span>
-        <span>לאחר שינוי הקוד — יש ליצור <strong>New Deployment</strong> (לא לעדכן את הישן)</span>
+      <div style="background:var(--amberDim);border:1px solid var(--amber);border-radius:var(--rs);padding:10px;font-size:.78rem;color:var(--amber);display:flex;gap:8px;align-items:flex-start">
+        <span>⚠️</span><span>לאחר שינוי קוד — צור <strong>New Deployment</strong> (לא עדכון!)</span>
       </div>
-      <a href="https://script.google.com/home" target="_blank" rel="noopener" class="btn-p sm" style="text-decoration:none;text-align:center">
-        🔗 פתח Google Apps Script
-      </a>
+      <button onclick="downloadGS()" class="btn-p sm" style="text-align:center">
+        ⬇️ הורד google-apps-script.gs
+      </button>
     </div>
   </div>
 </div>
+
+<!-- GS CODE BLOB (embedded for download) -->
+<pre id="gs-code-blob" style="display:none">// ============================================================
+//  MyWorkLog – Google Apps Script  v2.0
+//  הדבק קוד זה ב-Apps Script של הגיליון שלך
+//  לאחר מכן: Deploy &gt; New deployment &gt; Web App
+//  ✅ הרשאות: Anyone (אנונימי) / Execute as: Me
+// ============================================================
+
+const SHEET_NAME       = 'WorkLog';
+const SHEET_ATTENDANCE = 'Attendance';
+const SHEET_TASKS      = 'Tasks';
+
+const HEADERS            = ['Timestamp', 'Report_Date', 'Report_Time', 'Category', 'Description', 'Project', 'Record_ID'];
+const ATTENDANCE_HEADERS = ['Report_Date', 'Report_Time – כניסה', 'Report_Time – יציאה', 'משך יום עבודה'];
+const TASK_HEADERS       = ['Report_Date', 'משך משימה', 'Project', 'Description'];
+
+function doPost(e) {
+  try {
+    const data = JSON.parse(e.postData.contents);
+
+    if (data.action === 'delete') {
+      deleteById(data.id);
+      return ok('נמחק');
+    }
+
+    const ss   = SpreadsheetApp.getActiveSpreadsheet();
+    const main = getOrCreateSheet(ss, SHEET_NAME, HEADERS);
+    const ts   = new Date().toLocaleString('he-IL', { timeZone: 'Asia/Jerusalem' });
+
+    main.appendRow([
+      ts,
+      data.report_date || '',
+      data.report_time || '',
+      translateCategory(data.category) || '',
+      data.description || '',
+      data.project     || '',
+      data.id          || '',
+    ]);
+    autoFormatLastRow(main, HEADERS.length);
+
+    if (data.category === 'entry' || data.category === 'exit') updateAttendance(ss, data);
+    if (data.category === 'task')  updateTasks(ss, data);
+
+    return ok('נשמר בהצלחה');
+  } catch (err) {
+    return ContentService
+      .createTextOutput(JSON.stringify({ status: 'error', message: err.toString() }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+function doGet(e) {
+  return ContentService
+    .createTextOutput(JSON.stringify({ status: 'ok', app: 'MyWorkLog' }))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+function updateAttendance(ss, data) {
+  const sheet    = getOrCreateSheet(ss, SHEET_ATTENDANCE, ATTENDANCE_HEADERS);
+  const date     = data.report_date;
+  const time     = data.report_time;
+  const allData  = sheet.getDataRange().getValues();
+  let rowIdx     = -1;
+
+  for (let i = 1; i &lt; allData.length; i++) {
+    if (allData[i][0] === date) { rowIdx = i + 1; break; }
+  }
+
+  if (rowIdx === -1) {
+    const newRow = [date, '', '', ''];
+    if (data.category === 'entry') newRow[1] = time;
+    else newRow[2] = time;
+    sheet.appendRow(newRow);
+    autoFormatLastRow(sheet, ATTENDANCE_HEADERS.length);
+  } else {
+    if (data.category === 'entry') {
+      if (!sheet.getRange(rowIdx, 2).getValue()) sheet.getRange(rowIdx, 2).setValue(time);
+    } else {
+      sheet.getRange(rowIdx, 3).setValue(time);
+    }
+    const entry = sheet.getRange(rowIdx, 2).getValue();
+    const exit  = sheet.getRange(rowIdx, 3).getValue();
+    sheet.getRange(rowIdx, 4).setValue(calcDuration(entry, exit));
+  }
+}
+
+function updateTasks(ss, data) {
+  const sheet = getOrCreateSheet(ss, SHEET_TASKS, TASK_HEADERS);
+  sheet.appendRow([data.report_date || '', data.report_time || '', data.project || '', data.description || '']);
+  autoFormatLastRow(sheet, TASK_HEADERS.length);
+}
+
+function deleteById(id) {
+  const ss    = SpreadsheetApp.getActiveSpreadsheet();
+  const sheet = ss.getSheetByName(SHEET_NAME);
+  if (!sheet) return;
+  const data  = sheet.getDataRange().getValues();
+  for (let i = data.length - 1; i &gt;= 1; i--) {
+    if (String(data[i][6]) === String(id)) sheet.deleteRow(i + 1);
+  }
+}
+
+function calcDuration(entry, exit) {
+  if (!entry || !exit) return '';
+  const toMins = t =&gt; { const p = String(t).split(':'); return parseInt(p[0]) * 60 + parseInt(p[1] || 0); };
+  const diff   = toMins(exit) - toMins(entry);
+  if (diff &lt;= 0) return '';
+  return pad(Math.floor(diff / 60)) + ':' + pad(diff % 60);
+}
+
+function pad(n) { return String(n).padStart(2, '0'); }
+
+function ok(msg) {
+  return ContentService.createTextOutput(JSON.stringify({ status: 'ok', message: msg })).setMimeType(ContentService.MimeType.JSON);
+}
+
+function getOrCreateSheet(ss, name, headers) {
+  let sheet = ss.getSheetByName(name);
+  if (!sheet) {
+    sheet = ss.insertSheet(name);
+    const hRow = sheet.getRange(1, 1, 1, headers.length);
+    hRow.setValues([headers]);
+    hRow.setFontWeight('bold');
+    hRow.setBackground('#1a1d27');
+    hRow.setFontColor('#4ade80');
+    sheet.setFrozenRows(1);
+    headers.forEach((_, i) =&gt; sheet.setColumnWidth(i + 1, i &gt;= 2 ? 200 : 130));
+  }
+  return sheet;
+}
+
+function autoFormatLastRow(sheet, colCount) {
+  const lastRow = sheet.getLastRow();
+  if (lastRow % 2 === 0) sheet.getRange(lastRow, 1, 1, colCount).setBackground('#f8f9fa');
+}
+
+function translateCategory(cat) {
+  return { entry: 'כניסה', exit: 'יציאה', task: 'משימה' }[cat] || cat;
+}
+
+/*
+  SETUP:
+  1. פתח את גיליון Google Sheets שלך
+  2. Extensions &gt; Apps Script
+  3. הדבק קוד זה ושמור
+  4. Deploy &gt; New deployment &gt; Web App
+     Execute as: Me | Who has access: Anyone
+  5. העתק Web App URL לאפליקציה (הגדרות &gt; כתובת Script)
+  6. הדבק URL של הגיליון עצמו (הגדרות &gt; כתובת גיליון)
+
+  גיליונות שייווצרו אוטומטית:
+  ✅ WorkLog     - כל הדיווחים
+  ✅ Attendance  - כניסה + יציאה + משך יום עבודה
+  ✅ Tasks       - דיווחי משימות
+*/
+</pre>
+
 
 <script>
 /* ─────────────────────────────────────────────────────
@@ -791,7 +942,7 @@ function applyLang(lang){
 /* ─────────────────────────────────────────────────────
    App
 ───────────────────────────────────────────────────── */
-const VER='1.1.0';
+const VER='1.2.0';
 const K={ep:'mwl_endpoint',reps:'mwl_reports',q:'mwl_queue',proj:'mwl_projects',
   lang:'mwl_lang',theme:'mwl_theme',prefs:'mwl_prefs',ver:'mwl_version',inst:'mwl_install_dismissed',sheetUrl:'mwl_sheet_url'};
 const ST={cat:'entry',dur:'duration',sumPer:'day',sumOff:0,
@@ -824,7 +975,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   splashInit();dtInit();tabsInit();catInit();durInit();clockInit();
   submitInit();settingsInit();summaryInit();
   $('btn-now').addEventListener('click',()=>{
-    const n=new Date();setDateVal(isoD(n));setTimeVal(timeS(n));
+    const n=new Date();$('report-date').value=isoD(n);$('report-time').value=timeS(n);
     toast(t('toastNowUpdated'));buzz([20]);
   });
   netInit();netQInit();projLoad();histRender();
@@ -840,6 +991,7 @@ function splashInit(){
       $('app').classList.remove('hidden');
       applyLang(window._lang||'he');
       summaryRender();
+      updateMenuSheetLink();
     },420);
   },900);
 }
@@ -862,13 +1014,21 @@ function vBadgeInit(){
 }
 async function hardReset(){
   const kR=$('reset-keep-reports').checked,kS=$('reset-keep-settings').checked,kQ=$('reset-keep-queue').checked;
-  const sR=kR?store(K.reps):null,sE=kS?store(K.ep):null,sP=kS?store(K.proj):null,sQ=kQ?store(K.q):null;
+  // Preserve data BEFORE wiping localStorage
+  const sR=kR?store(K.reps):null;
+  const sE=kS?store(K.ep):null,sSU=kS?store(K.sheetUrl):null;
+  const sP=kS?store(K.proj):null,sTH=kS?store(K.theme):null,sLN=kS?store(K.lang):null,sPR=kS?store(K.prefs):null;
+  const sQ=kQ?store(K.q):null;
   localStorage.clear();sessionStorage.clear();
   document.cookie.split(';').forEach(c=>document.cookie=c.replace(/^ +/,'').replace(/=.*/,'=;expires='+new Date().toUTCString()+';path=/'));
   if('serviceWorker'in navigator)(await navigator.serviceWorker.getRegistrations()).forEach(r=>r.unregister());
   if('caches'in window)await Promise.all((await caches.keys()).map(k=>caches.delete(k)));
   if('indexedDB'in window){const dbs=await(indexedDB.databases?.()??Promise.resolve([]));dbs.forEach(db=>indexedDB.deleteDatabase(db.name))}
-  if(sR)store(K.reps,sR);if(sE)store(K.ep,sE);if(sP)store(K.proj,sP);if(sQ)store(K.q,sQ);
+  // Restore preserved data
+  if(sR)store(K.reps,sR);
+  if(sE)store(K.ep,sE);if(sSU)store(K.sheetUrl,sSU);
+  if(sP)store(K.proj,sP);if(sTH)store(K.theme,sTH);if(sLN)store(K.lang,sLN);if(sPR)store(K.prefs,sPR);
+  if(sQ)store(K.q,sQ);
   buzz([100,50,100]);window.location.reload(true);
 }
 
@@ -876,13 +1036,15 @@ async function hardReset(){
 function themeInit(){
   const s=store(K.theme),dark=s!==null?s==='dark':window.matchMedia('(prefers-color-scheme:dark)').matches;
   applyTheme(dark?'dark':'light');
-  $('btn-theme').addEventListener('click',()=>{applyTheme(document.body.classList.contains('light')?'dark':'light');buzz([20])});
 }
 function applyTheme(th){
-  document.body.classList.toggle('light',th==='light');
-  $('btn-theme').textContent=th==='light'?'🌙':'☀️';
-  document.querySelector('meta[name="theme-color"]').content=th==='light'?'#f0f0f6':'#0a0a0f';
+  const dark=th==='dark';
+  document.body.classList.toggle('light',!dark);
+  document.querySelector('meta[name="theme-color"]').content=dark?'#0a0a0f':'#f0f0f6';
   store(K.theme,th);
+  // sync menu button label
+  const btn=$('menu-theme-btn');
+  if(btn){btn.textContent=(dark?'☀️':'🌙')+' '+(dark?'מצב בהיר':'מצב כהה');btn.classList.toggle('theme-active',dark);}
 }
 
 /* LANG */
@@ -894,57 +1056,7 @@ function prefsLoadUI(){const p=getP();$('pref-vibration').checked=p.vibration!==
 function prefsSave(){const p={vibration:$('pref-vibration').checked,animations:$('pref-animations').checked,pullRefresh:$('pref-pull-refresh').checked};store(K.prefs,p);document.body.classList.toggle('no-anim',!p.animations)}
 
 /* DATE/TIME */
-function dtInit(){
-  const n=new Date();
-  setDateVal(isoD(n));
-  setTimeVal(timeS(n));
-  // Date display masking: auto-insert / as user types dd/mm/yyyy
-  $('report-date-disp').addEventListener('input',function(){
-    if(this._fmt)return;
-    let v=this.value.replace(/\D/g,'');
-    if(v.length>8)v=v.slice(0,8);
-    let fmt='';
-    if(v.length>=3&&v.length<=4) fmt=v.slice(0,2)+'/'+v.slice(2);
-    else if(v.length>4) fmt=v.slice(0,2)+'/'+v.slice(2,4)+'/'+v.slice(4);
-    else fmt=v;
-    this._fmt=true; this.value=fmt; this._fmt=false;
-    // parse to ISO when complete
-    if(v.length===8){
-      const dd=v.slice(0,2),mm=v.slice(2,4),yy=v.slice(4,8);
-      const dateObj=new Date(yy+'-'+mm+'-'+dd);
-      if(!isNaN(dateObj.getTime())) $('report-date').value=yy+'-'+mm+'-'+dd;
-      else $('report-date').value='';
-    }else{
-      $('report-date').value='';
-    }
-  });
-  // Time display masking: auto-insert : as user types HHMM → HH:MM
-  $('report-time-disp').addEventListener('input',function(){
-    let v=this.value.replace(/\D/g,'');
-    if(v.length>4)v=v.slice(0,4);
-    let fmt='';
-    if(v.length>2) fmt=v.slice(0,2)+':'+v.slice(2);
-    else fmt=v;
-    this.value=fmt;
-    if(v.length===4){
-      const h=parseInt(v.slice(0,2)),m=parseInt(v.slice(2,4));
-      if(h>=0&&h<=23&&m>=0&&m<=59){
-        $('report-time').value=pad(h)+':'+pad(m);
-      }else{$('report-time').value='';}
-    }else{$('report-time').value='';}
-  });
-}
-function setDateVal(iso){
-  if(!iso)return;
-  $('report-date').value=iso;
-  const[y,m,d]=iso.split('-');
-  $('report-date-disp').value=d+'/'+m+'/'+y;
-}
-function setTimeVal(hhmm){
-  if(!hhmm)return;
-  $('report-time').value=hhmm;
-  $('report-time-disp').value=hhmm;
-}
+function dtInit(){const n=new Date();$('report-date').value=isoD(n);$('report-time').value=timeS(n)}
 
 /* TABS */
 function tabsInit(){document.querySelectorAll('.tab-btn').forEach(b=>b.addEventListener('click',()=>switchTab(b.dataset.tab)))}
@@ -964,7 +1076,18 @@ function menuInit(){
   $('btn-close-menu').addEventListener('click',menuClose);
   $('menu-overlay').addEventListener('click',menuClose);
   $('menu-settings-btn').addEventListener('click',()=>{menuClose();openM('modal-settings')});
+  $('menu-help-btn').addEventListener('click',()=>{menuClose();openM('modal-help')});
+  $('menu-gs-btn').addEventListener('click',()=>{menuClose();downloadGS();});
+  $('menu-theme-btn').addEventListener('click',()=>{
+    applyTheme(document.body.classList.contains('light')?'dark':'light');buzz([20]);
+  });
   document.querySelectorAll('.menu-item[data-tab]').forEach(el=>el.addEventListener('click',()=>switchTab(el.dataset.tab)));
+  updateMenuSheetLink();
+}
+function updateMenuSheetLink(){
+  const su=store(K.sheetUrl);
+  const el=$('menu-sheet-link');
+  if(el){el.style.display=su?'flex':'none';if(su)el.href=su;}
 }
 function menuOpen(){$('side-menu').classList.add('open');$('menu-overlay').classList.remove('hidden');$('side-menu').setAttribute('aria-hidden','false');buzz([20])}
 function menuClose(){$('side-menu').classList.remove('open');$('menu-overlay').classList.add('hidden');$('side-menu').setAttribute('aria-hidden','true')}
@@ -1010,36 +1133,11 @@ function submitInit(){
     const rep=buildRep(date,time);if(!rep)return;
     saveLocal(rep);histRender();scrollSave();
     const ep=store(K.ep);
-    if(!ep){toast(t('toastNoEndpoint'),'warn');addQ(rep);pendUI();resetForm();return}
-    if(!navigator.onLine){toast(t('toastSavedOffline'),'warn');addQ(rep);pendUI();resetForm();return}
+    if(!ep){toast(t('toastNoEndpoint'),'warn');addQ(rep);pendUI();return}
+    if(!navigator.onLine){toast(t('toastSavedOffline'),'warn');addQ(rep);pendUI();return}
     await send(rep,ep);
   });
   $('btn-sync')?.addEventListener('click',syncQ);
-}
-
-/* RESET FORM AFTER SUBMIT */
-function resetForm(){
-  const n=new Date();
-  setDateVal(isoD(n));
-  setTimeVal(timeS(n));
-  // Reset category to entry
-  document.querySelectorAll('.cat-btn').forEach(b=>b.classList.remove('active'));
-  document.querySelector('.cat-btn[data-cat="entry"]').classList.add('active');
-  ST.cat='entry';
-  $('task-fields').style.display='none';
-  $('task-desc').value='';
-  $('task-project').value='';
-  // Reset duration clock
-  _ch=0;_cm=0;clockUpdate();
-  // Reset to duration mode
-  document.querySelectorAll('.seg-btn[data-mode]').forEach(b=>b.classList.remove('active'));
-  document.querySelector('.seg-btn[data-mode="duration"]').classList.add('active');
-  ST.dur='duration';
-  $('duration-mode').style.display='flex';
-  $('range-mode').style.display='none';
-  // Clear range fields
-  const rs=$('range-start'),re=$('range-end');
-  if(rs)rs.value='';if(re)re.value='';
 }
 function buildRep(date,time){
   const cat=ST.cat;let rTime=time,desc='',proj='';
@@ -1068,7 +1166,6 @@ async function send(rep,ep){
   try{
     await fetch(ep,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(rep),mode:'no-cors'});
     toast(t('toastSent'),'success');markSent(rep.id);buzz([30,20,60]);
-    resetForm();
   }catch{toast(t('toastSendError'),'error');addQ(rep);pendUI();buzz([100])}
   finally{btn.classList.remove('loading');btn.querySelector('.btn-text').textContent=t('btnSubmit')}
 }
@@ -1083,26 +1180,12 @@ async function syncQ(){
   const q=store(K.q)||[];if(!q.length){toast(t('toastNoQueuePending'),'success');return}
   let ok=0;const fail=[];
   for(const r of q){try{await fetch(ep,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(r),mode:'no-cors'});markSent(r.id);ok++}catch{fail.push(r)}}
-  store(K.q,fail);pendUI();
-  // also sync pending deletes
-  await syncDelQueue(ep);
-  toast(t('toastSynced',ok),'success');
-}
-async function syncDelQueue(ep){
-  const dq=store('mwl_del_q')||[];if(!dq.length)return;
-  const failed=[];
-  for(const id of dq){
-    try{
-      await fetch(ep,{method:'POST',headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({action:'delete',id}),mode:'no-cors'});
-    }catch{failed.push(id);}
-  }
-  store('mwl_del_q',failed);
+  store(K.q,fail);pendUI();toast(t('toastSynced',ok),'success');
 }
 
 /* NETWORK */
 function netInit(){
-  const upd=()=>{$('offline-banner').classList.toggle('hidden',navigator.onLine);if(navigator.onLine){toast(t('toastOnlineBack'),'success');syncQ();const ep=store(K.ep);if(ep)syncDelQueue(ep);}};
+  const upd=()=>{$('offline-banner').classList.toggle('hidden',navigator.onLine);if(navigator.onLine){toast(t('toastOnlineBack'),'success');syncQ()}};
   window.addEventListener('online',upd);window.addEventListener('offline',upd);
   $('offline-banner').classList.toggle('hidden',navigator.onLine);pendUI();
 }
@@ -1123,26 +1206,12 @@ function delReport(id){
   if(!confirm('למחוק דיווח זה?'))return;
   store(K.reps,(store(K.reps)||[]).filter(r=>r.id!==id));
   store(K.q,(store(K.q)||[]).filter(r=>r.id!==id));
-  // delete from sheet — queue if offline
+  // delete from sheet
   const ep=store(K.ep);
-  if(ep){
-    if(navigator.onLine){
-      fetch(ep,{method:'POST',headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({action:'delete',id}),mode:'no-cors'}).catch(()=>{
-        // queue delete for later sync
-        const dq=store('mwl_del_q')||[];dq.push(id);store('mwl_del_q',dq);
-      });
-    }else{
-      // queue delete for when back online
-      const dq=store('mwl_del_q')||[];if(!dq.includes(id))dq.push(id);store('mwl_del_q',dq);
-      toast('🗑 נמחק מקומית — יסונכרן עם הגיליון בחיבור הבא','warn',3500);
-    }
+  if(ep&&navigator.onLine){
+    fetch(ep,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'delete',id}),mode:'no-cors'}).catch(()=>{});
   }
-  histRender();summaryRender();
-  if(ep&&navigator.onLine)toast('🗑 דיווח נמחק מהאפליקציה ומהגיליון','success');
-  else if(ep)toast('🗑 נמחק מקומית — יסונכרן עם הגיליון','warn',3500);
-  else toast('🗑 דיווח נמחק','success');
-  buzz([30,20,30]);
+  histRender();summaryRender();toast('🗑 דיווח נמחק','success');
 }
 function hItem(r,showDel=false){
   const delBtn=showDel?`<button class="btn-d sm hitem-del" data-id="${r.id}" onclick="delReport('${r.id}')" style="padding:4px 8px;font-size:.7rem;flex-shrink:0">🗑</button>`:'';
@@ -1221,10 +1290,9 @@ function summaryRender(){
 
 /* SETTINGS */
 function settingsInit(){
+  $('btn-close-settings').addEventListener('click',()=>closeM('modal-settings'));
   $('btn-close-help').addEventListener('click',()=>closeM('modal-help'));
   $('modal-help').addEventListener('click',e=>{if(e.target===$('modal-help'))closeM('modal-help')});
-  $('btn-settings').addEventListener('click',()=>openM('modal-settings'));
-  $('btn-close-settings').addEventListener('click',()=>closeM('modal-settings'));
   $('btn-save-settings').addEventListener('click',settingsSave);
   $('btn-clear-data').addEventListener('click',()=>{
     if(confirm(t('confirmClearData'))){Object.values(K).forEach(k=>localStorage.removeItem(k));toast(t('toastDataCleared'),'success');closeM('modal-settings');histRender();pendUI()}
@@ -1257,7 +1325,7 @@ function settingsSave(){
   if(ep)store(K.ep,ep);else localStorage.removeItem(K.ep);
   const su=$('settings-sheet-url').value.trim();
   if(su)store(K.sheetUrl,su);else localStorage.removeItem(K.sheetUrl);
-  prefsSave();toast(t('toastSettingsSaved'),'success');buzz([20,20,40]);closeM('modal-settings');
+  prefsSave();toast(t('toastSettingsSaved'),'success');buzz([20,20,40]);closeM('modal-settings');updateMenuSheetLink();
 }
 
 /* PROJECTS */
@@ -1333,6 +1401,17 @@ function ptrInit(){
   });
 }
 
+
+/* DOWNLOAD GS */
+function downloadGS(){
+  const code=document.getElementById('gs-code-blob')?.textContent||'';
+  if(!code)return;
+  const b=new Blob([code],{type:'text/plain'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(b);
+  a.download='google-apps-script.gs';document.body.appendChild(a);a.click();
+  setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1000);
+  toast('⬇️ מוריד קוד...','success');
+}
 /* SCROLL */
 function scrollSave(){const s=$('main-scroll');if(s)store('mwl_scroll',s.scrollTop)}
 function scrollInit(){
