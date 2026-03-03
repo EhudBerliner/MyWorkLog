@@ -1,10 +1,9 @@
-// MyWorkLog Service Worker v2.0.0
-const APP_VERSION = '2.0.0';
+// MyWorkLog Service Worker v2.1.0
+const APP_VERSION = '2.1.0';
 const CACHE_NAME  = `mwl-${APP_VERSION}`;
 
 const ASSETS = [
   './', './index.html', './manifest.json',
-  './i18n.js', './app.js',
   './logo.png', './icon-192.png', './icon-512.png', './apple-touch-icon.png',
 ];
 
@@ -19,9 +18,7 @@ self.addEventListener('install', e => {
 self.addEventListener('activate', e => {
   e.waitUntil(
     caches.keys()
-      .then(ks => Promise.all(
-        ks.filter(k => k.startsWith('mwl-') && k !== CACHE_NAME).map(k => caches.delete(k))
-      ))
+      .then(ks => Promise.all(ks.filter(k => k.startsWith('mwl-') && k !== CACHE_NAME).map(k => caches.delete(k))))
       .then(() => self.clients.claim())
   );
   setTimeout(() => setInterval(checkUpdate, 300000), 15000);
@@ -30,8 +27,7 @@ self.addEventListener('activate', e => {
 self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET') return;
   if (e.request.url.includes('version.json')) {
-    e.respondWith(fetch(e.request, { cache: 'no-store' })
-      .catch(() => new Response('{}', { headers: { 'Content-Type': 'application/json' }})));
+    e.respondWith(fetch(e.request, { cache: 'no-store' }).catch(() => new Response('{}', { headers: { 'Content-Type': 'application/json' }})));
     return;
   }
   if (!e.request.url.startsWith(self.location.origin)) return;

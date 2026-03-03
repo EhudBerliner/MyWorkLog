@@ -12,7 +12,6 @@
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Noto+Sans+Hebrew:wght@300;400;500;700&display=swap" rel="stylesheet"/>
 <style>
-
 /* ═══════════════════════════════════════════════════════
    MYWORKLOG · Glass Noir Design System
    ═══════════════════════════════════════════════════════ */
@@ -332,10 +331,8 @@ textarea.fi{resize:vertical;min-height:72px}
 
 .hidden{display:none!important}
 .reset-desc{font-size:.85rem;color:var(--text2)}
-
 </style>
 </head>
-
 <body>
 
 <!-- OFFLINE BANNER -->
@@ -378,7 +375,7 @@ textarea.fi{resize:vertical;min-height:72px}
       <a id="menu-sheet-link" href="#" target="_blank" rel="noopener" style="display:none;align-items:center;gap:7px;font-size:.8rem;color:var(--blue);text-decoration:none;padding:3px 2px">
         📊 פתח גיליון הדיווחים
       </a>
-      <span id="menu-vbadge" class="vbadge" title="לחץ לאיפוס">v1.3.0</span>
+      <span id="menu-vbadge" class="vbadge" title="לחץ לאיפוס">v2.1.0</span>
     </div>
   </aside>
 
@@ -390,7 +387,7 @@ textarea.fi{resize:vertical;min-height:72px}
         <span class="hdr-name">MyWorkLog</span>
       </div>
       <div class="hdr-acts">
-        <span id="version-badge" class="vbadge" title="לחץ לאיפוס">v1.3.0</span>
+        <span id="version-badge" class="vbadge" title="לחץ לאיפוס">v2.1.0</span>
       </div>
     </div>
   </header>
@@ -539,8 +536,8 @@ textarea.fi{resize:vertical;min-height:72px}
         <div class="stat-card"><div class="stat-lbl" data-i18n="statExits">יציאות</div><div class="stat-val" id="stat-exits">0</div></div>
         <div class="stat-card"><div class="stat-lbl" data-i18n="statTasks">משימות</div><div class="stat-val" id="stat-tasks">0</div></div>
         <div class="stat-card"><div class="stat-lbl" data-i18n="statHours">שעות משימות</div><div class="stat-val" id="stat-hours">0</div></div>
-        <div class="stat-card" id="stat-workday-card"><div class="stat-lbl" id="stat-workday-lbl">משך יום</div><div class="stat-val" id="stat-workday" style="font-size:1.4rem">-</div></div>
-        <div class="stat-card" id="stat-days-card" style="display:none"><div class="stat-lbl">ימים מדווחים</div><div class="stat-val" id="stat-days">0</div></div>
+        <div class="stat-card" id="stat-workday-card"><div class="stat-lbl" id="stat-workday-lbl" data-i18n="statWorkday">משך יום</div><div class="stat-val" id="stat-workday" style="font-size:1.4rem">-</div></div>
+        <div class="stat-card" id="stat-days-card" style="display:none"><div class="stat-lbl" data-i18n="statDays">ימים</div><div class="stat-val" id="stat-days">0</div></div>
       </div>
       <div class="card">
         <div class="card-lbl" data-i18n="summaryDetail">פירוט דיווחים</div>
@@ -575,10 +572,10 @@ textarea.fi{resize:vertical;min-height:72px}
         <p class="fhint" data-i18n="settingsEndpointHint">הדבק את ה-URL של ה-Web App</p>
       </div>
       <div class="fg">
-        <label class="flbl">כתובת גיליון Google Sheets</label>
+        <label class="flbl" data-i18n="sheetUrlLabel">כתובת גיליון Google Sheets</label>
         <input type="url" id="settings-sheet-url" class="fi"
           placeholder="https://docs.google.com/spreadsheets/d/.../edit"/>
-        <p class="fhint">הדבק את ה-URL של הגיליון (לקישור ישיר)</p>
+        <p class="fhint" data-i18n="sheetUrlHint">הדבק את ה-URL של הגיליון (לקישור ישיר)</p>
       </div>
       <div class="fg">
         <label class="flbl" data-i18n="settingsProjectsLabel">פרויקטים שמורים</label>
@@ -601,12 +598,12 @@ textarea.fi{resize:vertical;min-height:72px}
       <div class="fg">
         <label class="flbl" data-i18n="settingsDataLabel">ניהול נתונים</label>
         <div style="display:flex;gap:8px;flex-wrap:wrap">
-          <button class="btn-g sm" id="btn-sync-projects" data-i18n="btnSyncProjects" style="flex:1">🔄 סנכרן פרויקטים</button>
-          <button class="btn-d sm" id="btn-clear-data"    data-i18n="btnClearData"    style="flex:1">🗑 מחק נתונים מקומיים</button>
+          <button class="btn-g sm" id="btn-sync-projects" style="flex:1" data-i18n="btnSyncProjects">🔄 סנכרן פרויקטים</button>
+          <button class="btn-d sm" id="btn-clear-data"    style="flex:1" data-i18n="btnClearData">🗑 מחק נתונים</button>
         </div>
       </div>
       <div class="fg" id="sheet-link-section" style="display:none">
-        <label class="flbl">גיליון Google Sheets</label>
+        <label class="flbl" data-i18n="sheetLinkLabel">פתח גיליון</label>
         <a id="sheet-link" href="#" target="_blank" rel="noopener"
           style="display:flex;align-items:center;gap:8px;padding:10px 13px;background:var(--bg3);border:1.5px solid var(--border);border-radius:var(--rs);color:var(--blue);font-size:.85rem;text-decoration:none;transition:border-color .2s"
           onmouseover="this.style.borderColor='var(--blue)'" onmouseout="this.style.borderColor='var(--border)'">
@@ -672,16 +669,16 @@ textarea.fi{resize:vertical;min-height:72px}
   <div class="mbox" style="max-height:92dvh;display:flex;flex-direction:column">
 
     <div class="mhdr" style="position:sticky;top:0;z-index:2;background:var(--bg1)">
-      <h2 style="font-size:1rem">📖 עזרה ומדריך</h2>
+      <h2 style="font-size:1rem" data-i18n="helpTitle">📖 עזרה ומדריך</h2>
       <button class="ibtn" id="btn-close-help">✕</button>
     </div>
 
     <!-- help tab bar -->
     <div id="help-tabbar" style="display:flex;border-bottom:1px solid var(--border);background:var(--bg1);flex-shrink:0">
-      <button class="htab-btn active" data-htab="guide"  onclick="hTab(this)">מדריך</button>
-      <button class="htab-btn"        data-htab="types"  onclick="hTab(this)">סוגי דיווח</button>
-      <button class="htab-btn"        data-htab="setup"  onclick="hTab(this)">הגדרה</button>
-      <button class="htab-btn"        data-htab="sheets" onclick="hTab(this)">גיליונות</button>
+      <button class="htab-btn active" data-htab="guide"  onclick="hTab(this)" data-i18n="helpTabGuide">מדריך</button>
+      <button class="htab-btn"        data-htab="types"  onclick="hTab(this)" data-i18n="helpTabTypes">סוגי דיווח</button>
+      <button class="htab-btn"        data-htab="setup"  onclick="hTab(this)" data-i18n="helpTabSetup">הגדרה</button>
+      <button class="htab-btn"        data-htab="sheets" onclick="hTab(this)" data-i18n="helpTabSheets">גיליונות</button>
     </div>
 
     <div class="mbody" style="flex:1;overflow-y:auto;gap:8px;padding:14px 16px">
@@ -802,7 +799,7 @@ textarea.fi{resize:vertical;min-height:72px}
         </div>
 
         <button onclick="downloadGS()" class="btn-p sm" style="text-align:center;width:100%">
-          ⬇️ הורד google-apps-script.gs
+          <span data-i18n="helpBtnDownloadGS">⬇️ הורד google-apps-script.gs</span>
         </button>
       </div>
 
@@ -842,7 +839,7 @@ textarea.fi{resize:vertical;min-height:72px}
 </div>
 <!-- GS CODE BLOB (embedded for download) -->
 <pre id="gs-code-blob" style="display:none">// ============================================================
-//  MyWorkLog – Google Apps Script  v3.0
+//  MyWorkLog – Google Apps Script  v2.1
 //  הדבק קוד זה ב-Apps Script של הגיליון שלך
 //  לאחר מכן: Deploy &gt; New deployment &gt; Web App
 //  ✅ הרשאות: Anyone (אנונימי) / Execute as: Me
@@ -853,88 +850,73 @@ const SHEET_ATTENDANCE = 'Attendance';
 const SHEET_TASKS      = 'Tasks';
 const SHEET_PROJECTS   = 'Projects';
 
-const HEADERS            = ['Timestamp', 'Report_Date', 'Report_Time', 'Category', 'Description', 'Project', 'Record_ID'];
-const ATTENDANCE_HEADERS = ['Report_Date', 'Report_Time – כניסה', 'Report_Time – יציאה', 'משך יום עבודה'];
-const TASK_HEADERS       = ['Report_Date', 'משך משימה', 'Project', 'Description'];
-const PROJECT_HEADERS    = ['Project_Name', 'Created_At'];
+const HEADERS            = ['Timestamp','Report_Date','Report_Time','Category','Description','Project','Record_ID'];
+const ATTENDANCE_HEADERS = ['Report_Date','Report_Time – כניסה','Report_Time – יציאה','משך יום עבודה'];
+const TASK_HEADERS       = ['Report_Date','משך משימה','Project','Description'];
+const PROJECT_HEADERS    = ['Project_Name','Created_At'];
 
 // ─── Router ──────────────────────────────────────────────────
 function doPost(e) {
   try {
     const data = JSON.parse(e.postData.contents);
 
-    // ── Project management ──
     if (data.action === 'addProject')    return ok(addProject(data.project));
     if (data.action === 'deleteProject') return ok(deleteProject(data.project));
+    if (data.action === 'delete')        { deleteById(data.id, data.category, data.report_date); return ok('נמחק'); }
 
-    // ── Delete report ──
-    if (data.action === 'delete') {
-      deleteById(data.id);
-      return ok('נמחק');
-    }
-
-    // ── Bi-directional sync ──
-    if (data.action === 'syncReports') return jsonResp(syncReports(data));
-
-    // ── New report ──
+    // Normal report
     const ss   = SpreadsheetApp.getActiveSpreadsheet();
     const main = getOrCreateSheet(ss, SHEET_NAME, HEADERS);
     const ts   = new Date().toLocaleString('he-IL', { timeZone: 'Asia/Jerusalem' });
 
-    main.appendRow([
-      ts,
-      data.report_date || '',
-      data.report_time || '',
-      translateCategory(data.category) || '',
-      data.description || '',
-      data.project     || '',
-      data.id          || '',
-    ]);
+    main.appendRow([ts, data.report_date||'', data.report_time||'',
+      translateCategory(data.category)||'', data.description||'', data.project||'', data.id||'']);
     autoFormatLastRow(main, HEADERS.length);
 
     if (data.category === 'entry' || data.category === 'exit') updateAttendance(ss, data);
     if (data.category === 'task') updateTasks(ss, data);
 
-    return ok('נשמר בהצלחה');
+    return ok('נשמר');
   } catch (err) {
-    return ContentService
-      .createTextOutput(JSON.stringify({ status: 'error', message: err.toString() }))
-      .setMimeType(ContentService.MimeType.JSON);
+    return errResp(err.toString());
   }
 }
 
 function doGet(e) {
-  const action = e?.parameter?.action || '';
+  const action = (e &amp;&amp; e.parameter &amp;&amp; e.parameter.action) || '';
 
-  // ── Return project list ──
   if (action === 'getProjects') {
     const ss    = SpreadsheetApp.getActiveSpreadsheet();
     const sheet = ss.getSheetByName(SHEET_PROJECTS);
     if (!sheet) return jsonResp({ projects: [] });
-    const rows = sheet.getDataRange().getValues().slice(1); // skip header
-    const names = rows.map(r =&gt; String(r[0]).trim()).filter(Boolean);
-    return jsonResp({ projects: names });
+    const rows  = sheet.getDataRange().getValues().slice(1);
+    return jsonResp({ projects: rows.map(r =&gt; String(r[0]).trim()).filter(Boolean) });
   }
 
-  // ── Return all reports for bi-directional sync ──
   if (action === 'getReports') {
     const ss    = SpreadsheetApp.getActiveSpreadsheet();
     const sheet = ss.getSheetByName(SHEET_NAME);
-    if (!sheet) return jsonResp({ reports: [] });
-    const rows = sheet.getDataRange().getValues().slice(1);
+    if (!sheet) return jsonResp({ reports: [], projects: [] });
+    const rows    = sheet.getDataRange().getValues().slice(1);
     const reports = rows.map(r =&gt; ({
-      timestamp:   r[0] ? String(r[0]) : '',
-      report_date: String(r[1] || ''),
-      report_time: String(r[2] || ''),
-      category:    reverseCategory(String(r[3] || '')),
-      description: String(r[4] || ''),
-      project:     String(r[5] || ''),
-      id:          String(r[6] || ''),
+      timestamp:   String(r[0]||''),
+      report_date: String(r[1]||''),
+      report_time: String(r[2]||''),
+      category:    reverseCategory(String(r[3]||'')),
+      description: String(r[4]||''),
+      project:     String(r[5]||''),
+      id:          String(r[6]||''),
+      sent:        true,
     })).filter(r =&gt; r.id);
-    return jsonResp({ reports });
+    // Also return current projects
+    const pSheet  = ss.getSheetByName(SHEET_PROJECTS);
+    const projects = pSheet
+      ? pSheet.getDataRange().getValues().slice(1).map(r =&gt; String(r[0]).trim()).filter(Boolean)
+      : [];
+    return jsonResp({ reports, projects });
   }
 
-  return jsonResp({ status: 'ok', app: 'MyWorkLog', version: '3.0' });
+  return jsonResp({ status: 'ok', app: 'MyWorkLog', version: '2.1' });
 }
 
 // ─── Attendance ───────────────────────────────────────────────
@@ -942,10 +924,10 @@ function updateAttendance(ss, data) {
   const sheet   = getOrCreateSheet(ss, SHEET_ATTENDANCE, ATTENDANCE_HEADERS);
   const date    = data.report_date;
   const time    = data.report_time;
-  const allData = sheet.getDataRange().getValues();
+  const all     = sheet.getDataRange().getValues();
   let rowIdx    = -1;
-  for (let i = 1; i &lt; allData.length; i++) {
-    if (allData[i][0] === date) { rowIdx = i + 1; break; }
+  for (let i = 1; i &lt; all.length; i++) {
+    if (all[i][0] === date) { rowIdx = i + 1; break; }
   }
   if (rowIdx === -1) {
     const newRow = [date, '', '', ''];
@@ -967,21 +949,62 @@ function updateAttendance(ss, data) {
 // ─── Tasks ───────────────────────────────────────────────────
 function updateTasks(ss, data) {
   const sheet = getOrCreateSheet(ss, SHEET_TASKS, TASK_HEADERS);
-  sheet.appendRow([data.report_date || '', data.report_time || '', data.project || '', data.description || '']);
+  sheet.appendRow([data.report_date||'', data.report_time||'', data.project||'', data.description||'']);
   autoFormatLastRow(sheet, TASK_HEADERS.length);
+}
+
+// ─── Delete by ID — also cleans Attendance and Tasks ─────────
+function deleteById(id, category, report_date) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+
+  // 1. Remove from WorkLog
+  const main = ss.getSheetByName(SHEET_NAME);
+  if (main) {
+    const data = main.getDataRange().getValues();
+    for (let i = data.length - 1; i &gt;= 1; i--) {
+      if (String(data[i][6]) === String(id)) main.deleteRow(i + 1);
+    }
+  }
+
+  // 2. Clean Attendance if entry or exit
+  if ((category === 'entry' || category === 'exit') &amp;&amp; report_date) {
+    const attSheet = ss.getSheetByName(SHEET_ATTENDANCE);
+    if (attSheet) {
+      const attData = attSheet.getDataRange().getValues();
+      for (let i = 1; i &lt; attData.length; i++) {
+        if (attData[i][0] === report_date) {
+          const rowIdx = i + 1;
+          if (category === 'entry') {
+            attSheet.getRange(rowIdx, 2).setValue('');  // clear entry time
+            attSheet.getRange(rowIdx, 4).setValue('');  // clear duration
+          } else {
+            attSheet.getRange(rowIdx, 3).setValue('');  // clear exit time
+            attSheet.getRange(rowIdx, 4).setValue('');  // clear duration
+          }
+          // If both entry and exit are now empty, delete the whole row
+          const entryVal = attSheet.getRange(rowIdx, 2).getValue();
+          const exitVal  = attSheet.getRange(rowIdx, 3).getValue();
+          if (!entryVal &amp;&amp; !exitVal) attSheet.deleteRow(rowIdx);
+          break;
+        }
+      }
+    }
+  }
+
+  // 3. Clean Tasks if task (match by id in description — not ideal, but WorkLog is source of truth)
+  // Tasks sheet doesn't store Record_ID, so we rely on WorkLog deletion only.
 }
 
 // ─── Projects ────────────────────────────────────────────────
 function addProject(name) {
-  if (!name || !name.trim()) return 'empty name';
+  if (!name || !name.trim()) return 'empty';
   const ss    = SpreadsheetApp.getActiveSpreadsheet();
   const sheet = getOrCreateSheet(ss, SHEET_PROJECTS, PROJECT_HEADERS);
   const rows  = sheet.getDataRange().getValues().slice(1);
-  const exists = rows.some(r =&gt; String(r[0]).trim().toLowerCase() === name.trim().toLowerCase());
-  if (exists) return 'already exists';
+  if (rows.some(r =&gt; String(r[0]).trim().toLowerCase() === name.trim().toLowerCase())) return 'exists';
   sheet.appendRow([name.trim(), new Date().toLocaleString('he-IL', { timeZone: 'Asia/Jerusalem' })]);
   autoFormatLastRow(sheet, PROJECT_HEADERS.length);
-  return 'added: ' + name;
+  return 'added';
 }
 
 function deleteProject(name) {
@@ -991,73 +1014,9 @@ function deleteProject(name) {
   if (!sheet) return 'no sheet';
   const rows = sheet.getDataRange().getValues();
   for (let i = rows.length - 1; i &gt;= 1; i--) {
-    if (String(rows[i][0]).trim().toLowerCase() === name.trim().toLowerCase()) {
-      sheet.deleteRow(i + 1);
-    }
+    if (String(rows[i][0]).trim().toLowerCase() === name.trim().toLowerCase()) sheet.deleteRow(i + 1);
   }
-  return 'deleted: ' + name;
-}
-
-// ─── Delete by ID ─────────────────────────────────────────────
-function deleteById(id) {
-  const ss    = SpreadsheetApp.getActiveSpreadsheet();
-  const sheet = ss.getSheetByName(SHEET_NAME);
-  if (!sheet) return;
-  const data = sheet.getDataRange().getValues();
-  for (let i = data.length - 1; i &gt;= 1; i--) {
-    if (String(data[i][6]) === String(id)) sheet.deleteRow(i + 1);
-  }
-  // Also remove from Tasks / Attendance if needed (by matching date+time for tasks)
-}
-
-// ─── Sync reports (bi-directional) ──────────────────────────
-function syncReports(data) {
-  // data.reports = array of local reports
-  // data.deletedIds = array of IDs deleted locally
-  const localReports  = data.reports     || [];
-  const deletedIds    = data.deletedIds  || [];
-  const ss            = SpreadsheetApp.getActiveSpreadsheet();
-  const sheet         = getOrCreateSheet(ss, SHEET_NAME, HEADERS);
-  const sheetData     = sheet.getDataRange().getValues();
-  const sheetIds      = new Set(sheetData.slice(1).map(r =&gt; String(r[6])));
-  const localIds      = new Set(localReports.map(r =&gt; r.id));
-
-  // 1. Delete removed items from sheet
-  for (const id of deletedIds) {
-    for (let i = sheetData.length - 1; i &gt;= 1; i--) {
-      if (String(sheetData[i][6]) === String(id)) sheet.deleteRow(i + 1);
-    }
-  }
-
-  // 2. Push local-only reports to sheet
-  const ts = new Date().toLocaleString('he-IL', { timeZone: 'Asia/Jerusalem' });
-  const toAdd = localReports.filter(r =&gt; !sheetIds.has(r.id) &amp;&amp; !deletedIds.includes(r.id));
-  for (const r of toAdd) {
-    sheet.appendRow([ts, r.report_date||'', r.report_time||'', translateCategory(r.category)||'', r.description||'', r.project||'', r.id||'']);
-    autoFormatLastRow(sheet, HEADERS.length);
-    if (r.category === 'entry' || r.category === 'exit') updateAttendance(ss, r);
-    if (r.category === 'task') updateTasks(ss, r);
-  }
-
-  // 3. Return sheet-only reports (not in local)
-  const refreshedSheet = sheet.getDataRange().getValues().slice(1);
-  const sheetOnly = refreshedSheet
-    .filter(r =&gt; {
-      const id = String(r[6]);
-      return id &amp;&amp; !localIds.has(id) &amp;&amp; !deletedIds.includes(id);
-    })
-    .map(r =&gt; ({
-      timestamp:   String(r[0]||''),
-      report_date: String(r[1]||''),
-      report_time: String(r[2]||''),
-      category:    reverseCategory(String(r[3]||'')),
-      description: String(r[4]||''),
-      project:     String(r[5]||''),
-      id:          String(r[6]||''),
-      sent:        true,
-    }));
-
-  return { status: 'ok', added: toAdd.length, newReports: sheetOnly };
+  return 'deleted';
 }
 
 // ─── Helpers ─────────────────────────────────────────────────
@@ -1066,16 +1025,19 @@ function calcDuration(entry, exit) {
   const toMins = t =&gt; { const p = String(t).split(':'); return parseInt(p[0])*60 + parseInt(p[1]||0); };
   const diff = toMins(exit) - toMins(entry);
   if (diff &lt;= 0) return '';
-  return pad(Math.floor(diff/60)) + ':' + pad(diff%60);
+  return pad(Math.floor(diff/60)) + ':' + pad(diff % 60);
 }
 
 function pad(n) { return String(n).padStart(2, '0'); }
 
 function ok(msg) {
-  return ContentService.createTextOutput(JSON.stringify({ status: 'ok', message: msg }))
+  return ContentService.createTextOutput(JSON.stringify({ status:'ok', message:msg }))
     .setMimeType(ContentService.MimeType.JSON);
 }
-
+function errResp(msg) {
+  return ContentService.createTextOutput(JSON.stringify({ status:'error', message:msg }))
+    .setMimeType(ContentService.MimeType.JSON);
+}
 function jsonResp(obj) {
   return ContentService.createTextOutput(JSON.stringify(obj))
     .setMimeType(ContentService.MimeType.JSON);
@@ -1102,44 +1064,753 @@ function autoFormatLastRow(sheet, colCount) {
 }
 
 function translateCategory(cat) {
-  return { entry: 'כניסה', exit: 'יציאה', task: 'משימה' }[cat] || cat;
+  return { entry:'כניסה', exit:'יציאה', task:'משימה' }[cat] || cat;
 }
-
 function reverseCategory(heb) {
-  return { 'כניסה': 'entry', 'יציאה': 'exit', 'משימה': 'task' }[heb] || heb;
+  return { 'כניסה':'entry', 'יציאה':'exit', 'משימה':'task' }[heb] || heb;
 }
 
 /*
-  SETUP (v3.0):
-  1. פתח את גיליון Google Sheets שלך
+  SETUP (v2.1):
+  1. פתח גיליון Google Sheets חדש
   2. Extensions &gt; Apps Script
-  3. הדבק קוד זה ושמור
+  3. הדבק קוד זה ושמור (Ctrl+S)
   4. Deploy &gt; New deployment &gt; Web App
      Execute as: Me | Who has access: Anyone
-  5. העתק Web App URL לאפליקציה (הגדרות &gt; כתובת Script)
-  6. הדבק URL של הגיליון עצמו (הגדרות &gt; כתובת גיליון)
+  5. העתק Web App URL → הגדרות האפליקציה
+  6. הדבק URL הגיליון → הגדרות האפליקציה
 
   גיליונות שייווצרו אוטומטית:
-  ✅ WorkLog     - כל הדיווחים
-  ✅ Attendance  - כניסה + יציאה + משך יום עבודה
-  ✅ Tasks       - דיווחי משימות
-  ✅ Projects    - פרויקטים (חדש בv3.0, מסונכרן דו-כיוונית)
+  ✅ WorkLog    - כל הדיווחים
+  ✅ Attendance - כניסה + יציאה + משך יום
+  ✅ Tasks      - דיווחי משימות
+  ✅ Projects   - פרויקטים (חדש v2.1, דו-כיווני)
 
-  API actions (POST):
-  • { action: 'addProject',    project: '...' }
-  • { action: 'deleteProject', project: '...' }
-  • { action: 'delete',        id: '...' }
-  • { action: 'syncReports',   reports: [...], deletedIds: [...] }
-  • { ...reportData } — שמירת דיווח רגיל
-
-  API actions (GET):
-  • ?action=getProjects  — מחזיר רשימת פרויקטים
-  • ?action=getReports   — מחזיר כל הדיווחים (לסנכרון)
+  GET actions: ?action=getProjects | ?action=getReports
+  POST actions: { action:'delete', id, category, report_date }
+              | { action:'addProject', project }
+              | { action:'deleteProject', project }
+              | { ...report } — שמירת דיווח
 */
 </pre>
 
 
-<script src="i18n.js"></script>
-<script src="app.js"></script>
+<script>
+/* ─────────────────────────────────────────────────────
+   i18n
+───────────────────────────────────────────────────── */
+const I18N={
+  appTagline:{he:'ניהול נוכחות ומשימות',en:'Attendance & Task Tracker'},
+  tabReport:{he:'דיווח',en:'Report'},tabHistory:{he:'היסטוריה',en:'History'},tabSummary:{he:'סיכום',en:'Summary'},
+  catEntry:{he:'🟢 כניסה',en:'🟢 Entry'},catExit:{he:'🔴 יציאה',en:'🔴 Exit'},catTask:{he:'📋 משימה',en:'📋 Task'},
+  labelReportType:{he:'סוג דיווח',en:'Report Type'},labelDatetime:{he:'תאריך ושעה',en:'Date & Time'},
+  labelDate:{he:'תאריך',en:'Date'},labelTime:{he:'שעה',en:'Time'},btnNow:{he:'🕐 עכשיו',en:'🕐 Now'},
+  labelTaskDetails:{he:'פרטי משימה',en:'Task Details'},labelDescription:{he:'תיאור',en:'Description'},
+  placeholderDesc:{he:'מה בוצע...',en:'What was done...'},labelProject:{he:'פרויקט',en:'Project'},
+  placeholderProj:{he:'שם הפרויקט (אופציונלי)',en:'Project name (optional)'},
+  labelDuration:{he:'משך / טווח',en:'Duration / Range'},modeDuration:{he:'משך זמן',en:'Duration'},
+  modeRange:{he:'טווח שעות',en:'Time Range'},labelHours:{he:'שעות',en:'Hours'},labelMinutes:{he:'דקות',en:'Minutes'},
+  labelStart:{he:'התחלה',en:'Start'},labelEnd:{he:'סיום',en:'End'},
+  btnSubmit:{he:'שלח דיווח',en:'Submit Report'},btnSubmitting:{he:'שולח...',en:'Sending...'},
+  pendingTitle:{he:'ממתינים',en:'Pending'},btnSync:{he:'🔄 סנכרן',en:'🔄 Sync'},
+  historyTitle:{he:'5 הדיווחים האחרונים',en:'Last 5 Reports'},historyEmpty:{he:'אין דיווחים עדיין',en:'No reports yet'},
+  sumPeriodDay:{he:'יום',en:'Day'},sumPeriodMonth:{he:'חודש',en:'Month'},
+  statEntries:{he:'כניסות',en:'Entries'},statExits:{he:'יציאות',en:'Exits'},
+  statTasks:{he:'משימות',en:'Tasks'},statHours:{he:'שעות',en:'Hours'},
+  summaryDetail:{he:'פירוט דיווחים',en:'Breakdown'},summaryEmpty:{he:'אין דיווחים בתקופה זו',en:'No reports for this period'},
+  settingsTitle:{he:'⚙️ הגדרות',en:'⚙️ Settings'},settingsLangLabel:{he:'שפה',en:'Language'},
+  settingsEndpointLabel:{he:'כתובת Google Apps Script',en:'Google Apps Script URL'},
+  settingsEndpointHint:{he:'הדבק את ה-URL של ה-Web App',en:'Paste your Web App URL'},
+  settingsProjectsLabel:{he:'פרויקטים שמורים',en:'Saved Projects'},
+  placeholderNewProject:{he:'הוסף פרויקט...',en:'Add project...'},
+  settingsDataLabel:{he:'ניהול נתונים',en:'Data Management'},
+  btnClearData:{he:'🗑 מחק כל הנתונים המקומיים',en:'🗑 Clear All Local Data'},
+  btnSaveSettings:{he:'שמור הגדרות',en:'Save Settings'},
+  settingsPrefTitle:{he:'העדפות',en:'Preferences'},prefVibration:{he:'רטט',en:'Vibration'},
+  prefAnimations:{he:'אנימציות',en:'Animations'},prefPullRefresh:{he:'משיכה לרענון',en:'Pull to Refresh'},
+  installTitle:{he:'התקן את האפליקציה',en:'Install the App'},installBody:{he:'גישה מהירה וללא אינטרנט',en:'Quick access, works offline'},
+  btnInstall:{he:'התקן',en:'Install'},btnInstallDismiss:{he:'אחר כך',en:'Later'},
+  toastSent:{he:'✅ הדיווח נשלח בהצלחה',en:'✅ Report sent'},
+  toastSavedOffline:{he:'📴 אין חיבור — נשמר לסנכרון',en:'📴 Offline — saved for sync'},
+  toastNoEndpoint:{he:'⚠️ לא הוגדר Endpoint',en:'⚠️ No Endpoint set'},
+  toastSendError:{he:'❌ שגיאה בשליחה',en:'❌ Send error — queued'},
+  toastNowUpdated:{he:'עודכן לשעה הנוכחית',en:'Updated to current time'},
+  toastSettingsSaved:{he:'✅ הגדרות נשמרו',en:'✅ Settings saved'},
+  toastDataCleared:{he:'נמחק',en:'Cleared'},
+  toastSynced:{he:(n)=>`✅ נשלחו ${n} דיווחים`,en:(n)=>`✅ Synced ${n} reports`},
+  toastNoDesc:{he:'⚠️ יש להזין תיאור משימה',en:'⚠️ Enter task description'},
+  toastNoTime:{he:'⚠️ יש לבחור תאריך ושעה',en:'⚠️ Select date and time'},
+  toastNoDuration:{he:'⚠️ יש להזין משך זמן',en:'⚠️ Enter a duration'},
+  toastNoRange:{he:'⚠️ יש לבחור שעת התחלה וסיום',en:'⚠️ Select start and end'},
+  toastNoQueuePending:{he:'אין דיווחים ממתינים',en:'No pending reports'},
+  toastNoEndpointSync:{he:'⚠️ הגדר Endpoint קודם',en:'⚠️ Set Endpoint first'},
+  toastOnlineBack:{he:'✅ חיבור לאינטרנט שוחזר',en:'✅ Connection restored'},
+  toastSlowData:{he:'⚠️ חיבור איטי',en:'⚠️ Slow connection'},
+  toastProjectAdded:{he:'✅ פרויקט נוסף',en:'✅ Project added'},
+  versionLabel:{he:(v)=>`גרסה ${v}`,en:(v)=>`v${v}`},
+  updateAvailable:{he:'גרסה חדשה זמינה! עדכן עכשיו',en:'New version available! Update now'},
+  btnUpdate:{he:'עדכן',en:'Update'},btnUpdateDismiss:{he:'לא עכשיו',en:'Not now'},
+  resetTitle:{he:'⚠️ איפוס אפליקציה',en:'⚠️ Reset App'},
+  resetBody:{he:'בחר מה לשמור לפני האיפוס:',en:'Choose what to keep:'},
+  resetKeepReports:{he:'שמור היסטוריית דיווחים',en:'Keep report history'},
+  resetKeepSettings:{he:'שמור הגדרות',en:'Keep settings'},
+  resetKeepQueue:{he:'שמור תור ממתין',en:'Keep pending queue'},
+  btnResetConfirm:{he:'🗑 אפס הכל',en:'🗑 Reset Everything'},
+  btnResetCancel:{he:'ביטול',en:'Cancel'},
+  offlineBanner:{he:'אין חיבור לאינטרנט',en:'No internet connection'},
+  menuReport:{he:'דיווח',en:'Report'},menuHistory:{he:'היסטוריה',en:'History'},
+  menuSummary:{he:'סיכום',en:'Summary'},menuSettings:{he:'הגדרות',en:'Settings'},
+  confirmClearData:{he:'למחוק את כל הנתונים המקומיים?',en:'Delete all local data?'},
+  toastDeleted:{he:'🗑 דיווח נמחק',en:'🗑 Report deleted'},
+  confirmDelReport:{he:'למחוק דיווח זה?',en:'Delete this report?'},
+  toastProjectExists:{he:'⚠️ פרויקט כבר קיים',en:'⚠️ Project already exists'},
+  toastProjectSynced:{he:'✅ פרויקטים סונכרנו',en:'✅ Projects synced'},
+  toastSyncStart:{he:'מסנכרן...',en:'Syncing...'},
+  btnSyncProjects:{he:'🔄 סנכרן פרויקטים',en:'🔄 Sync Projects'},
+  statWorkday:{he:'משך יום',en:'Workday'},
+  statDays:{he:'ימים',en:'Days'},
+  themeDark:{he:'מצב כהה',en:'Dark mode'},
+  themeLight:{he:'מצב בהיר',en:'Light mode'},
+  menuHelp:{he:'עזרה',en:'Help'},
+  menuDownloadGS:{he:'הורד קוד GAS',en:'Download GAS code'},
+  sheetLinkLabel:{he:'פתח גיליון',en:'Open Sheet'},
+  sheetUrlLabel:{he:'כתובת גיליון Google Sheets',en:'Google Sheets URL'},
+  sheetUrlHint:{he:'הדבק את ה-URL של הגיליון (לקישור ישיר)',en:'Paste the Sheets URL (for direct link)'},
+  labelSavedProjects:{he:'פרויקטים שמורים',en:'Saved Projects'},
+};
+function t(key,...args){
+  const lang=window._lang||'he',entry=I18N[key];
+  if(!entry)return key;
+  const raw=entry[lang]??entry.en??key;
+  return typeof raw==='function'?raw(...args):raw;
+}
+function applyLang(lang){
+  window._lang=lang;
+  const rtl=lang==='he';
+  document.documentElement.lang=lang;
+  document.documentElement.dir=rtl?'rtl':'ltr';
+  document.querySelectorAll('[data-i18n]').forEach(el=>{
+    const key=el.dataset.i18n,attr=el.dataset.i18nAttr||'textContent',val=t(key);
+    if(attr==='textContent')el.textContent=val;
+    else if(attr==='placeholder')el.placeholder=val;
+    else el.setAttribute(attr,val);
+  });
+  localStorage.setItem('mwl_lang',lang);
+}
+
+/* ─────────────────────────────────────────────────────
+   App
+───────────────────────────────────────────────────── */
+const VER='2.1.0';
+const K={ep:'mwl_endpoint',reps:'mwl_reports',q:'mwl_queue',delQ:'mwl_delete_queue',proj:'mwl_projects',
+  lang:'mwl_lang',theme:'mwl_theme',prefs:'mwl_prefs',ver:'mwl_version',inst:'mwl_install_dismissed',sheetUrl:'mwl_sheet_url'};
+const ST={cat:'entry',dur:'duration',sumPer:'day',sumOff:0,
+  swReg:null,install:null,swX:0,swY:0,pullY:0,pulling:false};
+
+const $=id=>document.getElementById(id);
+const pad=n=>String(n).padStart(2,'0');
+const isoD=(d=new Date())=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const timeS=(d=new Date())=>`${pad(d.getHours())}:${pad(d.getMinutes())}`;
+function store(key,val){
+  if(val===undefined){try{return JSON.parse(localStorage.getItem(key))}catch{return null}}
+  localStorage.setItem(key,JSON.stringify(val));
+}
+const getP=()=>store(K.prefs)||{vibration:true,animations:true,pullRefresh:false};
+const buzz=(p=[30])=>{if(getP().vibration&&navigator.vibrate)navigator.vibrate(p)};
+const fmtD=d=>{const[y,m,day]=d.split('-');return`${day}/${m}/${y}`};
+const fmtT=t=>{if(!t)return'';if(t.includes('-'))return t;const[h,m]=t.split(':');return`${pad(parseInt(h))}:${pad(parseInt(m||0))}`};
+const catLbl=cat=>t({entry:'catEntry',exit:'catExit',task:'catTask'}[cat])||cat;
+
+function toast(msg,type='success',ms=2800){
+  const el=$('toast');
+  el.textContent=msg;el.className=`toast ${type}`;
+  clearTimeout(el._t);
+  el._t=setTimeout(()=>el.classList.add('hidden'),ms);
+}
+
+/* BOOT */
+document.addEventListener('DOMContentLoaded',()=>{
+  verCheck();themeInit();langInit();prefsApply();
+  splashInit();dtInit();tabsInit();catInit();durInit();clockInit();
+  submitInit();settingsInit();summaryInit();
+  $('btn-now').addEventListener('click',()=>{
+    const n=new Date();$('report-date').value=isoD(n);$('report-time').value=timeS(n);
+    toast(t('toastNowUpdated'));buzz([20]);
+  });
+  netInit();netQInit();projLoad();histRender();
+  flushDeleteQueue();setTimeout(syncFromSheet,2000);
+  menuInit();vBadgeInit();swipeInit();ptrInit();swInit();installInit();scrollInit();
+});
+
+/* SPLASH */
+function splashInit(){
+  setTimeout(()=>{
+    $('splash').classList.add('out');
+    setTimeout(()=>{
+      $('splash').remove();
+      $('app').classList.remove('hidden');
+      applyLang(window._lang||'he');
+      summaryRender();
+      updateMenuSheetLink();
+    },420);
+  },900);
+}
+
+/* VERSION */
+function verCheck(){
+  const s=store(K.ver);
+  if(s&&s!==VER&&'caches'in window)caches.keys().then(ks=>ks.forEach(k=>caches.delete(k)));
+  store(K.ver,VER);
+  document.querySelectorAll('.vbadge').forEach(el=>el.textContent=t('versionLabel',VER));
+}
+function vBadgeInit(){
+  [$('version-badge'),$('menu-vbadge')].forEach(el=>{
+    if(!el)return;
+    el.addEventListener('click',()=>{buzz([20,30,20]);openM('modal-reset')});
+  });
+  $('btn-close-reset').addEventListener('click',()=>closeM('modal-reset'));
+  $('btn-reset-cancel').addEventListener('click',()=>closeM('modal-reset'));
+  $('btn-reset-confirm').addEventListener('click',hardReset);
+}
+async function hardReset(){
+  const kR=$('reset-keep-reports').checked,kS=$('reset-keep-settings').checked,kQ=$('reset-keep-queue').checked;
+  // Preserve data BEFORE wiping localStorage
+  const sR=kR?store(K.reps):null;
+  const sE=kS?store(K.ep):null,sSU=kS?store(K.sheetUrl):null;
+  const sP=kS?store(K.proj):null,sTH=kS?store(K.theme):null,sLN=kS?store(K.lang):null,sPR=kS?store(K.prefs):null;
+  const sQ=kQ?store(K.q):null;
+  localStorage.clear();sessionStorage.clear();
+  document.cookie.split(';').forEach(c=>document.cookie=c.replace(/^ +/,'').replace(/=.*/,'=;expires='+new Date().toUTCString()+';path=/'));
+  if('serviceWorker'in navigator)(await navigator.serviceWorker.getRegistrations()).forEach(r=>r.unregister());
+  if('caches'in window)await Promise.all((await caches.keys()).map(k=>caches.delete(k)));
+  if('indexedDB'in window){const dbs=await(indexedDB.databases?.()??Promise.resolve([]));dbs.forEach(db=>indexedDB.deleteDatabase(db.name))}
+  // Restore preserved data
+  if(sR)store(K.reps,sR);
+  if(sE)store(K.ep,sE);if(sSU)store(K.sheetUrl,sSU);
+  if(sP)store(K.proj,sP);if(sTH)store(K.theme,sTH);if(sLN)store(K.lang,sLN);if(sPR)store(K.prefs,sPR);
+  if(sQ)store(K.q,sQ);
+  buzz([100,50,100]);window.location.reload(true);
+}
+
+/* THEME */
+function themeInit(){
+  const s=store(K.theme),dark=s!==null?s==='dark':window.matchMedia('(prefers-color-scheme:dark)').matches;
+  applyTheme(dark?'dark':'light');
+}
+function applyTheme(th){
+  const dark=th==='dark';
+  document.body.classList.toggle('light',!dark);
+  document.querySelector('meta[name="theme-color"]').content=dark?'#0a0a0f':'#f0f0f6';
+  store(K.theme,th);
+  // sync menu button label
+  const btn=$('menu-theme-btn');
+  if(btn){btn.textContent=(dark?'☀️':'🌙')+' '+(dark?'מצב בהיר':'מצב כהה');btn.classList.toggle('theme-active',dark);}
+}
+
+/* LANG */
+function langInit(){window._lang=localStorage.getItem('mwl_lang')||'he';applyLang(window._lang)}
+
+/* PREFS */
+function prefsApply(){if(!getP().animations)document.body.classList.add('no-anim')}
+function prefsLoadUI(){const p=getP();$('pref-vibration').checked=p.vibration!==false;$('pref-animations').checked=p.animations!==false;$('pref-pull-refresh').checked=p.pullRefresh===true}
+function prefsSave(){const p={vibration:$('pref-vibration').checked,animations:$('pref-animations').checked,pullRefresh:$('pref-pull-refresh').checked};store(K.prefs,p);document.body.classList.toggle('no-anim',!p.animations)}
+
+/* DATE/TIME */
+function dtInit(){const n=new Date();$('report-date').value=isoD(n);$('report-time').value=timeS(n)}
+
+/* TABS */
+function tabsInit(){document.querySelectorAll('.tab-btn').forEach(b=>b.addEventListener('click',()=>switchTab(b.dataset.tab)))}
+function switchTab(name){
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+  document.querySelector(`.tab-btn[data-tab="${name}"]`)?.classList.add('active');
+  $(`tab-${name}`)?.classList.add('active');
+  if(name==='history')histRender();
+  if(name==='summary')summaryRender();
+  buzz([15]);menuClose();
+}
+
+/* MENU */
+function menuInit(){
+  $('btn-hamburger').addEventListener('click',menuOpen);
+  $('btn-close-menu').addEventListener('click',menuClose);
+  $('menu-overlay').addEventListener('click',menuClose);
+  $('menu-settings-btn').addEventListener('click',()=>{menuClose();openM('modal-settings')});
+  $('menu-help-btn').addEventListener('click',()=>{menuClose();openM('modal-help')});
+  $('menu-gs-btn').addEventListener('click',()=>{menuClose();downloadGS();});
+  $('menu-theme-btn').addEventListener('click',()=>{
+    applyTheme(document.body.classList.contains('light')?'dark':'light');buzz([20]);
+  });
+  document.querySelectorAll('.menu-item[data-tab]').forEach(el=>el.addEventListener('click',()=>switchTab(el.dataset.tab)));
+  updateMenuSheetLink();
+}
+function updateMenuSheetLink(){
+  const su=store(K.sheetUrl);
+  const el=$('menu-sheet-link');
+  if(el){el.style.display=su?'flex':'none';if(su)el.href=su;}
+}
+function menuOpen(){$('side-menu').classList.add('open');$('menu-overlay').classList.remove('hidden');$('side-menu').setAttribute('aria-hidden','false');buzz([20])}
+function menuClose(){$('side-menu').classList.remove('open');$('menu-overlay').classList.add('hidden');$('side-menu').setAttribute('aria-hidden','true')}
+
+/* CATEGORY */
+function catInit(){
+  document.querySelectorAll('.cat-btn').forEach(btn=>btn.addEventListener('click',()=>{
+    document.querySelectorAll('.cat-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');ST.cat=btn.dataset.cat;
+    $('task-fields').style.display=ST.cat==='task'?'flex':'none';buzz([15]);
+  }));
+  $('task-fields').style.display='none';
+}
+
+/* DURATION */
+function durInit(){
+  document.querySelectorAll('.seg-btn[data-mode]').forEach(btn=>btn.addEventListener('click',()=>{
+    document.querySelectorAll('.seg-btn[data-mode]').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');ST.dur=btn.dataset.mode;
+    $('duration-mode').style.display=ST.dur==='duration'?'flex':'none';
+    $('range-mode').style.display=ST.dur==='range'?'flex':'none';
+  }));
+}
+
+/* CLOCK UI */
+let _ch=0,_cm=0;
+function clockUpdate(){$('dur-h-val').textContent=pad(_ch);$('dur-m-val').textContent=pad(_cm);$('dur-hours').value=_ch;$('dur-minutes').value=_cm}
+function clockInit(){
+  $('dur-h-up').addEventListener('click',()=>{_ch=(_ch+1)%25;clockUpdate();buzz([10])});
+  $('dur-h-dn').addEventListener('click',()=>{_ch=(_ch-1+25)%25;clockUpdate();buzz([10])});
+  $('dur-m-up').addEventListener('click',()=>{_cm=(_cm+15)%60;clockUpdate();buzz([10])});
+  $('dur-m-dn').addEventListener('click',()=>{_cm=(_cm-15+60)%60;clockUpdate();buzz([10])});
+  // touch swipe on clock vals
+  document.querySelectorAll('.clock-preset').forEach(btn=>btn.addEventListener('click',()=>{
+    const[h,m]=btn.dataset.dur.split(':').map(Number);_ch=h;_cm=m;clockUpdate();buzz([15]);
+  }));
+}
+
+
+/* ─ RESET FORM AFTER SUBMIT ─ */
+function resetForm(){
+  // Reset category → entry
+  document.querySelectorAll('.cat-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelector('.cat-btn[data-cat="entry"]').classList.add('active');
+  ST.cat='entry';
+  $('task-fields').style.display='none';
+  // Clear task fields
+  $('task-project').value='';
+  $('task-desc').value='';
+  // Reset clock to 00:00
+  _ch=0;_cm=0;clockUpdate();
+  // Reset duration mode
+  document.querySelectorAll('.seg-btn[data-mode]').forEach(b=>b.classList.remove('active'));
+  document.querySelector('.seg-btn[data-mode="duration"]').classList.add('active');
+  ST.dur='duration';
+  $('duration-mode').style.display='flex';
+  $('range-mode').style.display='none';
+  const rs=$('range-start'),re=$('range-end');
+  if(rs)rs.value='';if(re)re.value='';
+  // Reset date/time to now
+  const n=new Date();
+  $('report-date').value=isoD(n);
+  $('report-time').value=timeS(n);
+}
+function submitInit(){
+  $('btn-submit').addEventListener('click',async()=>{
+    const date=$('report-date').value,time=$('report-time').value;
+    if(!date||!time){toast(t('toastNoTime'),'warn');buzz([80]);return}
+    const rep=buildRep(date,time);if(!rep)return;
+    saveLocal(rep);histRender();resetForm();
+    const ep=store(K.ep);
+    if(!ep){toast(t('toastNoEndpoint'),'warn');addQ(rep);pendUI();return}
+    if(!navigator.onLine){toast(t('toastSavedOffline'),'warn');addQ(rep);pendUI();return}
+    await send(rep,ep);
+  });
+  $('btn-sync')?.addEventListener('click',syncQ);
+}
+function buildRep(date,time){
+  const cat=ST.cat;let rTime=time,desc='',proj='';
+  if(cat==='task'){
+    desc=$('task-desc').value.trim();proj=$('task-project').value.trim();
+    if(!proj){toast('⚠️ יש לבחור פרויקט','warn');buzz([80]);return null}
+    // auto-save new project
+    const ps=store(K.proj)||[];
+    if(proj&&!ps.includes(proj)){ps.push(proj);store(K.proj,ps);projLoad();}
+    if(ST.dur==='duration'){
+      const h=parseInt($('dur-hours').value)||0,m=parseInt($('dur-minutes').value)||0;
+      if(!h&&!m){toast(t('toastNoDuration'),'warn');buzz([80]);return null}
+      rTime=`${pad(h)}:${pad(m)}`;
+    }else{
+      const s=$('range-start').value,e=$('range-end').value;
+      if(!s||!e){toast(t('toastNoRange'),'warn');buzz([80]);return null}
+      rTime=`${s}-${e}`;
+    }
+  }
+  return{id:Date.now()+Math.random().toString(36).slice(2),timestamp:new Date().toISOString(),
+    report_date:date,report_time:rTime,category:cat,description:desc,project:proj};
+}
+async function send(rep,ep){
+  const btn=$('btn-submit');btn.classList.add('loading');
+  btn.querySelector('.btn-text').textContent=t('btnSubmitting');
+  try{
+    await fetch(ep,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(rep),mode:'no-cors'});
+    toast(t('toastSent'),'success');markSent(rep.id);buzz([30,20,60]);
+  }catch{toast(t('toastSendError'),'error');addQ(rep);pendUI();buzz([100])}
+  finally{btn.classList.remove('loading');btn.querySelector('.btn-text').textContent=t('btnSubmit')}
+}
+
+/* STORAGE */
+function saveLocal(r){const rs=store(K.reps)||[];rs.unshift(r);store(K.reps,rs.slice(0,300))}
+function markSent(id){const rs=store(K.reps)||[];const r=rs.find(x=>x.id===id);if(r)r.sent=true;store(K.reps,rs)}
+function addQ(r){const q=store(K.q)||[];if(!q.find(x=>x.id===r.id))q.push(r);store(K.q,q)}
+function pendUI(){const q=store(K.q)||[];$('pending-section').classList.toggle('hidden',!q.length);$('pending-count').textContent=q.length}
+async function syncQ(){
+  const ep=store(K.ep);if(!ep){toast(t('toastNoEndpointSync'),'warn');return}
+  const q=store(K.q)||[];
+  if(!q.length&&!(store(K.delQ)||[]).length){
+    await syncFromSheet();
+    toast(t('toastNoQueuePending'),'success');return;
+  }
+  let ok=0;const fail=[];
+  for(const r of q){try{await fetch(ep,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(r),mode:'no-cors'});markSent(r.id);ok++}catch{fail.push(r)}}
+  store(K.q,fail);pendUI();
+  await flushDeleteQueue();
+  await syncFromSheet();
+  toast(t('toastSynced',ok),'success');
+}
+
+/* NETWORK */
+function netInit(){
+  const upd=()=>{$('offline-banner').classList.toggle('hidden',navigator.onLine);if(navigator.onLine){toast(t('toastOnlineBack'),'success');syncQ()}};
+  window.addEventListener('online',upd);window.addEventListener('offline',upd);
+  $('offline-banner').classList.toggle('hidden',navigator.onLine);pendUI();
+}
+function netQInit(){
+  const c=navigator.connection||navigator.mozConnection||navigator.webkitConnection;if(!c)return;
+  const chk=()=>{if(c.saveData||['2g','slow-2g'].includes(c.effectiveType))toast(t('toastSlowData'),'warn',5000)};
+  c.addEventListener('change',chk);chk();
+}
+
+/* HISTORY */
+function histRender(){
+  const now=new Date(),cutoff=new Date(now);cutoff.setDate(cutoff.getDate()-30);
+  const rs=(store(K.reps)||[]).filter(r=>{const d=new Date(r.timestamp||r.report_date);return d>=cutoff}).slice(0,200);
+  $('history-list').innerHTML=rs.length?rs.map(r=>hItem(r,true)).join(''):`<p class="empty">${t('historyEmpty')}</p>`;
+}
+/* Fix 10: delete report */
+function delReport(id){
+  if(!confirm(t('confirmDelReport')||'למחוק דיווח זה?'))return;
+  const all=store(K.reps)||[];
+  const rep=all.find(r=>r.id===id);
+  const cat=rep?rep.category:'';
+  const date=rep?rep.report_date:'';
+  store(K.reps,all.filter(r=>r.id!==id));
+  store(K.q,(store(K.q)||[]).filter(r=>r.id!==id));
+  const ep=store(K.ep);
+  if(ep&&navigator.onLine){
+    // send category+date so GAS can clean Attendance/Tasks too
+    fetch(ep,{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({action:'delete',id,category:cat,report_date:date}),mode:'no-cors'}).catch(()=>{
+      const dq=store('mwl_delete_queue')||[];
+      dq.push({id,category:cat,report_date:date});
+      store('mwl_delete_queue',dq);
+    });
+  }else if(ep){
+    const dq=store('mwl_delete_queue')||[];
+    dq.push({id,category:cat,report_date:date});
+    store('mwl_delete_queue',dq);
+  }
+  histRender();summaryRender();toast(t('toastDeleted')||'🗑 דיווח נמחק','success');
+}
+function hItem(r,showDel=false){
+  const delBtn=showDel?`<button class="btn-d sm hitem-del" data-id="${r.id}" onclick="delReport('${r.id}')" style="padding:4px 8px;font-size:.7rem;flex-shrink:0">🗑</button>`:'';
+  return`<div class="hitem" data-id="${r.id}"><div class="hdot ${r.category}"></div><div class="hmeta"><div class="htitle">${r.description||catLbl(r.category)}</div><div class="hsub">${fmtD(r.report_date)} · ${fmtT(r.report_time)}${r.project?' · '+r.project:''}${r.workDuration?' · ⏱'+r.workDuration:''}</div></div><span class="hbadge ${r.category}">${catLbl(r.category)}</span>${delBtn}</div>`;
+}
+
+/* SUMMARY */
+function summaryInit(){
+  document.querySelectorAll('.sum-tab').forEach(btn=>btn.addEventListener('click',()=>{
+    document.querySelectorAll('.sum-tab').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');ST.sumPer=btn.dataset.period;ST.sumOff=0;summaryRender();
+  }));
+  $('sum-prev').addEventListener('click',()=>{ST.sumOff--;summaryRender();buzz([15])});
+  $('sum-next').addEventListener('click',()=>{ST.sumOff++;summaryRender();buzz([15])});
+}
+function summaryRender(){
+  const rs=store(K.reps)||[],now=new Date();let fil=[],lbl='';
+  const lblEl=$('sum-period-label')||$('sum-lbl'); // support both IDs
+  if(ST.sumPer==='day'){
+    const tgt=new Date(now);tgt.setDate(tgt.getDate()+ST.sumOff);
+    const ds=isoD(tgt);fil=rs.filter(r=>r.report_date===ds);lbl=fmtD(ds);
+    const entries=fil.filter(r=>r.category==='entry').map(r=>r.report_time).sort();
+    const exits=fil.filter(r=>r.category==='exit').map(r=>r.report_time).sort();
+    let wdStr='-';
+    if(entries.length&&exits.length){
+      const[eh,em]=entries[0].split(':').map(Number);
+      const[xh,xm]=exits[exits.length-1].split(':').map(Number);
+      const diff=(xh*60+xm)-(eh*60+em);
+      if(diff>0)wdStr=`${pad(Math.floor(diff/60))}:${pad(diff%60)}`;
+    }
+    const wdEl=$('stat-workday');if(wdEl)wdEl.textContent=wdStr;
+    const wdCard=$('stat-workday-card');if(wdCard)wdCard.style.display='';
+    const dCard=$('stat-days-card');if(dCard)dCard.style.display='none';
+    $('sum-prev').disabled=false;
+    $('sum-next').disabled=ST.sumOff>=0;
+  }else{
+    const tgt=new Date(now.getFullYear(),now.getMonth()+ST.sumOff,1);
+    const y=tgt.getFullYear(),mo=tgt.getMonth();
+    fil=rs.filter(r=>{const d=new Date(r.report_date);return d.getFullYear()===y&&d.getMonth()===mo;});
+    const locale=(window._lang==='he')?'he-IL':'en-US';
+    lbl=`${tgt.toLocaleString(locale,{month:'long'})} ${y}`;
+    const wdEl=$('stat-workday');if(wdEl)wdEl.textContent='-';
+    const wdCard=$('stat-workday-card');if(wdCard)wdCard.style.display='none';
+    const dCard=$('stat-days-card');
+    if(dCard){
+      dCard.style.display='';
+      const dDays=new Set(fil.map(r=>r.report_date)).size;
+      const dEl=$('stat-days');if(dEl)dEl.textContent=dDays;
+    }
+    $('sum-prev').disabled=false;
+    $('sum-next').disabled=ST.sumOff>=0;
+  }
+  if(lblEl)lblEl.textContent=lbl;
+  $('stat-entries').textContent=fil.filter(r=>r.category==='entry').length;
+  $('stat-exits').textContent=fil.filter(r=>r.category==='exit').length;
+  $('stat-tasks').textContent=fil.filter(r=>r.category==='task').length;
+  let mins=0;
+  fil.filter(r=>r.category==='task').forEach(r=>{
+    if(!r.report_time)return;
+    if(r.report_time.includes('-')){
+      const[s,e]=r.report_time.split('-');
+      const[sh,sm]=s.split(':').map(Number),[eh,em]=e.split(':').map(Number);
+      const d=(eh*60+em)-(sh*60+sm);if(d>0)mins+=d;
+    }else if(r.report_time.includes(':')){
+      const[hh,mm]=r.report_time.split(':').map(Number);
+      mins+=((hh||0)*60)+(mm||0);
+    }
+  });
+  const hh=Math.floor(mins/60),mm=mins%60;
+  $('stat-hours').textContent=mm>0?`${hh}:${pad(mm)}`:`${hh}`;
+  $('summary-list').innerHTML=fil.length?fil.map(r=>hItem(r,false)).join(''):`<p class="empty">${t('summaryEmpty')}</p>`;
+}
+
+/* SETTINGS */
+function settingsInit(){
+  $('btn-close-settings').addEventListener('click',()=>closeM('modal-settings'));
+  $('btn-close-help').addEventListener('click',()=>closeM('modal-help'));
+  $('modal-help').addEventListener('click',e=>{if(e.target===$('modal-help'))closeM('modal-help')});
+  $('btn-save-settings').addEventListener('click',settingsSave);
+  $('btn-clear-data').addEventListener('click',()=>{
+    if(confirm(t('confirmClearData'))){Object.values(K).forEach(k=>localStorage.removeItem(k));toast(t('toastDataCleared'),'success');closeM('modal-settings');histRender();pendUI()}
+  });
+  $('btn-add-project').addEventListener('click',projAdd);
+  $('btn-sync-projects')?.addEventListener('click',syncProjects);
+  $('new-project').addEventListener('keydown',e=>{if(e.key==='Enter')projAdd()});
+  $('modal-settings').addEventListener('click',e=>{if(e.target===$('modal-settings'))closeM('modal-settings')});
+  $('modal-reset').addEventListener('click',e=>{if(e.target===$('modal-reset'))closeM('modal-reset')});
+  document.querySelectorAll('.seg-btn[data-lang]').forEach(btn=>btn.addEventListener('click',()=>{
+    document.querySelectorAll('.seg-btn[data-lang]').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');applyLang(btn.dataset.lang);buzz([20]);
+  }));
+}
+function openM(id){
+  $(id).classList.remove('hidden');document.body.style.overflow='hidden';
+  if(id==='modal-settings'){
+    $('settings-endpoint').value=store(K.ep)||'';
+    $('settings-sheet-url').value=store(K.sheetUrl)||'';
+    const sheetUrl=store(K.sheetUrl);
+    $('sheet-link-section').style.display=sheetUrl?'':'none';
+    if(sheetUrl)$('sheet-link').href=sheetUrl;
+    prefsLoadUI();projChipsRender();
+    const lang=window._lang||'he';
+    document.querySelectorAll('.seg-btn[data-lang]').forEach(b=>b.classList.toggle('active',b.dataset.lang===lang));
+  }
+}
+function closeM(id){$(id).classList.add('hidden');document.body.style.overflow=''}
+function settingsSave(){
+  const ep=$('settings-endpoint').value.trim();
+  if(ep)store(K.ep,ep);else localStorage.removeItem(K.ep);
+  const su=$('settings-sheet-url').value.trim();
+  if(su)store(K.sheetUrl,su);else localStorage.removeItem(K.sheetUrl);
+  prefsSave();toast(t('toastSettingsSaved'),'success');buzz([20,20,40]);closeM('modal-settings');updateMenuSheetLink();
+}
+
+/* PROJECTS */
+function projLoad(){const ps=store(K.proj)||[];$('projects-list').innerHTML=ps.map(p=>`<option value="${p}">`).join('')}
+function projAdd(){
+  const inp=$('new-project'),name=inp.value.trim();if(!name)return;
+  const ps=store(K.proj)||[];
+  if(ps.map(p=>p.toLowerCase()).includes(name.toLowerCase())){toast(t('toastProjectExists')||'⚠️ פרויקט כבר קיים','warn');inp.value='';return;}
+  ps.push(name);store(K.proj,ps);projLoad();
+  toast(t('toastProjectAdded'),'success');
+  inp.value='';projChipsRender();
+  pushProjectToSheet(name);
+}
+function projChipsRender(){$('projects-chips').innerHTML=(store(K.proj)||[]).map(p=>`<div class="chip"><span>${p}</span><button class="chip-x" onclick="projRemove('${encodeProjectName(p)}')">✕</button></div>`).join('')}
+function encodeProjectName(n){return encodeURIComponent(n)}
+function projRemove(encoded){
+  const name=decodeURIComponent(encoded);
+  store(K.proj,(store(K.proj)||[]).filter(p=>p!==name));projLoad();projChipsRender();
+  removeProjectFromSheet(name);
+}
+
+
+/* ── BI-DIRECTIONAL SYNC ── */
+/* Flush offline-queued deletes to sheet */
+async function flushDeleteQueue(){
+  const ep=store(K.ep);
+  if(!ep||!navigator.onLine)return;
+  const q=store(K.delQ)||[];if(!q.length)return;
+  const fail=[];
+  for(const item of q){
+    try{
+      await fetch(ep,{method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({action:'delete',id:item.id,category:item.category,report_date:item.report_date}),mode:'no-cors'});
+    }catch{fail.push(item);}
+  }
+  store(K.delQ,fail);
+}
+
+/* Pull sheet IDs and remove any locally that were deleted remotely */
+async function syncFromSheet(){
+  const ep=store(K.ep);
+  if(!ep||!navigator.onLine)return;
+  try{
+    const res=await fetch(ep+'?action=getReports&t='+Date.now(),{cache:'no-store'});
+    const data=await res.json();
+    if(!Array.isArray(data.reports))return;
+    const sheetIds=new Set(data.reports.map(r=>String(r.id)).filter(Boolean));
+    const local=store(K.reps)||[];
+    // Keep report if: not-yet-sent (no sent flag), OR still in sheet
+    const kept=local.filter(r=>!r.sent||sheetIds.has(String(r.id)));
+    if(kept.length!==local.length){
+      store(K.reps,kept);histRender();summaryRender();
+    }
+    // Also pull projects
+    if(Array.isArray(data.projects)){
+      const localP=store(K.proj)||[];
+      const toAdd=data.projects.filter(p=>!localP.includes(p));
+      if(toAdd.length){store(K.proj,[...localP,...toAdd]);projLoad();projChipsRender();}
+    }
+  }catch(_){}
+}
+
+/* Push a new project to GAS */
+async function pushProjectToSheet(name){
+  const ep=store(K.ep);
+  if(!ep||!navigator.onLine)return;
+  try{await fetch(ep,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'addProject',project:name}),mode:'no-cors'});}catch(_){}
+}
+async function removeProjectFromSheet(name){
+  const ep=store(K.ep);
+  if(!ep||!navigator.onLine)return;
+  try{await fetch(ep,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'deleteProject',project:name}),mode:'no-cors'});}catch(_){}
+}
+
+/* Bi-directional project sync (called from settings "Sync Projects" button) */
+async function syncProjects(){
+  const ep=store(K.ep);
+  if(!ep){toast(t('toastNoEndpointSync'),'warn');return;}
+  if(!navigator.onLine){toast(t('toastSavedOffline'),'warn');return;}
+  toast('🔄 '+t('toastSyncStart'),'success',1500);
+  try{
+    const res=await fetch(ep+'?action=getProjects&t='+Date.now(),{cache:'no-store'});
+    const data=await res.json();
+    const remote=Array.isArray(data.projects)?data.projects:[];
+    const local=store(K.proj)||[];
+    const toAdd=remote.filter(p=>!local.includes(p));
+    const final=[...local,...toAdd];
+    store(K.proj,final);projLoad();projChipsRender();
+    for(const p of local.filter(pp=>!remote.includes(pp)))await pushProjectToSheet(p);
+    toast(t('toastProjectSynced')||'✅ פרויקטים סונכרנו','success');
+  }catch(_){toast('❌ שגיאת סנכרון','error');}
+}
+
+/* SERVICE WORKER */
+function swInit(){
+  if(!('serviceWorker'in navigator))return;
+  navigator.serviceWorker.register('sw.js').then(reg=>{
+    ST.swReg=reg;
+    if(reg.waiting)showUpd();
+    reg.addEventListener('updatefound',()=>{
+      const sw=reg.installing;
+      sw.addEventListener('statechange',()=>{if(sw.state==='installed'&&navigator.serviceWorker.controller)showUpd()});
+    });
+  }).catch(()=>{});
+  navigator.serviceWorker.addEventListener('message',e=>{if(e.data?.type==='UPDATE_AVAILABLE')showUpd(e.data.version)});
+}
+function showUpd(){
+  $('update-prompt').classList.remove('hidden');buzz([30,30,60]);
+  $('btn-update-now').onclick=()=>{
+    if(ST.swReg?.waiting){ST.swReg.waiting.postMessage({type:'SKIP_WAITING'});navigator.serviceWorker.addEventListener('controllerchange',()=>window.location.reload())}
+    else window.location.reload(true);
+    $('update-prompt').classList.add('hidden');
+  };
+  $('btn-update-dismiss').onclick=()=>$('update-prompt').classList.add('hidden');
+}
+
+/* INSTALL PROMPT */
+function installInit(){
+  if(store(K.inst))return;
+  window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();ST.install=e;setTimeout(()=>$('install-banner').classList.remove('hidden'),3000)});
+  window.addEventListener('appinstalled',()=>{$('install-banner').classList.add('hidden');store(K.inst,true)});
+  $('btn-install-confirm')?.addEventListener('click',async()=>{
+    if(!ST.install)return;
+    ST.install.prompt();const{outcome}=await ST.install.userChoice;
+    ST.install=null;$('install-banner').classList.add('hidden');
+    if(outcome==='dismissed')store(K.inst,true);buzz([30,20,60]);
+  });
+  $('btn-install-dismiss')?.addEventListener('click',()=>{$('install-banner').classList.add('hidden');store(K.inst,true)});
+}
+
+/* SWIPE */
+function swipeInit(){
+  const el=$('main-scroll');
+  el.addEventListener('touchstart',e=>{ST.swX=e.touches[0].clientX;ST.swY=e.touches[0].clientY},{passive:true});
+  el.addEventListener('touchend',e=>{
+    const dx=e.changedTouches[0].clientX-ST.swX,dy=e.changedTouches[0].clientY-ST.swY;
+    if(Math.abs(dx)<40||Math.abs(dy)>Math.abs(dx))return;
+    const tabs=['report','history','summary'],idx=tabs.indexOf(document.querySelector('.tab-btn.active')?.dataset.tab);
+    const rtl=document.documentElement.dir==='rtl',next=(rtl?dx<0:dx>0)?idx-1:idx+1;
+    if(next>=0&&next<tabs.length)switchTab(tabs[next]);
+  },{passive:true});
+}
+
+/* PULL TO REFRESH */
+function ptrInit(){
+  const scroll=$('main-scroll'),ind=$('ptr');
+  scroll.addEventListener('touchstart',e=>{if(!getP().pullRefresh)return;ST.pullY=e.touches[0].clientY;ST.pulling=scroll.scrollTop===0},{passive:true});
+  scroll.addEventListener('touchmove',e=>{if(!ST.pulling||!getP().pullRefresh)return;if(e.touches[0].clientY-ST.pullY>60){ind.classList.remove('hidden');ind.classList.add('visible');ind.querySelector('.ptr-icon').classList.add('spin')}},{passive:true});
+  scroll.addEventListener('touchend',()=>{
+    if(!ST.pulling)return;
+    if(!ind.classList.contains('hidden'))setTimeout(()=>{ind.classList.remove('visible');ind.classList.add('hidden');ind.querySelector('.ptr-icon').classList.remove('spin');window.location.reload()},600);
+    ST.pulling=false;
+  });
+}
+
+
+/* ─ HELP TABS ─ */
+function hTab(btn){
+  const id=btn.dataset.htab;
+  document.querySelectorAll('.htab-btn').forEach(b=>b.classList.toggle('active',b===btn));
+  document.querySelectorAll('.htab-pnl').forEach(p=>p.style.display='none');
+  const panel=document.getElementById('htab-'+id);
+  if(panel){panel.style.display='flex';}
+}
+/* DOWNLOAD GS */
+function downloadGS(){
+  const code=document.getElementById('gs-code-blob')?.textContent||'';
+  if(!code)return;
+  const b=new Blob([code],{type:'text/plain'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(b);
+  a.download='google-apps-script.gs';document.body.appendChild(a);a.click();
+  setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1000);
+  toast('⬇️ '+(t('helpBtnDownloadGS')||'Downloading...'),'success');
+}
+/* SCROLL */
+function scrollSave(){const s=$('main-scroll');if(s)store('mwl_scroll',s.scrollTop)}
+function scrollInit(){
+  const s=$('main-scroll'),pos=store('mwl_scroll');
+  if(pos&&s)s.scrollTop=pos;
+  s?.addEventListener('scroll',scrollSave,{passive:true});
+}
+</script>
 </body>
 </html>
