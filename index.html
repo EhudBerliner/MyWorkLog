@@ -427,7 +427,7 @@ textarea.fi{resize:vertical;min-height:72px}
       <a id="menu-sheet-link" href="#" target="_blank" rel="noopener" style="display:none;align-items:center;gap:7px;font-size:.8rem;color:var(--blue);text-decoration:none;padding:3px 2px">
         📊 פתח גיליון הדיווחים
       </a>
-      <span id="menu-vbadge" class="vbadge" title="לחץ לאיפוס">v2.2.0</span>
+      <span id="menu-vbadge" class="vbadge" title="לחץ לאיפוס">v2.3.0</span>
     </div>
   </aside>
 
@@ -439,7 +439,7 @@ textarea.fi{resize:vertical;min-height:72px}
         <span class="hdr-name">MyWorkLog</span>
       </div>
       <div class="hdr-acts">
-        <span id="version-badge" class="vbadge" title="לחץ לאיפוס">v2.2.0</span>
+        <span id="version-badge" class="vbadge" title="לחץ לאיפוס">v2.3.0</span>
       </div>
     </div>
   </header>
@@ -590,6 +590,7 @@ textarea.fi{resize:vertical;min-height:72px}
         <div class="stat-card"><div class="stat-lbl" data-i18n="statTasks">&#1502;&#1513;&#1497;&#1502;&#1493;&#1514;</div><div class="stat-val" id="stat-tasks">0</div></div>
         <div class="stat-card"><div class="stat-lbl" data-i18n="statHours">&#1513;&#1506;&#1493;&#1514; &#1502;&#1513;&#1497;&#1502;&#1493;&#1514;</div><div class="stat-val" id="stat-hours">0</div></div>
         <div class="stat-card" id="stat-workday-card"><div class="stat-lbl" data-i18n="statWorkday">&#1502;&#1513;&#1498; &#1497;&#1493;&#1501;</div><div class="stat-val" id="stat-workday" style="font-size:1.4rem">-</div></div>
+        <div class="stat-card" id="stat-achievement-card" style="display:none"><div class="stat-lbl">&#1506;&#1502;&#1497;&#1491;&#1492; &#1489;&#1497;&#1506;&#1491;</div><div class="stat-val" id="stat-achievement" style="font-size:1.4rem">&#8212;</div></div>
         <div class="stat-card" id="stat-days-card" style="display:none"><div class="stat-lbl" data-i18n="statDays">&#1497;&#1502;&#1497;&#1501; &#1508;&#1506;&#1497;&#1500;&#1497;&#1501;</div><div class="stat-val" id="stat-days">0</div></div>
       </div>
       <!-- Daily status (day view only) -->
@@ -739,44 +740,24 @@ textarea.fi{resize:vertical;min-height:72px}
   </div>
 </div>
 
-<!-- WORK CALENDAR SETTINGS MODAL -->
+<!-- WORK STANDARD SYNC MODAL -->
 <div id="modal-workcal" class="moverlay hidden" role="dialog" aria-modal="true">
   <div class="mbox sm">
     <div class="mhdr">
-      <h2>&#128197; &#1492;&#1490;&#1491;&#1512;&#1514; &#1502;&#1497;&#1504;&#1497;&#1502;&#1493;&#1501; &#1513;&#1506;&#1493;&#1514;</h2>
+      <h2>&#128197; &#1514;&#1511;&#1503; &#1497;&#1502;&#1497; &#1506;&#1489;&#1493;&#1491;&#1492;</h2>
       <button class="ibtn" id="btn-close-workcal">&#10005;</button>
     </div>
     <div class="mbody">
-      <div class="fg">
-        <label class="flbl">&#1502;&#1497;&#1504;&#1497;&#1502;&#1493;&#1501; &#1489;&#1512;&#1497;&#1512;&#1514; &#1502;&#1495;&#1491;&#1500; &#x28;&#1513;&#1506;&#1493;&#1514;/&#1497;&#1493;&#1501;&#x29;</label>
-        <input type="number" id="wc-default-min" class="fi" min="0" max="24" step="0.5" placeholder="0"/>
-        <p class="fhint">0 = &#1504;&#1495;&#1513;&#1489; &#1499;&#1502;&#1497;&#1504;&#1497;&#1502;&#1493;&#1501; &#1488;&#1508;&#1505; &#1500;&#1497;&#1502;&#1497;&#1501; &#1500;&#1500;&#1488; &#1492;&#1490;&#1491;&#1512;&#1492;</p>
+      <div style="background:var(--blueDim);border:1px solid rgba(77,171,255,.3);border-radius:var(--rs);padding:11px 13px;font-size:.82rem;color:var(--text2);line-height:1.7">
+        <strong style="color:var(--blue)">&#128202; &#1490;&#1497;&#1500;&#1497;&#1493;&#1503; WorkStandard &#1489;-Google Sheets</strong><br/>
+        &#1492;&#1502;&#1489;&#1504;&#1492;: <span style="font-family:monospace;color:var(--text);font-size:.78rem">Date | WeekDay | Day_Standard_Hours | Notes</span><br/>
+        &#1492;&#1493;&#1505;&#1508;/&#1506;&#1512;&#1493;&#1498; &#1513;&#1493;&#1512;&#1493;&#1514; &#1497;&#1513;&#1497;&#1512;&#1493;&#1514; &#1489;&#1490;&#1497;&#1500;&#1497;&#1493;&#1503;, &#1488;&#1493; &#1500;&#1495;&#1509; &#1506;&#1500; &#1497;&#1493;&#1501; &#1489;&#1500;&#1493;&#1495; &#1500;&#1506;&#1512;&#1497;&#1499;&#1492; &#1491;&#1512;&#1498; &#1492;&#1488;&#1508;&#1500;&#1497;&#1511;&#1510;&#1497;&#1492;.
       </div>
-      <hr style="border:none;border-top:1px solid var(--border);margin:4px 0"/>
-      <div class="fg">
-        <label class="flbl">&#1492;&#1490;&#1491;&#1512; &#1502;&#1497;&#1504;&#1497;&#1502;&#1493;&#1501; &#1500;&#1514;&#1511;&#1493;&#1508;&#1492;</label>
-        <div class="row2">
-          <div class="fg">
-            <label class="flbl">&#1502;&#1514;&#1488;&#1512;&#1497;&#1498;</label>
-            <input type="date" id="wc-range-from" class="fi"/>
-          </div>
-          <div class="fg">
-            <label class="flbl">&#1506;&#1491; &#1514;&#1488;&#1512;&#1497;&#1498;</label>
-            <input type="date" id="wc-range-to" class="fi"/>
-          </div>
-        </div>
-        <div class="wc-min-row" style="margin-top:8px">
-          <div class="fg">
-            <label class="flbl">&#1502;&#1497;&#1504;&#1497;&#1502;&#1493;&#1501; &#1513;&#1506;&#1493;&#1514; &#1500;&#1514;&#1511;&#1493;&#1508;&#1492;</label>
-            <input type="number" id="wc-range-min" class="fi" min="0" max="24" step="0.5" placeholder="8"/>
-          </div>
-          <button id="btn-wc-apply-range" class="btn-p sm">&#1492;&#1495;&#1500;</button>
-        </div>
-        <p class="fhint">&#1497;&#1513;&#1493;&#1501; &#1502;&#1497;&#1504;&#1497;&#1502;&#1493;&#1501; &#1513;&#1506;&#1493;&#1514; &#1500;&#1499;&#1500; &#1497;&#1493;&#1501; &#1489;&#1496;&#1493;&#1493;&#1495;&#x2E; &#1497;&#1502;&#1497; &#1495;&#1493;&#1508;&#1513; &#1502;&#1505;&#1493;&#1502;&#1504;&#1497;&#1501; &#1497;&#1513;&#1493;&#1502;&#1512;&#1493;.</p>
-      </div>
+      <div id="wstandard-sync-status" style="font-size:.78rem;color:var(--text3);text-align:center;min-height:20px"></div>
     </div>
-    <div class="mfoot">
-      <button class="btn-p" id="btn-save-workcal">&#1513;&#1502;&#1493;&#1512; &#1492;&#1490;&#1491;&#1512;&#1493;&#1514;</button>
+    <div class="mfoot mfoot2">
+      <button class="btn-g" id="btn-close-workcal2">&#1505;&#1490;&#1493;&#1512;</button>
+      <button class="btn-p sm" id="btn-sync-wstandard">&#128260; &#1505;&#1504;&#1499;&#1512;&#1503; &#1502;&#1490;&#1497;&#1500;&#1497;&#1493;&#1503;</button>
     </div>
   </div>
 </div>
@@ -785,26 +766,27 @@ textarea.fi{resize:vertical;min-height:72px}
 <div id="modal-dayedit" class="moverlay hidden" role="dialog" aria-modal="true">
   <div class="mbox sm">
     <div class="mhdr">
-      <h2 id="dayedit-title">&#128197; &#1506;&#1512;&#1497;&#1499;&#1514; &#1497;&#1493;&#1501;</h2>
+      <h2 id="dayedit-title">&#128197; &#1506;&#1512;&#1497;&#1499;&#1514; &#1514;&#1511;&#1503; &#1497;&#1493;&#1501;</h2>
       <button class="ibtn" id="btn-close-dayedit">&#10005;</button>
     </div>
     <div class="mbody">
-      <div id="dayedit-info" style="font-size:.82rem;color:var(--text2);background:var(--bg3);border:1px solid var(--border);border-radius:var(--rs);padding:10px 13px;margin-bottom:4px"></div>
-      <div class="pref-list">
-        <label class="pref-row">
-          <span>&#127958; &#1497;&#1493;&#1501; &#1495;&#1493;&#1508;&#1513;</span>
-          <input type="checkbox" id="dayedit-vacation" class="ptog"/>
-        </label>
+      <div id="dayedit-info" style="display:flex;flex-direction:column;gap:6px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--rs);padding:11px 13px;font-size:.82rem;color:var(--text2)"></div>
+      <div class="fg">
+        <label class="flbl">&#1514;&#1511;&#1503; &#1497;&#1493;&#1502;&#1497; &#x28;&#1513;&#1506;&#1493;&#1514;&#x29;</label>
+        <input type="number" id="dayedit-stdhours" class="fi" min="0" max="24" step="0.5" placeholder="0"/>
+        <p class="fhint">0 = &#1489;&#1497;&#1493;&#1501; &#1494;&#1492; &#1488;&#1497;&#1503; &#1491;&#1512;&#1497;&#1513;&#1492; &#x28;&#1513;&#1489;&#1514;, &#1495;&#1490;, &#1495;&#1493;&#1508;&#1513;&#x29;</p>
       </div>
-      <div class="fg" id="dayedit-min-row">
-        <label class="flbl">&#1502;&#1497;&#1504;&#1497;&#1502;&#1493;&#1501; &#1513;&#1506;&#1493;&#1514; &#1500;&#1497;&#1493;&#1501; &#1494;&#1492; &#x28;&#1506;&#1511;&#1493;&#1507; &#1489;&#1512;&#1497;&#1512;&#1514; &#1502;&#1495;&#1491;&#1500;&#x29;</label>
-        <input type="number" id="dayedit-min" class="fi" min="0" max="24" step="0.5" placeholder="&#1489;&#1512;&#1497;&#1512;&#1514; &#1502;&#1495;&#1491;&#1500;"/>
-        <p class="fhint">&#1492;&#1513;&#1488;&#1512; &#1512;&#1497;&#1511; &#1500;&#1513;&#1497;&#1502;&#1493;&#1513; &#1489;&#1489;&#1512;&#1497;&#1512;&#1514; &#1492;&#1502;&#1495;&#1491;&#1500;</p>
+      <div class="fg">
+        <label class="flbl">&#1492;&#1506;&#1512;&#1493;&#1514; &#x28;&#1497;&#1493;&#1501; &#1495;&#1493;&#1508;&#1513;, &#1495;&#1490;, &#1493;&#1499;&#x27;&#x29;</label>
+        <input type="text" id="dayedit-notes" class="fi" placeholder="&#1500;&#1491;&#1493;&#1490;&#1502;&#1492;: &#1497;&#1493;&#1501; &#1495;&#1493;&#1508;&#1513;, &#1512;&#1488;&#1513; &#1492;&#1513;&#1504;&#1492;..."/>
+      </div>
+      <div id="dayedit-offline-hint" style="display:none;background:var(--amberDim);border:1px solid var(--amber);border-radius:var(--rxs);padding:8px 11px;font-size:.76rem;color:var(--amber)">
+        &#9888;&#65039; &#1488;&#1497;&#1503; &#1495;&#1497;&#1489;&#1493;&#1512; &#8212; &#1492;&#1513;&#1497;&#1504;&#1493;&#1497; &#1497;&#1513;&#1502;&#1512; &#1502;&#1511;&#1493;&#1502;&#1497;&#1514; &#1493;&#1497;&#1505;&#1493;&#1504;&#1499;&#1512;&#1503; &#1489;&#1514;&#1493;&#1505;&#1508;&#1514; &#1495;&#1497;&#1489;&#1493;&#1512;
       </div>
     </div>
     <div class="mfoot mfoot2">
       <button id="btn-dayedit-cancel" class="btn-g">&#1489;&#1497;&#1496;&#1493;&#1500;</button>
-      <button id="btn-dayedit-save" class="btn-p sm">&#1513;&#1502;&#1493;&#1512;</button>
+      <button id="btn-dayedit-save" class="btn-p sm">&#9889; &#1513;&#1502;&#1493;&#1512; &#1493;&#1505;&#1504;&#1499;&#1512;&#1503;</button>
     </div>
   </div>
 </div>
@@ -995,17 +977,20 @@ const SHEET_NAME       = 'WorkLog';
 const SHEET_ATTENDANCE = 'Attendance';
 const SHEET_TASKS      = 'Tasks';
 const SHEET_PROJECTS   = 'Projects';
+const SHEET_WSTANDARD  = 'WorkStandard';
 
 const HEADERS            = ['Timestamp','Report_Date','Report_Time','Category','Description','Project','Record_ID'];
 const ATTENDANCE_HEADERS = ['Report_Date','Report_Time – כניסה','Report_Time – יציאה','משך יום עבודה'];
 const TASK_HEADERS       = ['Report_Date','משך משימה','Project','Description'];
 const PROJECT_HEADERS    = ['Project_Name','Created_At'];
+const WSTANDARD_HEADERS  = ['Date','WeekDay','Day_Standard_Hours','Notes'];
 
 // ─── Router ──────────────────────────────────────────────────
 function doPost(e) {
   try {
     const data = JSON.parse(e.postData.contents);
 
+    if (data.action === 'setDayStandard') return ok(updateWorkStandard(data.date, data.weekDay, data.stdHours, data.notes||''));
     if (data.action === 'addProject')    return ok(addProject(data.project));
     if (data.action === 'deleteProject') return ok(deleteProject(data.project));
     if (data.action === 'delete')        { deleteById(data.id, data.category, data.report_date); return ok('נמחק'); }
@@ -1030,6 +1015,20 @@ function doPost(e) {
 
 function doGet(e) {
   const action = (e &amp;&amp; e.parameter &amp;&amp; e.parameter.action) || '';
+
+  if (action === 'getWorkStandard') {
+    const ss    = SpreadsheetApp.getActiveSpreadsheet();
+    const sheet = ss.getSheetByName(SHEET_WSTANDARD);
+    if (!sheet) return jsonResp({ workStandard: [] });
+    const rows  = sheet.getDataRange().getValues().slice(1);
+    const workStandard = rows.map(r => ({
+      date:     String(r[0]||'').trim(),
+      weekDay:  String(r[1]||'').trim(),
+      stdHours: parseFloat(r[2])||0,
+      notes:    String(r[3]||'').trim(),
+    })).filter(r => r.date);
+    return jsonResp({ workStandard });
+  }
 
   if (action === 'getProjects') {
     const ss    = SpreadsheetApp.getActiveSpreadsheet();
@@ -1141,6 +1140,23 @@ function deleteById(id, category, report_date) {
   // Tasks sheet doesn't store Record_ID, so we rely on WorkLog deletion only.
 }
 
+// ─── WorkStandard ────────────────────────────────────────────
+function updateWorkStandard(date, weekDay, stdHours, notes) {
+  if (!date) return &#x27;no date&#x27;;
+  const ss    = SpreadsheetApp.getActiveSpreadsheet();
+  const sheet = getOrCreateSheet(ss, SHEET_WSTANDARD, WSTANDARD_HEADERS);
+  const data  = sheet.getDataRange().getValues();
+  for (let i = 1; i &lt; data.length; i++) {
+    if (String(data[i][0]).trim() === String(date).trim()) {
+      sheet.getRange(i+1, 1, 1, 4).setValues([[date, weekDay||&#x27;&#x27;, stdHours||0, notes||&#x27;&#x27;]]);
+      return &#x27;updated&#x27;;
+    }
+  }
+  sheet.appendRow([date, weekDay||&#x27;&#x27;, stdHours||0, notes||&#x27;&#x27;]);
+  autoFormatLastRow(sheet, WSTANDARD_HEADERS.length);
+  return &#x27;added&#x27;;
+}
+
 // ─── Projects ────────────────────────────────────────────────
 function addProject(name) {
   if (!name || !name.trim()) return 'empty';
@@ -1231,6 +1247,7 @@ function reverseCategory(heb) {
   ✅ Attendance - כניסה + יציאה + משך יום
   ✅ Tasks      - דיווחי משימות
   ✅ Projects   - פרויקטים (חדש v2.1, דו-כיווני)
+  ✅ WorkStandard - תקן ימי עבודה (חדש v2.3)
 
   GET actions: ?action=getProjects | ?action=getReports
   POST actions: { action:'delete', id, category, report_date }
@@ -1347,10 +1364,10 @@ function applyLang(lang){
 /* ─────────────────────────────────────────────────────
    App
 ───────────────────────────────────────────────────── */
-const VER='2.2.0';
+const VER='2.3.0';
 const K={ep:'mwl_endpoint',reps:'mwl_reports',q:'mwl_queue',delQ:'mwl_delete_queue',proj:'mwl_projects',
   lang:'mwl_lang',theme:'mwl_theme',prefs:'mwl_prefs',ver:'mwl_version',inst:'mwl_install_dismissed',sheetUrl:'mwl_sheet_url',
-  workcal:'mwl_workcal'};
+  wstandard:'mwl_wstandard'};
 const ST={cat:'entry',dur:'duration',sumPer:'day',sumOff:0,
   swReg:null,install:null,swX:0,swY:0,pullY:0,pulling:false};
 
@@ -1385,7 +1402,7 @@ document.addEventListener('DOMContentLoaded',()=>{
     toast(t('toastNowUpdated'));buzz([20]);
   });
   netInit();netQInit();projLoad();histRender();
-  flushDeleteQueue();setTimeout(syncFromSheet,2000);
+  flushDeleteQueue();setTimeout(()=>{syncFromSheet();flushWStandardQueue();},2000);
   menuInit();vBadgeInit();swipeInit();ptrInit();swInit();installInit();scrollInit();
 });
 
@@ -1619,6 +1636,7 @@ async function syncQ(){
   for(const r of q){try{await fetch(ep,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(r),mode:'no-cors'});markSent(r.id);ok++}catch{fail.push(r)}}
   store(K.q,fail);pendUI();
   await flushDeleteQueue();
+  await flushWStandardQueue();
   await syncFromSheet();
   toast(t('toastSynced',ok),'success');
 }
@@ -1672,20 +1690,26 @@ function hItem(r,showDel=false){
 }
 
 /* ═══════════════════════════════════════════
-   WORK CALENDAR
+   WORK STANDARD  (WorkStandard sheet + local cache)
 ═══════════════════════════════════════════ */
-function getWorkcal(){return store(K.workcal)||{defaultMin:0,days:{}}}
-function saveWorkcal(wc){store(K.workcal,wc);summaryRender()}
 
-/* Returns null if vacation, otherwise min hours (number) */
-function getDayMinHours(ds){
-  const wc=getWorkcal(),cfg=wc.days[ds]||{};
-  if(cfg.vacation)return null;
-  if(cfg.minHours!==undefined&&cfg.minHours!==null&&cfg.minHours!=='')return Number(cfg.minHours);
-  return Number(wc.defaultMin)||0;
+/* Storage helpers */
+function getWStandard(){ return store(K.wstandard)||[]; }
+function saveWStandardLocal(arr){ store(K.wstandard,arr); }
+
+/* Return standard for a specific date-string YYYY-MM-DD */
+function getDayStd(ds){
+  const row=getWStandard().find(r=>r.date===ds);
+  if(!row)return{stdHours:0,notes:'',isWorkDay:false};
+  const h=parseFloat(row.stdHours)||0;
+  return{stdHours:h,notes:row.notes||'',isWorkDay:h>0};
 }
 
-/* Calc actual work minutes for a day (last exit - first entry) */
+/* Hebrew weekday */
+const HEB_DOW=['ראשון','שני','שלישי','רביעי','חמישי','שישי','שבת'];
+function hebDow(ds){const d=new Date(ds);return HEB_DOW[d.getDay()];}
+
+/* Actual work minutes for a day */
 function calcDayWorkMins(ds,reports){
   const dr=reports.filter(r=>r.report_date===ds);
   const en=dr.filter(r=>r.category==='entry').map(r=>r.report_time).filter(Boolean).sort();
@@ -1697,56 +1721,117 @@ function calcDayWorkMins(ds,reports){
   return d>0?d:0;
 }
 
-/* Returns {status:'ok'|'deficit'|'vacation'|'nodata', actualMins, minMins, diffMins, wdStr} */
+/* Full status for a day */
 function getDayStatus(ds,reports){
-  const minH=getDayMinHours(ds);
-  if(minH===null){return{status:'vacation',actualMins:0,minMins:0,diffMins:0,wdStr:'-'}}
+  const{stdHours,notes,isWorkDay}=getDayStd(ds);
   const actualMins=calcDayWorkMins(ds,reports);
-  const minMins=Math.round(minH*60);
-  const diffMins=actualMins-minMins;
   const wdStr=actualMins>0?`${pad(Math.floor(actualMins/60))}:${pad(actualMins%60)}`:'-';
-  let status='nodata';
-  if(actualMins>0||minMins>0){
-    if(minMins===0)status=actualMins>0?'ok':'nodata';
-    else status=diffMins>=0?'ok':'deficit';
-  }
-  return{status,actualMins,minMins,diffMins,wdStr};
+  if(!isWorkDay)return{status:'nostandard',actualMins,minMins:0,diffMins:actualMins,wdStr,notes,pct:null};
+  const minMins=Math.round(stdHours*60);
+  const diffMins=actualMins-minMins;
+  const status=diffMins>=0?'ok':'deficit';
+  const pct=minMins>0?Math.min(999,Math.round(actualMins/minMins*100)):100;
+  return{status,actualMins,minMins,diffMins,wdStr,notes,pct};
 }
 
-function minsToHHMM(m){if(!m)return'0:00';const h=Math.floor(Math.abs(m)/60),mm=Math.abs(m)%60;return`${m<0?'-':''}${h}:${pad(mm)}`}
+function minsToHHMM(m){
+  if(!m&&m!==0)return'0:00';
+  const sign=m<0?'-':'';const abs=Math.abs(m);
+  return`${sign}${Math.floor(abs/60)}:${pad(abs%60)}`;
+}
 
-/* Render the daily status card */
+/* Sync WorkStandard from sheet */
+async function syncWStandard(quiet=false){
+  const ep=store(K.ep);
+  if(!ep||!navigator.onLine){if(!quiet)toast('⚠️ אין חיבור לגיליון','warn');return false;}
+  try{
+    const res=await fetch(ep+'?action=getWorkStandard&t='+Date.now(),{cache:'no-store'});
+    const data=await res.json();
+    if(!Array.isArray(data.workStandard))return false;
+    saveWStandardLocal(data.workStandard);
+    store('mwl_wstandard_sync',new Date().toLocaleString('he-IL'));
+    if(!quiet)toast('✅ WorkStandard עודכן — '+data.workStandard.length+' ימים','success');
+    summaryRender();
+    return true;
+  }catch(e){if(!quiet)toast('❌ שגיאת סנכרון','error');return false;}
+}
+
+/* Push one day's standard to sheet */
+async function setDayStd(ds,stdHours,notes){
+  const wd=hebDow(ds);
+  const std=getWStandard();
+  const idx=std.findIndex(r=>r.date===ds);
+  const rec={date:ds,weekDay:wd,stdHours:Number(stdHours)||0,notes:notes||''};
+  if(idx>=0)std[idx]=rec;else std.push(rec);
+  // sort by date
+  std.sort((a,b)=>a.date<b.date?-1:1);
+  saveWStandardLocal(std);
+  summaryRender();
+  const ep=store(K.ep);
+  if(ep&&navigator.onLine){
+    try{
+      await fetch(ep,{method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({action:'setDayStandard',date:ds,weekDay:wd,stdHours:Number(stdHours)||0,notes:notes||''}),
+        mode:'no-cors'});
+      toast('✅ עודכן בגיליון','success');
+    }catch(_){toast('⚠️ נשמר מקומית — יסונכרן בחיבור','warn');}
+  }else{
+    // queue for later
+    const q=store('mwl_wstandard_queue')||[];
+    q.push({date:ds,weekDay:wd,stdHours:Number(stdHours)||0,notes:notes||''});
+    store('mwl_wstandard_queue',q);
+    toast('📴 נשמר מקומית — יסונכרן בחיבור','warn');
+  }
+}
+
+/* Flush queued wstandard updates */
+async function flushWStandardQueue(){
+  const ep=store(K.ep);if(!ep||!navigator.onLine)return;
+  const q=store('mwl_wstandard_queue')||[];if(!q.length)return;
+  const fail=[];
+  for(const item of q){
+    try{
+      await fetch(ep,{method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({action:'setDayStandard',...item}),mode:'no-cors'});
+    }catch(_){fail.push(item);}
+  }
+  store('mwl_wstandard_queue',fail);
+}
+
+/* ─ Daily status card ─ */
 function renderDayWCStatus(ds,reports){
   const sec=$('day-wc-section');if(!sec)return;
-  const{status,actualMins,minMins,diffMins,wdStr}=getDayStatus(ds,reports);
-  const minH=getDayMinHours(ds);
-  const wc=getWorkcal();
-  const isVac=minH===null;
+  const{status,actualMins,minMins,diffMins,wdStr,notes,pct}=getDayStatus(ds,reports);
+  if(status==='nostandard'&&!notes){sec.style.display='none';return;}
   let html='';
-  if(isVac){
-    html+='<span class="day-status-badge vacation">🏖 יום חופש</span>';
-  }else if(status==='nodata'&&minMins===0){
-    html+='<span class="day-status-badge nodata">אין הגדרת מינימום</span>';
-    sec.style.display='none';return;
+  if(notes)html+=`<span style="font-size:.78rem;color:var(--amber)">📝 ${notes}</span>`;
+  if(status==='nostandard'){
+    html+='<span class="day-status-badge nodata">אין תקן ליום זה</span>';
   }else{
-    const badge=status==='ok'?'ok':status==='deficit'?'deficit':'nodata';
-    const badgeLabel=status==='ok'?'✅ תקין':status==='deficit'?'⚠️ חוסר שעות':'אין נתונים';
-    html+=`<span class="day-status-badge ${badge}">${badgeLabel}</span>`;
+    const badge=status==='ok'?'ok':'deficit';
+    const label=status==='ok'?`✅ תקין (${pct}%)`:`⚠️ חוסר שעות (${pct}%)`;
+    html+=`<span class="day-status-badge ${badge}">${label}</span>`;
     html+=`<span style="font-size:.8rem;color:var(--text2)">בפועל: <strong style="color:var(--text)">${wdStr}</strong></span>`;
-    if(minMins>0)html+=`<span style="font-size:.8rem;color:var(--text2)">נדרש: <strong style="color:var(--text)">${minsToHHMM(minMins)}</strong></span>`;
-    if(status==='deficit')html+=`<span style="font-size:.8rem;color:var(--red)">חוסר: <strong>${minsToHHMM(Math.abs(diffMins))}</strong></span>`;
-    if(status==='ok'&&diffMins>0&&minMins>0)html+=`<span style="font-size:.8rem;color:var(--lime)">עודף: <strong>${minsToHHMM(diffMins)}</strong></span>`;
+    html+=`<span style="font-size:.8rem;color:var(--text2)">תקן: <strong style="color:var(--text)">${minsToHHMM(minMins)}</strong></span>`;
+    if(status==='deficit')html+=`<span style="font-size:.8rem;color:var(--red)">חסר: <strong>${minsToHHMM(Math.abs(diffMins))}</strong></span>`;
+    if(status==='ok'&&diffMins>0)html+=`<span style="font-size:.8rem;color:var(--lime)">עודף: <strong>${minsToHHMM(diffMins)}</strong></span>`;
   }
   $('day-wc-content').innerHTML=html;
   sec.style.display='';
+  // achievement stat card
+  const ac=$('stat-achievement-card');
+  if(ac){
+    ac.style.display='';
+    $('stat-achievement').textContent=pct!=null?`${pct}%`:'—';
+    $('stat-achievement').style.color=pct==null?'var(--text3)':pct>=100?'var(--lime)':pct>=80?'var(--amber)':'var(--red)';
+  }
 }
 
-/* Render monthly work calendar grid */
+/* ─ Monthly calendar grid ─ */
 function renderWCCalendar(year,month,reports){
   const dowRow=$('wc-dow-row'),daysGrid=$('wc-days-grid');
   if(!dowRow||!daysGrid)return;
   const todayStr=isoD(new Date());
-  // Day of week headers (Sun=0)
   const dows=['א','ב','ג','ד','ה','ו','ש'];
   dowRow.innerHTML=dows.map(d=>`<div class="wc-dow">${d}</div>`).join('');
   const firstDay=new Date(year,month,1);
@@ -1756,121 +1841,114 @@ function renderWCCalendar(year,month,reports){
   for(let i=0;i<startDow;i++)html+='<div class="wc-empty-cell"></div>';
   for(let d=1;d<=lastDate;d++){
     const ds=`${year}-${pad(month+1)}-${pad(d)}`;
-    const{status,actualMins,wdStr}=getDayStatus(ds,reports);
+    const{status,actualMins,wdStr,notes,minMins}=getDayStatus(ds,reports);
     const isToday=ds===todayStr;
-    const actualStr=actualMins>0?wdStr:'';
-    const isVac=status==='vacation';
-    html+=`<div class="wc-cell ${status==='nodata'?'':status}${isToday?' today':''}" onclick="editDayConfig('${ds}')">
+    const showActual=actualMins>0;
+    const cellClass=status==='nostandard'?'':status;
+    const stdStr=minMins>0?minsToHHMM(minMins):'';
+    html+=`<div class="wc-cell ${cellClass}${isToday?' today':''}" onclick="editDayConfig('${ds}')">
       <span class="wc-day-num">${d}</span>
-      ${actualStr?`<span class="wc-actual">${actualStr}</span>`:''}
-      ${isVac?'<span class="wc-vac-icon">🏖</span>':''}
+      ${showActual?`<span class="wc-actual">${wdStr}</span>`:''}
+      ${stdStr&&!showActual?`<span class="wc-actual" style="color:var(--text3)">${stdStr}</span>`:''}
+      ${notes?`<span class="wc-vac-icon" title="${notes}">📝</span>`:''}
     </div>`;
   }
   daysGrid.innerHTML=html;
 }
 
-/* Render monthly work stats */
+/* ─ Monthly stats ─ */
 function renderMonthlyWCStats(year,month,reports){
   const el=$('monthly-wc-stats');if(!el)return;
   const lastDate=new Date(year,month+1,0).getDate();
-  let reqMins=0,actualMins=0,surplusMins=0,deficitMins=0;
+  let reqMins=0,actualMins=0,surplusMins=0,deficitMins=0,deficitDays=0,workDays=0;
   for(let d=1;d<=lastDate;d++){
     const ds=`${year}-${pad(month+1)}-${pad(d)}`;
     const{status,actualMins:am,minMins}=getDayStatus(ds,reports);
-    if(status==='vacation')continue;
-    reqMins+=minMins;
-    actualMins+=am;
+    if(status==='nostandard')continue;
+    workDays++;reqMins+=minMins;actualMins+=am;
     const diff=am-minMins;
     if(diff>0)surplusMins+=diff;
-    else if(diff<0)deficitMins+=Math.abs(diff);
+    else if(diff<0){deficitMins+=Math.abs(diff);deficitDays++;}
   }
   const balance=surplusMins-deficitMins;
   const balClass=balance>=0?'balpos':'balneg';
+  const pctAch=reqMins>0?Math.round(actualMins/reqMins*100):null;
+  const pctColor=pctAch==null?'var(--text3)':pctAch>=100?'var(--lime)':pctAch>=80?'var(--amber)':'var(--red)';
+
   el.innerHTML=`
+    <div class="wc-stat"><div class="wc-stat-lbl">ימי תקן</div><div class="wc-stat-val">${workDays}</div></div>
     <div class="wc-stat"><div class="wc-stat-lbl">נדרש</div><div class="wc-stat-val">${minsToHHMM(reqMins)}</div></div>
     <div class="wc-stat actual-s"><div class="wc-stat-lbl">בפועל</div><div class="wc-stat-val">${minsToHHMM(actualMins)}</div></div>
     <div class="wc-stat surplus-s"><div class="wc-stat-lbl">עודף</div><div class="wc-stat-val">${minsToHHMM(surplusMins)}</div></div>
     <div class="wc-stat deficit-s"><div class="wc-stat-lbl">חוסר</div><div class="wc-stat-val">${minsToHHMM(deficitMins)}</div></div>
-    <div class="wc-stat ${balClass}"><div class="wc-stat-lbl">מאזן</div><div class="wc-stat-val">${balance>=0?'+':''}${minsToHHMM(balance)}</div></div>`;
+    <div class="wc-stat ${balClass}"><div class="wc-stat-lbl">מאזן</div><div class="wc-stat-val">${balance>=0?'+':''}${minsToHHMM(balance)}</div></div>
+    <div class="wc-stat" style="${pctAch!=null?'border-color:'+pctColor:''}"><div class="wc-stat-lbl">עמידה ביעד</div><div class="wc-stat-val" style="color:${pctColor}">${pctAch!=null?pctAch+'%':'—'}</div></div>
+    <div class="wc-stat deficit-s"><div class="wc-stat-lbl">ימי חוסר</div><div class="wc-stat-val" style="color:${deficitDays>0?'var(--red)':'var(--text)'}">${deficitDays}</div></div>`;
+  // also update achievement stat card
+  const ac=$('stat-achievement-card');
+  if(ac){ac.style.display='none';}
 }
 
-/* Open day edit modal */
+/* ─ Edit day modal ─ */
 let _editDs='';
 function editDayConfig(ds){
   _editDs=ds;
-  const wc=getWorkcal(),cfg=wc.days[ds]||{};
-  const[y,m,d]=ds.split('-');
-  $('dayedit-title').textContent=`📅 עריכת יום — ${d}/${m}/${y}`;
-  // Show actual work info
   const reports=store(K.reps)||[];
+  const{stdHours,notes,isWorkDay}=getDayStd(ds);
   const{actualMins,wdStr}=getDayStatus(ds,reports);
-  $('dayedit-info').textContent=`שעות עבודה בפועל: ${wdStr}`;
-  $('dayedit-vacation').checked=cfg.vacation===true;
-  const minVal=cfg.minHours!==undefined&&cfg.minHours!==null&&cfg.minHours!==''?cfg.minHours:'';
-  $('dayedit-min').value=minVal;
-  $('dayedit-min-row').style.opacity=cfg.vacation?'0.4':'1';
+  const[y,m,d]=ds.split('-');
+  $('dayedit-title').textContent=`📅 ${d}/${m}/${y} — ${hebDow(ds)}`;
+  const infoEl=$('dayedit-info');
+  infoEl.innerHTML=`
+    <div><span style="color:var(--text3);font-size:.7rem">יום בשבוע</span><span style="margin-right:8px;color:var(--text)">${hebDow(ds)}</span></div>
+    <div><span style="color:var(--text3);font-size:.7rem">שעות בפועל</span><span style="margin-right:8px;color:${actualMins>0?'var(--blue)':'var(--text3)'};font-weight:700">${wdStr}</span></div>
+    ${isWorkDay?`<div><span style="color:var(--text3);font-size:.7rem">תקן נוכחי</span><span style="margin-right:8px;color:var(--amber)">${minsToHHMM(Math.round(stdHours*60))}</span></div>`:''}`;
+  $('dayedit-stdhours').value=stdHours>0?stdHours:'';
+  $('dayedit-notes').value=notes;
+  $('dayedit-offline-hint').style.display=navigator.onLine?'none':'';
   openM('modal-dayedit');
 }
-function saveDayConfig(){
+
+async function saveDayConfig(){
   if(!_editDs)return;
-  const wc=getWorkcal();
-  const vac=$('dayedit-vacation').checked;
-  const minVal=$('dayedit-min').value;
-  const cfg={};
-  if(vac)cfg.vacation=true;
-  if(!vac&&minVal!=='')cfg.minHours=Number(minVal);
-  if(Object.keys(cfg).length)wc.days[_editDs]=cfg;
-  else delete wc.days[_editDs];
-  saveWorkcal(wc);
+  const stdHours=$('dayedit-stdhours').value===''?0:Number($('dayedit-stdhours').value);
+  const notes=$('dayedit-notes').value.trim();
+  const btn=$('btn-dayedit-save');
+  btn.disabled=true;btn.textContent='...';
+  await setDayStd(_editDs,stdHours,notes);
+  btn.disabled=false;btn.textContent='⚡ שמור וסנכרן';
   closeM('modal-dayedit');
-  toast('✅ יום עודכן','success');buzz([20]);
+  buzz([20,20]);
 }
 
-/* Work calendar settings init */
+/* ─ WorkStandard settings init ─ */
 function workcalInit(){
-  $('btn-open-workcal').addEventListener('click',()=>openWorkcalSettings());
+  $('btn-open-workcal').addEventListener('click',openWorkcalSettings);
   $('btn-close-workcal').addEventListener('click',()=>closeM('modal-workcal'));
+  $('btn-close-workcal2').addEventListener('click',()=>closeM('modal-workcal'));
   $('modal-workcal').addEventListener('click',e=>{if(e.target===$('modal-workcal'))closeM('modal-workcal')});
-  $('btn-save-workcal').addEventListener('click',()=>{
-    const wc=getWorkcal();
-    wc.defaultMin=Number($('wc-default-min').value)||0;
-    saveWorkcal(wc);
-    closeM('modal-workcal');
-    toast('✅ הגדרות שמורות','success');buzz([20,20,40]);
-  });
-  $('btn-wc-apply-range').addEventListener('click',()=>{
-    const from=$('wc-range-from').value,to=$('wc-range-to').value,minH=$('wc-range-min').value;
-    if(!from||!to){toast('⚠️ יש לבחור תאריכים','warn');return}
-    if(from>to){toast('⚠️ תאריך התחלה גדול מהסיום','warn');return}
-    const wc=getWorkcal();
-    let cur=new Date(from);
-    const end=new Date(to);
-    let cnt=0;
-    while(cur<=end){
-      const ds=isoD(cur);
-      const cfg=wc.days[ds]||{};
-      if(!cfg.vacation){// don't overwrite vacation days
-        if(minH!=='')cfg.minHours=Number(minH);
-        wc.days[ds]=cfg;cnt++;
-      }
-      cur.setDate(cur.getDate()+1);
-    }
-    saveWorkcal(wc);
-    toast(`✅ עודכנו ${cnt} ימים`,'success');buzz([20,20]);
+  $('btn-sync-wstandard').addEventListener('click',async()=>{
+    const btn=$('btn-sync-wstandard');
+    btn.disabled=true;btn.textContent='⏳ מסנכרן...';
+    await syncWStandard(false);
+    btn.disabled=false;btn.textContent='🔄 סנכרן מגיליון';
+    updateSyncStatus();
   });
   $('btn-close-dayedit').addEventListener('click',()=>closeM('modal-dayedit'));
   $('btn-dayedit-cancel').addEventListener('click',()=>closeM('modal-dayedit'));
   $('btn-dayedit-save').addEventListener('click',saveDayConfig);
   $('modal-dayedit').addEventListener('click',e=>{if(e.target===$('modal-dayedit'))closeM('modal-dayedit')});
-  $('dayedit-vacation').addEventListener('change',e=>{
-    $('dayedit-min-row').style.opacity=e.target.checked?'0.4':'1';
-    $('dayedit-min').disabled=e.target.checked;
-  });
 }
+
+function updateSyncStatus(){
+  const el=$('wstandard-sync-status');if(!el)return;
+  const last=store('mwl_wstandard_sync');
+  const count=getWStandard().length;
+  el.textContent=last?`✅ סנכרן לאחרונה: ${last} · ${count} ימים בתקן`:'טרם בוצע סנכרון';
+}
+
 function openWorkcalSettings(){
-  const wc=getWorkcal();
-  $('wc-default-min').value=wc.defaultMin||0;
-  $('wc-range-from').value='';$('wc-range-to').value='';$('wc-range-min').value='';
+  updateSyncStatus();
   openM('modal-workcal');
 }
 
@@ -2049,6 +2127,8 @@ async function syncFromSheet(){
       if(toAdd.length){store(K.proj,[...localP,...toAdd]);projLoad();projChipsRender();}
     }
   }catch(_){}
+  // Also sync WorkStandard
+  await syncWStandard(true);
 }
 
 /* Push a new project to GAS */
