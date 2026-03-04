@@ -168,6 +168,8 @@ html,body{height:100%;background:var(--bg0);color:var(--text);
   border-radius:var(--rs);padding:11px 13px;font-family:var(--fhe);font-size:.92rem;
   transition:border-color .2s;width:100%;color-scheme:dark}
 .fi:focus{outline:none;border-color:var(--lime)}
+.fi.input-err{border-color:var(--red)!important;animation:shake .35s ease}
+@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-6px)}40%{transform:translateX(6px)}60%{transform:translateX(-4px)}80%{transform:translateX(4px)}}
 .fi::placeholder{color:var(--text3)}
 textarea.fi{resize:vertical;min-height:72px}
 .fhint{font-size:.68rem;color:var(--text3)}
@@ -354,9 +356,8 @@ textarea.fi{resize:vertical;min-height:72px}
 .wc-cell.ok .wc-actual{color:rgba(200,241,53,.75)}
 .wc-cell.deficit .wc-actual{color:rgba(255,77,106,.8)}
 .wc-vac-icon{font-size:.6rem;line-height:1}
-.wc-stats-row{display:flex;gap:6px;overflow-x:auto;padding:2px 1px;-webkit-overflow-scrolling:touch}
-.wc-stats-row::-webkit-scrollbar{height:2px}
-.wc-stat{flex-shrink:0;background:var(--bg3);border:1px solid var(--border);border-radius:var(--rs);
+.wc-stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;padding:2px 1px}
+.wc-stat{background:var(--bg3);border:1px solid var(--border);border-radius:var(--rs);
   padding:10px 11px;display:flex;flex-direction:column;gap:3px;min-width:64px}
 .wc-stat-lbl{font-size:.58rem;color:var(--text3);font-weight:700;text-transform:uppercase;letter-spacing:1px}
 .wc-stat-val{font-family:'Syne',monospace;font-size:.95rem;font-weight:800;color:var(--text)}
@@ -1648,7 +1649,15 @@ function buildRep(date,time){
   const cat=ST.cat;let rTime=time,desc='',proj='';
   if(cat==='task'){
     desc=$('task-desc').value.trim();proj=$('task-project').value.trim();
-    if(!proj){toast('⚠️ יש לבחור פרויקט','warn');buzz([80]);return null}
+    if(!proj){
+      const inp=$('task-project');
+      inp.classList.remove('input-err'); // reset to retrigger animation
+      void inp.offsetWidth;
+      inp.classList.add('input-err');
+      inp.focus();
+      setTimeout(()=>inp.classList.remove('input-err'),1500);
+      toast('⚠️ יש להזין שם פרויקט','warn');buzz([80,40,80]);return null;
+    }
     // auto-save new project
     const ps=store(K.proj)||[];
     if(proj&&!ps.includes(proj)){ps.push(proj);store(K.proj,ps);projLoad();}
@@ -1778,28 +1787,53 @@ const HEB_DOW=['ראשון','שני','שלישי','רביעי','חמישי','ש�
 function hebDow(ds){const d=new Date(ds);return HEB_DOW[d.getDay()];}
 
 /* Actual work minutes for a day */
+/* Parse a task report_time string → minutes
+   Duration mode: "H:MM"       → h*60+m
+   Range mode:    "HH:MM-HH:MM" → end-start           */
+function parseTaskMins(rt){
+  if(!rt)return 0;
+  if(rt.includes('-')){
+    const[s,e]=rt.split('-');
+    if(!s||!e)return 0;
+    const[sh,sm]=s.split(':').map(Number);
+    const[eh,em]=e.split(':').map(Number);
+    const d=(eh*60+em)-(sh*60+sm);
+    return d>0?d:0;
+  }
+  const[h,m]=rt.split(':').map(Number);
+  return(h||0)*60+(m||0);
+}
+
+/* Returns {mins, fromTasks}
+   fromTasks=true  → no entry/exit found, fell back to task sum */
 function calcDayWorkMins(ds,reports){
   const dr=reports.filter(r=>r.report_date===ds);
   const en=dr.filter(r=>r.category==='entry').map(r=>r.report_time).filter(Boolean).sort();
   const ex=dr.filter(r=>r.category==='exit').map(r=>r.report_time).filter(Boolean).sort();
-  if(!en.length||!ex.length)return 0;
-  const[eh,em]=en[0].split(':').map(Number);
-  const[xh,xm]=ex[ex.length-1].split(':').map(Number);
-  const d=(xh*60+xm)-(eh*60+em);
-  return d>0?d:0;
+  if(en.length&&ex.length){
+    const[eh,em]=en[0].split(':').map(Number);
+    const[xh,xm]=ex[ex.length-1].split(':').map(Number);
+    const d=(xh*60+xm)-(eh*60+em);
+    return{mins:d>0?d:0,fromTasks:false};
+  }
+  // Fallback: sum task durations
+  const tasks=dr.filter(r=>r.category==='task');
+  if(!tasks.length)return{mins:0,fromTasks:false};
+  const total=tasks.reduce((s,r)=>s+parseTaskMins(r.report_time),0);
+  return{mins:total,fromTasks:true};
 }
 
 /* Full status for a day */
 function getDayStatus(ds,reports){
   const{stdHours,notes,isWorkDay}=getDayStd(ds);
-  const actualMins=calcDayWorkMins(ds,reports);
+  const{mins:actualMins,fromTasks}=calcDayWorkMins(ds,reports);
   const wdStr=actualMins>0?`${pad(Math.floor(actualMins/60))}:${pad(actualMins%60)}`:'-';
-  if(!isWorkDay)return{status:'nostandard',actualMins,minMins:0,diffMins:actualMins,wdStr,notes,pct:null};
+  if(!isWorkDay)return{status:'nostandard',actualMins,minMins:0,diffMins:actualMins,wdStr,notes,pct:null,fromTasks};
   const minMins=Math.round(stdHours*60);
   const diffMins=actualMins-minMins;
   const status=diffMins>=0?'ok':'deficit';
   const pct=minMins>0?Math.min(999,Math.round(actualMins/minMins*100)):100;
-  return{status,actualMins,minMins,diffMins,wdStr,notes,pct};
+  return{status,actualMins,minMins,diffMins,wdStr,notes,pct,fromTasks};
 }
 
 function minsToHHMM(m){
@@ -1946,6 +1980,7 @@ function renderDayWCStatus(ds,reports){
     html+=`<span style="font-size:.82rem;color:var(--text2)">תקן: <strong style="color:var(--amber)">${minsToHHMM(minMins)}</strong></span>`;
     if(status==='deficit')html+=`<span style="font-size:.82rem;color:var(--red)">חסר: <strong>${minsToHHMM(Math.abs(diffMins))}</strong></span>`;
     if(status==='ok'&&diffMins>0)html+=`<span style="font-size:.82rem;color:var(--lime)">עודף: <strong>${minsToHHMM(diffMins)}</strong></span>`;
+    if(fromTasks)html+=`<span style="font-size:.75rem;color:var(--amber);display:flex;align-items:center;gap:4px;margin-top:2px">⚠️ חושב ממשימות — חסרים נתוני כניסה/יציאה</span>`;
   }
   $('day-wc-content').innerHTML=html;
   // Progress meter
@@ -1988,14 +2023,14 @@ function renderWCCalendar(year,month,reports){
   for(let i=0;i<startDow;i++)html+='<div class="wc-empty-cell"></div>';
   for(let d=1;d<=lastDate;d++){
     const ds=`${year}-${pad(month+1)}-${pad(d)}`;
-    const{status,actualMins,wdStr,notes,minMins}=getDayStatus(ds,reports);
+    const{status,actualMins,wdStr,notes,minMins,fromTasks}=getDayStatus(ds,reports);
     const isToday=ds===todayStr;
     const showActual=actualMins>0;
     const cellClass=status==='nostandard'?'':status;
     const stdStr=minMins>0?minsToHHMM(minMins):'';
     html+=`<div class="wc-cell ${cellClass}${isToday?' today':''}" onclick="editDayConfig('${ds}')">
       <span class="wc-day-num">${d}</span>
-      ${showActual?`<span class="wc-actual">${wdStr}</span>`:''}
+      ${showActual?`<span class="wc-actual">${wdStr}${fromTasks?'*':''}</span>`:''}
       ${stdStr&&!showActual?`<span class="wc-actual" style="color:var(--text3)">${stdStr}</span>`:''}
       ${notes?`<span class="wc-vac-icon" title="${notes}">📝</span>`:''}
     </div>`;
