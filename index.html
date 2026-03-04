@@ -1434,8 +1434,8 @@ function splashInit(){
       applyLang(window._lang||'he');
       summaryRender();
       updateMenuSheetLink();
-      // Auto-pull WorkStandard on every launch
-      setTimeout(()=>syncWStandard(true).then(()=>summaryRender()),1500);
+      // Auto-pull WorkStandard on every launch (not quiet — show GAS errors)
+      setTimeout(()=>syncWStandard(false).then(ok=>{ if(ok) summaryRender(); }),2500);
     },420);
   },900);
 }
@@ -1760,20 +1760,52 @@ function minsToHHMM(m){
   return`${sign}${Math.floor(abs/60)}:${pad(abs%60)}`;
 }
 
-/* Sync WorkStandard from sheet */
+/* Sync WorkStandard from sheet → local cache */
 async function syncWStandard(quiet=false){
   const ep=store(K.ep);
-  if(!ep||!navigator.onLine){if(!quiet)toast('⚠️ אין חיבור לגיליון','warn');return false;}
+  if(!ep){
+    if(!quiet)toast('⚠️ לא הוגדר Endpoint — פתח הגדרות','warn',4000);
+    return false;
+  }
+  if(!navigator.onLine){
+    if(!quiet)toast('📴 אין חיבור — לא ניתן לסנכרן','warn');
+    return false;
+  }
   try{
     const res=await fetch(ep+'?action=getWorkStandard&t='+Date.now(),{cache:'no-store'});
+    if(!res.ok)throw new Error('HTTP '+res.status);
     const data=await res.json();
-    if(!Array.isArray(data.workStandard))return false;
+
+    /* GAS returned error */
+    if(data.status==='error'){
+      if(!quiet)toast('❌ GAS שגיאה: '+(data.message||''),'error',5000);
+      return false;
+    }
+
+    /* GAS is old version — no getWorkStandard action */
+    if(!Array.isArray(data.workStandard)){
+      // Always show this error — user must redeploy GAS
+      toast('⚠️ ה-GAS אינו כולל WorkStandard — יש לפרוס מחדש (New Deployment)','warn',7000);
+      return false;
+    }
+
+    /* Don't overwrite local data with an empty server response */
+    const local=getWStandard();
+    if(data.workStandard.length===0&&local.length>0){
+      if(!quiet)toast('⚠️ הגיליון ריק — הנתונים המקומיים נשמרו','warn');
+      return false;
+    }
+
     saveWStandardLocal(data.workStandard);
     store('mwl_wstandard_sync',new Date().toLocaleString('he-IL'));
-    if(!quiet)toast('✅ WorkStandard עודכן — '+data.workStandard.length+' ימים','success');
     summaryRender();
+    if(!quiet)toast('✅ WorkStandard סונכרן — '+data.workStandard.length+' ימים','success');
     return true;
-  }catch(e){if(!quiet)toast('❌ שגיאת סנכרון','error');return false;}
+  }catch(err){
+    console.error('[syncWStandard]',err);
+    if(!quiet)toast('❌ שגיאת סנכרון: '+err.message,'error',5000);
+    return false;
+  }
 }
 
 /* Push one day's standard to sheet */
@@ -1783,39 +1815,66 @@ async function setDayStd(ds,stdHours,notes){
   const idx=std.findIndex(r=>r.date===ds);
   const rec={date:ds,weekDay:wd,stdHours:Number(stdHours)||0,notes:notes||''};
   if(idx>=0)std[idx]=rec;else std.push(rec);
-  // sort by date
   std.sort((a,b)=>a.date<b.date?-1:1);
   saveWStandardLocal(std);
   summaryRender();
   const ep=store(K.ep);
-  if(ep&&navigator.onLine){
-    try{
-      await fetch(ep,{method:'POST',headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({action:'setDayStandard',date:ds,weekDay:wd,stdHours:Number(stdHours)||0,notes:notes||''}),
-        mode:'no-cors'});
-      toast('✅ עודכן בגיליון','success');
-    }catch(_){toast('⚠️ נשמר מקומית — יסונכרן בחיבור','warn');}
-  }else{
-    // queue for later
-    const q=store('mwl_wstandard_queue')||[];
-    q.push({date:ds,weekDay:wd,stdHours:Number(stdHours)||0,notes:notes||''});
-    store('mwl_wstandard_queue',q);
-    toast('📴 נשמר מקומית — יסונכרן בחיבור','warn');
+  if(!ep){toast('⚠️ לא הוגדר Endpoint — פתח הגדרות','warn');return;}
+  if(!navigator.onLine){
+    _wstdQueue(rec);
+    toast('📴 נשמר מקומית — יסונכרן כשיחזור חיבור','warn');
+    return;
+  }
+  await _wstdSend(rec);
+}
+
+/* Send one WorkStandard record to GAS.
+   MUST use text/plain — application/json triggers CORS preflight
+   which no-cors mode cannot handle and the body is silently dropped. */
+async function _wstdSend(rec){
+  const ep=store(K.ep);if(!ep)return false;
+  try{
+    const body=JSON.stringify({
+      action:'setDayStandard',
+      date:rec.date,weekDay:rec.weekDay,
+      stdHours:rec.stdHours,notes:rec.notes
+    });
+    await fetch(ep,{
+      method:'POST',
+      headers:{'Content-Type':'text/plain;charset=UTF-8'},
+      body,
+      mode:'no-cors'
+    });
+    // no-cors response is opaque — verify by re-syncing
+    setTimeout(()=>syncWStandard(true),1200);
+    toast('✅ נשמר בגיליון WorkStandard','success');
+    return true;
+  }catch(err){
+    console.warn('[wstd send]',err);
+    _wstdQueue(rec);
+    toast('⚠️ שמירה נכשלה — בתור לשליחה','warn');
+    return false;
   }
 }
 
-/* Flush queued wstandard updates */
+function _wstdQueue(rec){
+  const q=store('mwl_wstandard_queue')||[];
+  const i=q.findIndex(r=>r.date===rec.date);
+  if(i>=0)q[i]=rec;else q.push(rec);
+  store('mwl_wstandard_queue',q);
+}
+
+/* Flush queued wstandard updates when back online */
 async function flushWStandardQueue(){
   const ep=store(K.ep);if(!ep||!navigator.onLine)return;
   const q=store('mwl_wstandard_queue')||[];if(!q.length)return;
   const fail=[];
   for(const item of q){
-    try{
-      await fetch(ep,{method:'POST',headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({action:'setDayStandard',...item}),mode:'no-cors'});
-    }catch(_){fail.push(item);}
+    const ok=await _wstdSend(item);
+    if(!ok)fail.push(item);
   }
   store('mwl_wstandard_queue',fail);
+  if(fail.length===0&&q.length>0)toast('✅ כל עדכוני WorkStandard נשלחו','success');
 }
 
 /* ─ Daily status card ─ */
@@ -1993,7 +2052,19 @@ function updateSyncStatus(){
   const el=$('wstandard-sync-status');if(!el)return;
   const last=store('mwl_wstandard_sync');
   const count=getWStandard().length;
-  el.textContent=last?`✅ סנכרן לאחרונה: ${last} · ${count} ימים בתקן`:'טרם בוצע סנכרון';
+  const q=(store('mwl_wstandard_queue')||[]).length;
+  const ep=store(K.ep);
+  let html='';
+  if(!ep){
+    html='<span style="color:var(--red)">⚠️ Endpoint לא הוגדר — פתח הגדרות ולחץ שמור</span>';
+  }else if(last){
+    html=`✅ סנכרן: ${last} · ${count} ימים`;
+    if(q>0)html+=` · <span style="color:var(--amber)">⏳ ${q} ממתינים לשליחה</span>`;
+  }else{
+    html=`<span style="color:var(--amber)">לא סונכרן עדיין — לחץ "משוך מגיליון"</span>`;
+    if(q>0)html+=` · ⏳ ${q} עדכונים בתור`;
+  }
+  el.innerHTML=html;
 }
 
 function openWorkcalSettings(){
