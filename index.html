@@ -19,7 +19,7 @@
   --bg0:#0a0a0f;--bg1:#111118;--bg2:#16161f;--bg3:#1c1c28;
   --glass:rgba(255,255,255,.04);--glass2:rgba(255,255,255,.07);
   --border:rgba(255,255,255,.08);--border2:rgba(255,255,255,.14);
-  --lime:#c8f135;--lime2:#a8d420;--limeDim:rgba(200,241,53,.12);
+  --lime:#52d68a;--lime2:#3bb870;--limeDim:rgba(82,214,138,.12);
   --red:#ff4d6a;--redDim:rgba(255,77,106,.12);
   --blue:#4dabff;--blueDim:rgba(77,171,255,.12);
   --amber:#ffb830;--amberDim:rgba(255,184,48,.12);
@@ -379,6 +379,7 @@ textarea.fi{resize:vertical;min-height:72px}
 .wc-legend-dot.vacation{background:var(--amber)}
 .wc-sect-lbl{font-size:.67rem;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:1.5px;margin:2px 0 6px}
 .workcal-hint{font-size:.72rem;color:var(--text3);text-align:center;padding:6px 0}
+details summary::-webkit-details-marker{display:none}
 .wc-range-row{display:flex;flex-direction:column;gap:8px}
 .wc-min-row{display:flex;gap:8px;align-items:flex-end}
 .wc-min-row .fg{flex:1}
@@ -422,12 +423,14 @@ textarea.fi{resize:vertical;min-height:72px}
       <button class="menu-item" id="menu-settings-btn" data-i18n="menuSettings">⚙️ הגדרות</button>
       <button class="menu-item" id="menu-help-btn">📄 עזרה — Apps Script</button>
       <button class="menu-item" id="menu-gs-btn">🔗 קוד google-apps-script.gs</button>
+      <hr class="menu-div"/>
+      <button class="menu-item" id="menu-wstandard-btn">📊 תקן שעות — WorkStandard</button>
     </nav>
     <div class="menu-foot" style="display:flex;flex-direction:column;gap:8px">
       <a id="menu-sheet-link" href="#" target="_blank" rel="noopener" style="display:none;align-items:center;gap:7px;font-size:.8rem;color:var(--blue);text-decoration:none;padding:3px 2px">
         📊 פתח גיליון הדיווחים
       </a>
-      <span id="menu-vbadge" class="vbadge" title="לחץ לאיפוס">v2.4.1</span>
+      <span id="menu-vbadge" class="vbadge" title="לחץ לאיפוס">v2.4.2</span>
     </div>
   </aside>
 
@@ -439,7 +442,7 @@ textarea.fi{resize:vertical;min-height:72px}
         <span class="hdr-name">MyWorkLog</span>
       </div>
       <div class="hdr-acts">
-        <span id="version-badge" class="vbadge" title="לחץ לאיפוס">v2.4.1</span>
+        <span id="version-badge" class="vbadge" title="לחץ לאיפוס">v2.4.2</span>
       </div>
     </div>
   </header>
@@ -582,7 +585,6 @@ textarea.fi{resize:vertical;min-height:72px}
           <span id="sum-period-label" class="period-lbl"></span>
           <button class="ibtn" id="sum-next">&rsaquo;</button>
         </div>
-        <button id="btn-open-workcal" class="btn-g sm" style="align-self:flex-end;margin-top:2px">&#128197; &#1492;&#1490;&#1491;&#1512;&#1514; &#1502;&#1497;&#1504;&#1497;&#1502;&#1493;&#1501; &#1513;&#1506;&#1493;&#1514;</button>
       </div>
       <div class="stats-grid">
         <div class="stat-card"><div class="stat-lbl" data-i18n="statEntries">&#1499;&#1504;&#1497;&#1505;&#1493;&#1514;</div><div class="stat-val" id="stat-entries">0</div></div>
@@ -612,9 +614,16 @@ textarea.fi{resize:vertical;min-height:72px}
       </div>
       <!-- Monthly work calendar (month view only) -->
       <div id="monthly-wc-section" style="display:none">
-        <div class="card">
-          <div class="wc-sect-lbl">&#128202; &#1502;&#1488;&#1494;&#1503; &#1513;&#1506;&#1493;&#1514; &#1495;&#1493;&#1491;&#1513;&#1497;</div>
-          <div id="monthly-wc-stats" class="wc-stats-row"></div>
+        <div class="card" style="padding:0;overflow:hidden">
+          <details id="monthly-wc-details" open>
+            <summary style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;cursor:pointer;list-style:none;user-select:none" onclick="event.preventDefault();toggleMonthlyStats()">
+              <span class="wc-sect-lbl" style="margin:0">&#128202; &#1502;&#1488;&#1494;&#1503; &#1513;&#1506;&#1493;&#1514; &#1495;&#1493;&#1491;&#1513;&#1497;</span>
+              <span id="monthly-stats-chevron" style="font-size:.75rem;color:var(--text3);transition:transform .25s">&#9650;</span>
+            </summary>
+            <div id="monthly-wc-stats-wrap" style="padding:0 14px 14px">
+              <div id="monthly-wc-stats" class="wc-stats-row"></div>
+            </div>
+          </details>
         </div>
         <div class="card">
           <div class="wc-sect-lbl" style="margin-bottom:8px">&#128197; &#1500;&#1493;&#1495; &#1506;&#1489;&#1493;&#1491;&#1492; &#1495;&#1493;&#1491;&#1513;&#1497;</div>
@@ -1382,7 +1391,7 @@ function applyLang(lang){
 /* ─────────────────────────────────────────────────────
    App
 ───────────────────────────────────────────────────── */
-const VER='2.4.1';
+const VER='2.4.2';
 const K={ep:'mwl_endpoint',reps:'mwl_reports',q:'mwl_queue',delQ:'mwl_delete_queue',proj:'mwl_projects',
   lang:'mwl_lang',theme:'mwl_theme',prefs:'mwl_prefs',ver:'mwl_version',inst:'mwl_install_dismissed',sheetUrl:'mwl_sheet_url',
   wstandard:'mwl_wstandard'};
@@ -1420,7 +1429,7 @@ document.addEventListener('DOMContentLoaded',()=>{
     toast(t('toastNowUpdated'));buzz([20]);
   });
   netInit();netQInit();projLoad();histRender();
-  flushDeleteQueue();setTimeout(()=>{syncFromSheet();flushWStandardQueue();},2000);
+  flushDeleteQueue();
   menuInit();vBadgeInit();swipeInit();ptrInit();swInit();installInit();scrollInit();
 });
 
@@ -1434,10 +1443,29 @@ function splashInit(){
       applyLang(window._lang||'he');
       summaryRender();
       updateMenuSheetLink();
-      // Auto-pull WorkStandard on every launch (not quiet — show GAS errors)
-      setTimeout(()=>syncWStandard(false).then(ok=>{ if(ok) summaryRender(); }),2500);
+      // Background sync: projects + WorkStandard on every launch
+      setTimeout(bgSync, 2000);
     },420);
   },900);
+}
+
+/* Background sync on launch */
+async function bgSync(){
+  const ep=store(K.ep);
+  if(!ep||!navigator.onLine)return;
+  // Flush any queued reports
+  flushWStandardQueue();
+  // Sync projects silently
+  try{
+    const res=await fetch(ep+'?action=getProjects&t='+Date.now(),{cache:'no-store'});
+    if(res.ok){
+      const d=await res.json();
+      if(Array.isArray(d.projects)&&d.projects.length){store(K.proj,d.projects);projLoad();}
+    }
+  }catch(_){}
+  // Sync WorkStandard silently (quiet=true, no toast unless error)
+  const ok=await syncWStandard(true);
+  if(ok)summaryRender();
 }
 
 /* VERSION */
@@ -1527,6 +1555,7 @@ function menuInit(){
   });
   document.querySelectorAll('.menu-item[data-tab]').forEach(el=>el.addEventListener('click',()=>switchTab(el.dataset.tab)));
   updateMenuSheetLink();
+  $('menu-wstandard-btn')?.addEventListener('click',()=>{menuClose();openWorkcalSettings();});
 }
 function updateMenuSheetLink(){
   const su=store(K.sheetUrl);
@@ -1601,11 +1630,17 @@ function submitInit(){
     const date=$('report-date').value,time=$('report-time').value;
     if(!date||!time){toast(t('toastNoTime'),'warn');buzz([80]);return}
     const rep=buildRep(date,time);if(!rep)return;
-    saveLocal(rep);histRender();resetForm();
+
+    // ── Save locally and reset UI immediately ─────────────────
+    saveLocal(rep);histRender();summaryRender();resetForm();
+    buzz([30,20,60]);
+    toast('💾 נשמר מקומית...','success',1200);
+
+    // ── Send to sheet in background ───────────────────────────
     const ep=store(K.ep);
     if(!ep){toast(t('toastNoEndpoint'),'warn');addQ(rep);pendUI();return}
     if(!navigator.onLine){toast(t('toastSavedOffline'),'warn');addQ(rep);pendUI();return}
-    await send(rep,ep);
+    sendBackground(rep,ep);
   });
   $('btn-sync')?.addEventListener('click',syncQ);
 }
@@ -1630,14 +1665,27 @@ function buildRep(date,time){
   return{id:Date.now()+Math.random().toString(36).slice(2),timestamp:new Date().toISOString(),
     report_date:date,report_time:rTime,category:cat,description:desc,project:proj};
 }
+/* Legacy blocking send — used only by syncQ */
 async function send(rep,ep){
-  const btn=$('btn-submit');btn.classList.add('loading');
-  btn.querySelector('.btn-text').textContent=t('btnSubmitting');
   try{
     await fetch(ep,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(rep),mode:'no-cors'});
-    toast(t('toastSent'),'success');markSent(rep.id);buzz([30,20,60]);
-  }catch{toast(t('toastSendError'),'error');addQ(rep);pendUI();buzz([100])}
-  finally{btn.classList.remove('loading');btn.querySelector('.btn-text').textContent=t('btnSubmit')}
+    markSent(rep.id);
+  }catch{addQ(rep);pendUI();}
+}
+
+/* Non-blocking background send for new reports */
+function sendBackground(rep,ep){
+  const catLabels={entry:'כניסה',exit:'יציאה',task:'משימה'};
+  const label=catLabels[rep.category]||rep.category;
+  fetch(ep,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(rep),mode:'no-cors'})
+    .then(()=>{
+      markSent(rep.id);
+      toast(`✅ ${label} נשלח לגיליון`,'success');
+    })
+    .catch(()=>{
+      addQ(rep);pendUI();
+      toast(`⚠️ ${label} בתור — יישלח בחיבור הבא`,'warn',3500);
+    });
 }
 
 /* STORAGE */
@@ -2031,7 +2079,7 @@ async function saveDayConfig(){
 
 /* ─ WorkStandard settings init ─ */
 function workcalInit(){
-  $('btn-open-workcal').addEventListener('click',openWorkcalSettings);
+  $('btn-open-workcal')?.addEventListener('click',openWorkcalSettings); // moved to hamburger
   $('btn-close-workcal').addEventListener('click',()=>closeM('modal-workcal'));
   $('btn-close-workcal2').addEventListener('click',()=>closeM('modal-workcal'));
   $('modal-workcal').addEventListener('click',e=>{if(e.target===$('modal-workcal'))closeM('modal-workcal')});
@@ -2072,6 +2120,16 @@ function openWorkcalSettings(){
   openM('modal-workcal');
 }
 
+
+function toggleMonthlyStats(){
+  const wrap=$('monthly-wc-stats-wrap');
+  const chev=$('monthly-stats-chevron');
+  const details=$('monthly-wc-details');
+  if(!wrap||!details)return;
+  const isOpen=wrap.style.display!=='none';
+  wrap.style.display=isOpen?'none':'';
+  if(chev)chev.style.transform=isOpen?'rotate(0deg)':'rotate(180deg)';
+}
 /* SUMMARY */
 function summaryInit(){
   document.querySelectorAll('.sum-tab').forEach(btn=>btn.addEventListener('click',()=>{
