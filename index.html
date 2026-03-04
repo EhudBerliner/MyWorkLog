@@ -431,7 +431,7 @@ details summary::-webkit-details-marker{display:none}
       <a id="menu-sheet-link" href="#" target="_blank" rel="noopener" style="display:none;align-items:center;gap:7px;font-size:.8rem;color:var(--blue);text-decoration:none;padding:3px 2px">
         📊 פתח גיליון הדיווחים
       </a>
-      <span id="menu-vbadge" class="vbadge" title="לחץ לאיפוס">v2.4.2</span>
+      <span id="menu-vbadge" class="vbadge" title="לחץ לאיפוס">v2.5.0</span>
     </div>
   </aside>
 
@@ -443,7 +443,7 @@ details summary::-webkit-details-marker{display:none}
         <span class="hdr-name">MyWorkLog</span>
       </div>
       <div class="hdr-acts">
-        <span id="version-badge" class="vbadge" title="לחץ לאיפוס">v2.4.2</span>
+        <span id="version-badge" class="vbadge" title="לחץ לאיפוס">v2.5.0</span>
       </div>
     </div>
   </header>
@@ -1392,7 +1392,7 @@ function applyLang(lang){
 /* ─────────────────────────────────────────────────────
    App
 ───────────────────────────────────────────────────── */
-const VER='2.4.2';
+const VER='2.5.0';
 const K={ep:'mwl_endpoint',reps:'mwl_reports',q:'mwl_queue',delQ:'mwl_delete_queue',proj:'mwl_projects',
   lang:'mwl_lang',theme:'mwl_theme',prefs:'mwl_prefs',ver:'mwl_version',inst:'mwl_install_dismissed',sheetUrl:'mwl_sheet_url',
   wstandard:'mwl_wstandard'};
@@ -1432,6 +1432,9 @@ document.addEventListener('DOMContentLoaded',()=>{
   netInit();netQInit();projLoad();histRender();
   flushDeleteQueue();
   menuInit();vBadgeInit();swipeInit();ptrInit();swInit();installInit();scrollInit();
+  backBtnInit();
+  // set initial history state so first back press is handled
+  history.replaceState({ui:'tab',name:'report'},'');
 });
 
 /* SPLASH */
@@ -1469,12 +1472,64 @@ async function bgSync(){
   if(ok)summaryRender();
 }
 
+
+/* ─── Back button (Android / browser) ─────────────────────── */
+function backBtnInit(){
+  window.addEventListener('popstate', e => {
+    const st = e.state || {};
+
+    // 1. Close any open modal
+    const openModal = document.querySelector('.moverlay:not(.hidden)');
+    if(openModal){
+      openModal.classList.add('hidden');
+      document.body.style.overflow='';
+      return;
+    }
+
+    // 2. Close side menu if open
+    if($('side-menu').classList.contains('open')){
+      $('side-menu').classList.remove('open');
+      $('menu-overlay').classList.add('hidden');
+      $('side-menu').setAttribute('aria-hidden','true');
+      return;
+    }
+
+    // 3. Navigate tabs: summary/history → report
+    const cur = document.querySelector('.tab-btn.active')?.dataset?.tab;
+    if(cur && cur !== 'report'){
+      switchTab('report');
+      return;
+    }
+
+    // 4. On report tab — let the OS handle (minimize/exit)
+  });
+}
+
 /* VERSION */
 function verCheck(){
-  const s=store(K.ver);
-  if(s&&s!==VER&&'caches'in window)caches.keys().then(ks=>ks.forEach(k=>caches.delete(k)));
+  const prev=store(K.ver);
+  const isUpgrade = prev && prev !== VER;
+
+  if(isUpgrade){
+    // Clear SW caches so new assets load
+    if('caches'in window) caches.keys().then(ks=>ks.forEach(k=>caches.delete(k)));
+    // Migrate data — NEVER deletes existing user data, only adds missing keys
+    migrateData(prev);
+    console.info(`[verCheck] upgraded ${prev} → ${VER}`);
+  }
+
   store(K.ver,VER);
   document.querySelectorAll('.vbadge').forEach(el=>el.textContent=t('versionLabel',VER));
+}
+
+/* Safe migration: run on every version change.
+   Only ADDS missing defaults — never overwrites existing user data. */
+function migrateData(prevVer){
+  // Ensure wstandard key exists (added in v2.3)
+  if(!store(K.wstandard)) store(K.wstandard,[]);
+  // Ensure queue key exists
+  if(!store('mwl_wstandard_queue')) store('mwl_wstandard_queue',[]);
+  // Keep all other keys as-is — reports, settings, projects, prefs untouched
 }
 function vBadgeInit(){
   [$('version-badge'),$('menu-vbadge')].forEach(el=>{
@@ -1534,13 +1589,17 @@ function dtInit(){const n=new Date();$('report-date').value=isoD(n);$('report-ti
 /* TABS */
 function tabsInit(){document.querySelectorAll('.tab-btn').forEach(b=>b.addEventListener('click',()=>switchTab(b.dataset.tab)))}
 function switchTab(name){
+  menuClose(); // close menu FIRST — before any rendering that could throw
   document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
   document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
   document.querySelector(`.tab-btn[data-tab="${name}"]`)?.classList.add('active');
   $(`tab-${name}`)?.classList.add('active');
-  if(name==='history')histRender();
-  if(name==='summary')summaryRender();
-  buzz([15]);menuClose();
+  try{
+    if(name==='history')histRender();
+    if(name==='summary')summaryRender();
+  }catch(e){console.error('[switchTab render]',e);}
+  buzz([15]);
+  history.pushState({ui:'tab',name},'');
 }
 
 /* MENU */
@@ -1563,8 +1622,18 @@ function updateMenuSheetLink(){
   const el=$('menu-sheet-link');
   if(el){el.style.display=su?'flex':'none';if(su)el.href=su;}
 }
-function menuOpen(){$('side-menu').classList.add('open');$('menu-overlay').classList.remove('hidden');$('side-menu').setAttribute('aria-hidden','false');buzz([20])}
-function menuClose(){$('side-menu').classList.remove('open');$('menu-overlay').classList.add('hidden');$('side-menu').setAttribute('aria-hidden','true')}
+function menuOpen(){
+  $('side-menu').classList.add('open');
+  $('menu-overlay').classList.remove('hidden');
+  $('side-menu').setAttribute('aria-hidden','false');
+  history.pushState({ui:'menu'},'');
+  buzz([20]);
+}
+function menuClose(){
+  $('side-menu').classList.remove('open');
+  $('menu-overlay').classList.add('hidden');
+  $('side-menu').setAttribute('aria-hidden','true');
+}
 
 /* CATEGORY */
 function catInit(){
@@ -1962,7 +2031,7 @@ async function flushWStandardQueue(){
 /* ─ Daily status card ─ */
 function renderDayWCStatus(ds,reports){
   const sec=$('day-wc-section');if(!sec)return;
-  const{status,actualMins,minMins,diffMins,wdStr,notes,pct}=getDayStatus(ds,reports);
+  const{status,actualMins,minMins,diffMins,wdStr,notes,pct,fromTasks}=getDayStatus(ds,reports);
   // Always show section so user can edit standard even when no data
   // Notes
   const notesEl=$('day-wc-notes');
@@ -2262,6 +2331,7 @@ function settingsInit(){
 }
 function openM(id){
   $(id).classList.remove('hidden');document.body.style.overflow='hidden';
+  history.pushState({ui:'modal',id},'');
   if(id==='modal-settings'){
     $('settings-endpoint').value=store(K.ep)||'';
     $('settings-sheet-url').value=store(K.sheetUrl)||'';
@@ -2273,7 +2343,7 @@ function openM(id){
     document.querySelectorAll('.seg-btn[data-lang]').forEach(b=>b.classList.toggle('active',b.dataset.lang===lang));
   }
 }
-function closeM(id){$(id).classList.add('hidden');document.body.style.overflow=''}
+function closeM(id){$(id).classList.add('hidden');document.body.style.overflow='';}
 function settingsSave(){
   const ep=$('settings-endpoint').value.trim();
   if(ep)store(K.ep,ep);else localStorage.removeItem(K.ep);
@@ -2380,22 +2450,43 @@ function swInit(){
   if(!('serviceWorker'in navigator))return;
   navigator.serviceWorker.register('sw.js').then(reg=>{
     ST.swReg=reg;
-    if(reg.waiting)showUpd();
+    // Already waiting (updated in background while tab was open)
+    if(reg.waiting) showUpd();
     reg.addEventListener('updatefound',()=>{
       const sw=reg.installing;
-      sw.addEventListener('statechange',()=>{if(sw.state==='installed'&&navigator.serviceWorker.controller)showUpd()});
+      sw.addEventListener('statechange',()=>{
+        if(sw.state==='installed'&&navigator.serviceWorker.controller) showUpd();
+      });
     });
+    // Poll for updates every 30 min while app is open
+    setInterval(()=>reg.update().catch(()=>{}), 30*60*1000);
   }).catch(()=>{});
-  navigator.serviceWorker.addEventListener('message',e=>{if(e.data?.type==='UPDATE_AVAILABLE')showUpd(e.data.version)});
+  navigator.serviceWorker.addEventListener('message',e=>{
+    if(e.data?.type==='UPDATE_AVAILABLE') showUpd(e.data.version);
+    if(e.data?.type==='SKIP_WAITING') window.location.reload();
+  });
+  // When a new SW takes control, reload to get fresh assets
+  navigator.serviceWorker.addEventListener('controllerchange',()=>{
+    if(!ST._reloading){ST._reloading=true;window.location.reload();}
+  });
 }
-function showUpd(){
-  $('update-prompt').classList.remove('hidden');buzz([30,30,60]);
+function showUpd(newVer){
+  const prompt=$('update-prompt');if(!prompt)return;
+  if(newVer){
+    const lbl=prompt.querySelector('.upd-ver-lbl');
+    if(lbl)lbl.textContent=`גרסה ${newVer} זמינה`;
+  }
+  prompt.classList.remove('hidden');buzz([30,30,60]);
   $('btn-update-now').onclick=()=>{
-    if(ST.swReg?.waiting){ST.swReg.waiting.postMessage({type:'SKIP_WAITING'});navigator.serviceWorker.addEventListener('controllerchange',()=>window.location.reload())}
-    else window.location.reload(true);
-    $('update-prompt').classList.add('hidden');
+    prompt.classList.add('hidden');
+    if(ST.swReg?.waiting){
+      // Tell SW to skip waiting; controllerchange listener above will reload
+      ST.swReg.waiting.postMessage({type:'SKIP_WAITING'});
+    } else {
+      window.location.reload(true);
+    }
   };
-  $('btn-update-dismiss').onclick=()=>$('update-prompt').classList.add('hidden');
+  $('btn-update-dismiss').onclick=()=>prompt.classList.add('hidden');
 }
 
 /* INSTALL PROMPT */
