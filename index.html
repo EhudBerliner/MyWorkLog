@@ -427,7 +427,7 @@ textarea.fi{resize:vertical;min-height:72px}
       <a id="menu-sheet-link" href="#" target="_blank" rel="noopener" style="display:none;align-items:center;gap:7px;font-size:.8rem;color:var(--blue);text-decoration:none;padding:3px 2px">
         📊 פתח גיליון הדיווחים
       </a>
-      <span id="menu-vbadge" class="vbadge" title="לחץ לאיפוס">v2.3.0</span>
+      <span id="menu-vbadge" class="vbadge" title="לחץ לאיפוס">v2.4.0</span>
     </div>
   </aside>
 
@@ -439,7 +439,7 @@ textarea.fi{resize:vertical;min-height:72px}
         <span class="hdr-name">MyWorkLog</span>
       </div>
       <div class="hdr-acts">
-        <span id="version-badge" class="vbadge" title="לחץ לאיפוס">v2.3.0</span>
+        <span id="version-badge" class="vbadge" title="לחץ לאיפוס">v2.4.0</span>
       </div>
     </div>
   </header>
@@ -593,10 +593,22 @@ textarea.fi{resize:vertical;min-height:72px}
         <div class="stat-card" id="stat-achievement-card" style="display:none"><div class="stat-lbl">&#1506;&#1502;&#1497;&#1491;&#1492; &#1489;&#1497;&#1506;&#1491;</div><div class="stat-val" id="stat-achievement" style="font-size:1.4rem">&#8212;</div></div>
         <div class="stat-card" id="stat-days-card" style="display:none"><div class="stat-lbl" data-i18n="statDays">&#1497;&#1502;&#1497;&#1501; &#1508;&#1506;&#1497;&#1500;&#1497;&#1501;</div><div class="stat-val" id="stat-days">0</div></div>
       </div>
-      <!-- Daily status (day view only) -->
+            <!-- Daily status (day view only) -->
       <div id="day-wc-section" class="card" style="display:none">
-        <div class="wc-sect-lbl">&#9200; &#1502;&#1510;&#1489; &#1513;&#1506;&#1493;&#1514; &#1497;&#1493;&#1501;</div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+          <div class="wc-sect-lbl" style="margin:0">&#9200; &#1514;&#1511;&#1503; &#1497;&#1493;&#1501;</div>
+          <button id="btn-edit-today-std" class="btn-g sm" onclick="editTodayStd()" style="font-size:.7rem;padding:4px 10px">&#9998; &#1506;&#1512;&#1493;&#1498; &#1514;&#1511;&#1503;</button>
+        </div>
+        <div id="day-wc-notes" style="display:none;font-size:.78rem;color:var(--amber);margin-bottom:6px;padding:5px 10px;background:var(--amberDim);border-radius:var(--rxs)"></div>
         <div id="day-wc-content" class="day-status-row"><span class="day-status-badge nodata">&#1488;&#1497;&#1503; &#1504;&#1514;&#1493;&#1504;&#1497;&#1501;</span></div>
+        <div id="day-wc-meter" style="display:none;margin-top:8px">
+          <div style="display:flex;justify-content:space-between;font-size:.68rem;color:var(--text3);margin-bottom:3px">
+            <span id="day-wc-meter-label">0%</span><span id="day-wc-meter-std"></span>
+          </div>
+          <div style="height:6px;background:var(--bg3);border-radius:3px;overflow:hidden">
+            <div id="day-wc-meter-bar" style="height:100%;border-radius:3px;transition:width .4s ease,background .4s;width:0%"></div>
+          </div>
+        </div>
       </div>
       <!-- Monthly work calendar (month view only) -->
       <div id="monthly-wc-section" style="display:none">
@@ -757,7 +769,7 @@ textarea.fi{resize:vertical;min-height:72px}
     </div>
     <div class="mfoot mfoot2">
       <button class="btn-g" id="btn-close-workcal2">&#1505;&#1490;&#1493;&#1512;</button>
-      <button class="btn-p sm" id="btn-sync-wstandard">&#128260; &#1505;&#1504;&#1499;&#1512;&#1503; &#1502;&#1490;&#1497;&#1500;&#1497;&#1493;&#1503;</button>
+      <button class="btn-p sm" id="btn-sync-wstandard">&#128260; &#1502;&#1513;&#1493;&#1498; &#1504;&#1514;&#1493;&#1504;&#1497;&#1501; &#1502;&#1492;&#1490;&#1497;&#1500;&#1497;&#1493;&#1503;</button>
     </div>
   </div>
 </div>
@@ -967,70 +979,74 @@ textarea.fi{resize:vertical;min-height:72px}
 </div>
 <!-- GS CODE BLOB (embedded for download) -->
 <pre id="gs-code-blob" style="display:none">// ============================================================
-//  MyWorkLog – Google Apps Script  v2.1
+//  MyWorkLog – Google Apps Script  v2.4
 //  הדבק קוד זה ב-Apps Script של הגיליון שלך
 //  לאחר מכן: Deploy &gt; New deployment &gt; Web App
 //  ✅ הרשאות: Anyone (אנונימי) / Execute as: Me
 // ============================================================
 
-const SHEET_NAME       = 'WorkLog';
-const SHEET_ATTENDANCE = 'Attendance';
-const SHEET_TASKS      = 'Tasks';
-const SHEET_PROJECTS   = 'Projects';
-const SHEET_WSTANDARD  = 'WorkStandard';
+const SHEET_NAME        = &#x27;WorkLog&#x27;;
+const SHEET_ATTENDANCE  = &#x27;Attendance&#x27;;
+const SHEET_TASKS       = &#x27;Tasks&#x27;;
+const SHEET_PROJECTS    = &#x27;Projects&#x27;;
+const SHEET_WSTANDARD   = &#x27;WorkStandard&#x27;;   // ← גיליון תקן שעות יומי
 
-const HEADERS            = ['Timestamp','Report_Date','Report_Time','Category','Description','Project','Record_ID'];
-const ATTENDANCE_HEADERS = ['Report_Date','Report_Time – כניסה','Report_Time – יציאה','משך יום עבודה'];
-const TASK_HEADERS       = ['Report_Date','משך משימה','Project','Description'];
-const PROJECT_HEADERS    = ['Project_Name','Created_At'];
-const WSTANDARD_HEADERS  = ['Date','WeekDay','Day_Standard_Hours','Notes'];
+const HEADERS            = [&#x27;Timestamp&#x27;,&#x27;Report_Date&#x27;,&#x27;Report_Time&#x27;,&#x27;Category&#x27;,&#x27;Description&#x27;,&#x27;Project&#x27;,&#x27;Record_ID&#x27;];
+const ATTENDANCE_HEADERS = [&#x27;Report_Date&#x27;,&#x27;Report_Time – כניסה&#x27;,&#x27;Report_Time – יציאה&#x27;,&#x27;משך יום עבודה&#x27;];
+const TASK_HEADERS       = [&#x27;Report_Date&#x27;,&#x27;משך משימה&#x27;,&#x27;Project&#x27;,&#x27;Description&#x27;];
+const PROJECT_HEADERS    = [&#x27;Project_Name&#x27;,&#x27;Created_At&#x27;];
+const WSTANDARD_HEADERS  = [&#x27;Date&#x27;,&#x27;WeekDay&#x27;,&#x27;Day_Standard_Hours&#x27;,&#x27;Notes&#x27;];
 
 // ─── Router ──────────────────────────────────────────────────
 function doPost(e) {
   try {
     const data = JSON.parse(e.postData.contents);
 
-    if (data.action === 'setDayStandard') return ok(updateWorkStandard(data.date, data.weekDay, data.stdHours, data.notes||''));
-    if (data.action === 'addProject')    return ok(addProject(data.project));
-    if (data.action === 'deleteProject') return ok(deleteProject(data.project));
-    if (data.action === 'delete')        { deleteById(data.id, data.category, data.report_date); return ok('נמחק'); }
+    if (data.action === &#x27;setDayStandard&#x27;) return ok(updateWorkStandard(data.date, data.weekDay, data.stdHours, data.notes||&#x27;&#x27;));
+    if (data.action === &#x27;addProject&#x27;)     return ok(addProject(data.project));
+    if (data.action === &#x27;deleteProject&#x27;)  return ok(deleteProject(data.project));
+    if (data.action === &#x27;delete&#x27;)         { deleteById(data.id, data.category, data.report_date); return ok(&#x27;נמחק&#x27;); }
 
     // Normal report
     const ss   = SpreadsheetApp.getActiveSpreadsheet();
     const main = getOrCreateSheet(ss, SHEET_NAME, HEADERS);
-    const ts   = new Date().toLocaleString('he-IL', { timeZone: 'Asia/Jerusalem' });
+    const ts   = new Date().toLocaleString(&#x27;he-IL&#x27;, { timeZone: &#x27;Asia/Jerusalem&#x27; });
 
-    main.appendRow([ts, data.report_date||'', data.report_time||'',
-      translateCategory(data.category)||'', data.description||'', data.project||'', data.id||'']);
+    main.appendRow([ts, data.report_date||&#x27;&#x27;, data.report_time||&#x27;&#x27;,
+      translateCategory(data.category)||&#x27;&#x27;, data.description||&#x27;&#x27;, data.project||&#x27;&#x27;, data.id||&#x27;&#x27;]);
     autoFormatLastRow(main, HEADERS.length);
 
-    if (data.category === 'entry' || data.category === 'exit') updateAttendance(ss, data);
-    if (data.category === 'task') updateTasks(ss, data);
+    if (data.category === &#x27;entry&#x27; || data.category === &#x27;exit&#x27;) updateAttendance(ss, data);
+    if (data.category === &#x27;task&#x27;) updateTasks(ss, data);
 
-    return ok('נשמר');
+    return ok(&#x27;נשמר&#x27;);
   } catch (err) {
     return errResp(err.toString());
   }
 }
 
 function doGet(e) {
-  const action = (e &amp;&amp; e.parameter &amp;&amp; e.parameter.action) || '';
+  const action = (e &amp;&amp; e.parameter &amp;&amp; e.parameter.action) || &#x27;&#x27;;
 
-  if (action === 'getWorkStandard') {
+  // ── WorkStandard: return all rows ──────────────────────────
+  if (action === &#x27;getWorkStandard&#x27;) {
     const ss    = SpreadsheetApp.getActiveSpreadsheet();
     const sheet = ss.getSheetByName(SHEET_WSTANDARD);
     if (!sheet) return jsonResp({ workStandard: [] });
-    const rows  = sheet.getDataRange().getValues().slice(1);
-    const workStandard = rows.map(r => ({
-      date:     String(r[0]||'').trim(),
-      weekDay:  String(r[1]||'').trim(),
-      stdHours: parseFloat(r[2])||0,
-      notes:    String(r[3]||'').trim(),
-    })).filter(r => r.date);
+    const rows = sheet.getDataRange().getValues().slice(1);
+    const workStandard = rows
+      .map(r =&gt; ({
+        date:     fmtDateCell(r[0]),
+        weekDay:  String(r[1]||&#x27;&#x27;).trim(),
+        stdHours: parseFloat(r[2]) || 0,
+        notes:    String(r[3]||&#x27;&#x27;).trim(),
+      }))
+      .filter(r =&gt; r.date);
     return jsonResp({ workStandard });
   }
 
-  if (action === 'getProjects') {
+  // ── Projects ───────────────────────────────────────────────
+  if (action === &#x27;getProjects&#x27;) {
     const ss    = SpreadsheetApp.getActiveSpreadsheet();
     const sheet = ss.getSheetByName(SHEET_PROJECTS);
     if (!sheet) return jsonResp({ projects: [] });
@@ -1038,49 +1054,68 @@ function doGet(e) {
     return jsonResp({ projects: rows.map(r =&gt; String(r[0]).trim()).filter(Boolean) });
   }
 
-  if (action === 'getReports') {
+  // ── Reports ────────────────────────────────────────────────
+  if (action === &#x27;getReports&#x27;) {
     const ss    = SpreadsheetApp.getActiveSpreadsheet();
     const sheet = ss.getSheetByName(SHEET_NAME);
     if (!sheet) return jsonResp({ reports: [], projects: [] });
     const rows    = sheet.getDataRange().getValues().slice(1);
     const reports = rows.map(r =&gt; ({
-      timestamp:   String(r[0]||''),
-      report_date: String(r[1]||''),
-      report_time: String(r[2]||''),
-      category:    reverseCategory(String(r[3]||'')),
-      description: String(r[4]||''),
-      project:     String(r[5]||''),
-      id:          String(r[6]||''),
+      timestamp:   String(r[0]||&#x27;&#x27;),
+      report_date: String(r[1]||&#x27;&#x27;),
+      report_time: String(r[2]||&#x27;&#x27;),
+      category:    reverseCategory(String(r[3]||&#x27;&#x27;)),
+      description: String(r[4]||&#x27;&#x27;),
+      project:     String(r[5]||&#x27;&#x27;),
+      id:          String(r[6]||&#x27;&#x27;),
       sent:        true,
     })).filter(r =&gt; r.id);
-    // Also return current projects
-    const pSheet  = ss.getSheetByName(SHEET_PROJECTS);
+    const pSheet   = ss.getSheetByName(SHEET_PROJECTS);
     const projects = pSheet
       ? pSheet.getDataRange().getValues().slice(1).map(r =&gt; String(r[0]).trim()).filter(Boolean)
       : [];
     return jsonResp({ reports, projects });
   }
 
-  return jsonResp({ status: 'ok', app: 'MyWorkLog', version: '2.1' });
+  return jsonResp({ status: &#x27;ok&#x27;, app: &#x27;MyWorkLog&#x27;, version: &#x27;2.4&#x27; });
+}
+
+// ─── WorkStandard ─────────────────────────────────────────────
+// Creates/updates one row by date.  Called from app when user edits a day.
+function updateWorkStandard(date, weekDay, stdHours, notes) {
+  if (!date) return &#x27;no date&#x27;;
+  const dateStr = String(date).trim();
+  const ss    = SpreadsheetApp.getActiveSpreadsheet();
+  const sheet = getOrCreateSheet(ss, SHEET_WSTANDARD, WSTANDARD_HEADERS);
+  const data  = sheet.getDataRange().getValues();
+  for (let i = 1; i &lt; data.length; i++) {
+    if (fmtDateCell(data[i][0]) === dateStr) {
+      sheet.getRange(i+1, 1, 1, 4).setValues([[dateStr, weekDay||&#x27;&#x27;, Number(stdHours)||0, notes||&#x27;&#x27;]]);
+      return &#x27;updated&#x27;;
+    }
+  }
+  sheet.appendRow([dateStr, weekDay||&#x27;&#x27;, Number(stdHours)||0, notes||&#x27;&#x27;]);
+  autoFormatLastRow(sheet, WSTANDARD_HEADERS.length);
+  return &#x27;added&#x27;;
 }
 
 // ─── Attendance ───────────────────────────────────────────────
 function updateAttendance(ss, data) {
-  const sheet   = getOrCreateSheet(ss, SHEET_ATTENDANCE, ATTENDANCE_HEADERS);
-  const date    = data.report_date;
-  const time    = data.report_time;
-  const all     = sheet.getDataRange().getValues();
-  let rowIdx    = -1;
+  const sheet  = getOrCreateSheet(ss, SHEET_ATTENDANCE, ATTENDANCE_HEADERS);
+  const date   = data.report_date;
+  const time   = data.report_time;
+  const all    = sheet.getDataRange().getValues();
+  let rowIdx   = -1;
   for (let i = 1; i &lt; all.length; i++) {
     if (all[i][0] === date) { rowIdx = i + 1; break; }
   }
   if (rowIdx === -1) {
-    const newRow = [date, '', '', ''];
-    if (data.category === 'entry') newRow[1] = time; else newRow[2] = time;
+    const newRow = [date, &#x27;&#x27;, &#x27;&#x27;, &#x27;&#x27;];
+    if (data.category === &#x27;entry&#x27;) newRow[1] = time; else newRow[2] = time;
     sheet.appendRow(newRow);
     autoFormatLastRow(sheet, ATTENDANCE_HEADERS.length);
   } else {
-    if (data.category === 'entry') {
+    if (data.category === &#x27;entry&#x27;) {
       if (!sheet.getRange(rowIdx, 2).getValue()) sheet.getRange(rowIdx, 2).setValue(time);
     } else {
       sheet.getRange(rowIdx, 3).setValue(time);
@@ -1094,15 +1129,13 @@ function updateAttendance(ss, data) {
 // ─── Tasks ───────────────────────────────────────────────────
 function updateTasks(ss, data) {
   const sheet = getOrCreateSheet(ss, SHEET_TASKS, TASK_HEADERS);
-  sheet.appendRow([data.report_date||'', data.report_time||'', data.project||'', data.description||'']);
+  sheet.appendRow([data.report_date||&#x27;&#x27;, data.report_time||&#x27;&#x27;, data.project||&#x27;&#x27;, data.description||&#x27;&#x27;]);
   autoFormatLastRow(sheet, TASK_HEADERS.length);
 }
 
-// ─── Delete by ID — also cleans Attendance and Tasks ─────────
+// ─── Delete ───────────────────────────────────────────────────
 function deleteById(id, category, report_date) {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
-
-  // 1. Remove from WorkLog
   const main = ss.getSheetByName(SHEET_NAME);
   if (main) {
     const data = main.getDataRange().getValues();
@@ -1110,23 +1143,20 @@ function deleteById(id, category, report_date) {
       if (String(data[i][6]) === String(id)) main.deleteRow(i + 1);
     }
   }
-
-  // 2. Clean Attendance if entry or exit
-  if ((category === 'entry' || category === 'exit') &amp;&amp; report_date) {
+  if ((category === &#x27;entry&#x27; || category === &#x27;exit&#x27;) &amp;&amp; report_date) {
     const attSheet = ss.getSheetByName(SHEET_ATTENDANCE);
     if (attSheet) {
       const attData = attSheet.getDataRange().getValues();
       for (let i = 1; i &lt; attData.length; i++) {
         if (attData[i][0] === report_date) {
           const rowIdx = i + 1;
-          if (category === 'entry') {
-            attSheet.getRange(rowIdx, 2).setValue('');  // clear entry time
-            attSheet.getRange(rowIdx, 4).setValue('');  // clear duration
+          if (category === &#x27;entry&#x27;) {
+            attSheet.getRange(rowIdx, 2).setValue(&#x27;&#x27;);
+            attSheet.getRange(rowIdx, 4).setValue(&#x27;&#x27;);
           } else {
-            attSheet.getRange(rowIdx, 3).setValue('');  // clear exit time
-            attSheet.getRange(rowIdx, 4).setValue('');  // clear duration
+            attSheet.getRange(rowIdx, 3).setValue(&#x27;&#x27;);
+            attSheet.getRange(rowIdx, 4).setValue(&#x27;&#x27;);
           }
-          // If both entry and exit are now empty, delete the whole row
           const entryVal = attSheet.getRange(rowIdx, 2).getValue();
           const exitVal  = attSheet.getRange(rowIdx, 3).getValue();
           if (!entryVal &amp;&amp; !exitVal) attSheet.deleteRow(rowIdx);
@@ -1135,69 +1165,61 @@ function deleteById(id, category, report_date) {
       }
     }
   }
-
-  // 3. Clean Tasks if task (match by id in description — not ideal, but WorkLog is source of truth)
-  // Tasks sheet doesn't store Record_ID, so we rely on WorkLog deletion only.
-}
-
-// ─── WorkStandard ────────────────────────────────────────────
-function updateWorkStandard(date, weekDay, stdHours, notes) {
-  if (!date) return &#x27;no date&#x27;;
-  const ss    = SpreadsheetApp.getActiveSpreadsheet();
-  const sheet = getOrCreateSheet(ss, SHEET_WSTANDARD, WSTANDARD_HEADERS);
-  const data  = sheet.getDataRange().getValues();
-  for (let i = 1; i &lt; data.length; i++) {
-    if (String(data[i][0]).trim() === String(date).trim()) {
-      sheet.getRange(i+1, 1, 1, 4).setValues([[date, weekDay||&#x27;&#x27;, stdHours||0, notes||&#x27;&#x27;]]);
-      return &#x27;updated&#x27;;
-    }
-  }
-  sheet.appendRow([date, weekDay||&#x27;&#x27;, stdHours||0, notes||&#x27;&#x27;]);
-  autoFormatLastRow(sheet, WSTANDARD_HEADERS.length);
-  return &#x27;added&#x27;;
 }
 
 // ─── Projects ────────────────────────────────────────────────
 function addProject(name) {
-  if (!name || !name.trim()) return 'empty';
+  if (!name || !name.trim()) return &#x27;empty&#x27;;
   const ss    = SpreadsheetApp.getActiveSpreadsheet();
   const sheet = getOrCreateSheet(ss, SHEET_PROJECTS, PROJECT_HEADERS);
   const rows  = sheet.getDataRange().getValues().slice(1);
-  if (rows.some(r =&gt; String(r[0]).trim().toLowerCase() === name.trim().toLowerCase())) return 'exists';
-  sheet.appendRow([name.trim(), new Date().toLocaleString('he-IL', { timeZone: 'Asia/Jerusalem' })]);
+  if (rows.some(r =&gt; String(r[0]).trim().toLowerCase() === name.trim().toLowerCase())) return &#x27;exists&#x27;;
+  sheet.appendRow([name.trim(), new Date().toLocaleString(&#x27;he-IL&#x27;, { timeZone: &#x27;Asia/Jerusalem&#x27; })]);
   autoFormatLastRow(sheet, PROJECT_HEADERS.length);
-  return 'added';
+  return &#x27;added&#x27;;
 }
 
 function deleteProject(name) {
-  if (!name) return 'no name';
+  if (!name) return &#x27;no name&#x27;;
   const ss    = SpreadsheetApp.getActiveSpreadsheet();
   const sheet = ss.getSheetByName(SHEET_PROJECTS);
-  if (!sheet) return 'no sheet';
+  if (!sheet) return &#x27;no sheet&#x27;;
   const rows = sheet.getDataRange().getValues();
   for (let i = rows.length - 1; i &gt;= 1; i--) {
     if (String(rows[i][0]).trim().toLowerCase() === name.trim().toLowerCase()) sheet.deleteRow(i + 1);
   }
-  return 'deleted';
+  return &#x27;deleted&#x27;;
 }
 
 // ─── Helpers ─────────────────────────────────────────────────
 function calcDuration(entry, exit) {
-  if (!entry || !exit) return '';
-  const toMins = t =&gt; { const p = String(t).split(':'); return parseInt(p[0])*60 + parseInt(p[1]||0); };
+  if (!entry || !exit) return &#x27;&#x27;;
+  const toMins = t =&gt; { const p = String(t).split(&#x27;:&#x27;); return parseInt(p[0])*60 + parseInt(p[1]||0); };
   const diff = toMins(exit) - toMins(entry);
-  if (diff &lt;= 0) return '';
-  return pad(Math.floor(diff/60)) + ':' + pad(diff % 60);
+  if (diff &lt;= 0) return &#x27;&#x27;;
+  return pad(Math.floor(diff/60)) + &#x27;:&#x27; + pad(diff % 60);
 }
 
-function pad(n) { return String(n).padStart(2, '0'); }
+// Normalise a date cell — handles Date objects and strings like &quot;2025-06-01&quot;
+function fmtDateCell(v) {
+  if (!v) return &#x27;&#x27;;
+  if (v instanceof Date) {
+    const y = v.getFullYear();
+    const m = String(v.getMonth()+1).padStart(2,&#x27;0&#x27;);
+    const d = String(v.getDate()).padStart(2,&#x27;0&#x27;);
+    return `${y}-${m}-${d}`;
+  }
+  return String(v).trim().substring(0,10); // take YYYY-MM-DD part
+}
+
+function pad(n) { return String(n).padStart(2, &#x27;0&#x27;); }
 
 function ok(msg) {
-  return ContentService.createTextOutput(JSON.stringify({ status:'ok', message:msg }))
+  return ContentService.createTextOutput(JSON.stringify({ status:&#x27;ok&#x27;, message:msg }))
     .setMimeType(ContentService.MimeType.JSON);
 }
 function errResp(msg) {
-  return ContentService.createTextOutput(JSON.stringify({ status:'error', message:msg }))
+  return ContentService.createTextOutput(JSON.stringify({ status:&#x27;error&#x27;, message:msg }))
     .setMimeType(ContentService.MimeType.JSON);
 }
 function jsonResp(obj) {
@@ -1211,9 +1233,9 @@ function getOrCreateSheet(ss, name, headers) {
     sheet = ss.insertSheet(name);
     const hRow = sheet.getRange(1, 1, 1, headers.length);
     hRow.setValues([headers]);
-    hRow.setFontWeight('bold');
-    hRow.setBackground('#1a1d27');
-    hRow.setFontColor('#4ade80');
+    hRow.setFontWeight(&#x27;bold&#x27;);
+    hRow.setBackground(&#x27;#1a1d27&#x27;);
+    hRow.setFontColor(&#x27;#4ade80&#x27;);
     sheet.setFrozenRows(1);
     headers.forEach((_, i) =&gt; sheet.setColumnWidth(i+1, i &gt;= 2 ? 200 : 130));
   }
@@ -1222,19 +1244,19 @@ function getOrCreateSheet(ss, name, headers) {
 
 function autoFormatLastRow(sheet, colCount) {
   const lastRow = sheet.getLastRow();
-  if (lastRow % 2 === 0) sheet.getRange(lastRow, 1, 1, colCount).setBackground('#f8f9fa');
+  if (lastRow % 2 === 0) sheet.getRange(lastRow, 1, 1, colCount).setBackground(&#x27;#f8f9fa&#x27;);
 }
 
 function translateCategory(cat) {
-  return { entry:'כניסה', exit:'יציאה', task:'משימה' }[cat] || cat;
+  return { entry:&#x27;כניסה&#x27;, exit:&#x27;יציאה&#x27;, task:&#x27;משימה&#x27; }[cat] || cat;
 }
 function reverseCategory(heb) {
-  return { 'כניסה':'entry', 'יציאה':'exit', 'משימה':'task' }[heb] || heb;
+  return { &#x27;כניסה&#x27;:&#x27;entry&#x27;, &#x27;יציאה&#x27;:&#x27;exit&#x27;, &#x27;משימה&#x27;:&#x27;task&#x27; }[heb] || heb;
 }
 
 /*
-  SETUP (v2.1):
-  1. פתח גיליון Google Sheets חדש
+  SETUP (v2.4):
+  1. פתח גיליון Google Sheets עם הגיליון WorkStandard
   2. Extensions &gt; Apps Script
   3. הדבק קוד זה ושמור (Ctrl+S)
   4. Deploy &gt; New deployment &gt; Web App
@@ -1242,18 +1264,20 @@ function reverseCategory(heb) {
   5. העתק Web App URL → הגדרות האפליקציה
   6. הדבק URL הגיליון → הגדרות האפליקציה
 
-  גיליונות שייווצרו אוטומטית:
-  ✅ WorkLog    - כל הדיווחים
-  ✅ Attendance - כניסה + יציאה + משך יום
-  ✅ Tasks      - דיווחי משימות
-  ✅ Projects   - פרויקטים (חדש v2.1, דו-כיווני)
-  ✅ WorkStandard - תקן ימי עבודה (חדש v2.3)
+  גיליונות:
+  ✅ WorkLog       - כל הדיווחים
+  ✅ Attendance    - כניסה + יציאה + משך יום
+  ✅ Tasks         - דיווחי משימות
+  ✅ Projects      - פרויקטים (דו-כיווני)
+  ✅ WorkStandard  - תקן שעות יומי (Date | WeekDay | Day_Standard_Hours | Notes)
 
-  GET actions: ?action=getProjects | ?action=getReports
-  POST actions: { action:'delete', id, category, report_date }
-              | { action:'addProject', project }
-              | { action:'deleteProject', project }
-              | { ...report } — שמירת דיווח
+  GET  ?action=getWorkStandard  → מחזיר את כל תקן השעות
+  GET  ?action=getProjects      → מחזיר פרויקטים
+  GET  ?action=getReports       → מחזיר דיווחים + פרויקטים
+  POST { action:&#x27;setDayStandard&#x27;, date, weekDay, stdHours, notes }
+  POST { action:&#x27;delete&#x27;, id, category, report_date }
+  POST { action:&#x27;addProject&#x27; / &#x27;deleteProject&#x27;, project }
+  POST { ...report }  → שמירת דיווח
 */
 </pre>
 
@@ -1364,7 +1388,7 @@ function applyLang(lang){
 /* ─────────────────────────────────────────────────────
    App
 ───────────────────────────────────────────────────── */
-const VER='2.3.0';
+const VER='2.4.0';
 const K={ep:'mwl_endpoint',reps:'mwl_reports',q:'mwl_queue',delQ:'mwl_delete_queue',proj:'mwl_projects',
   lang:'mwl_lang',theme:'mwl_theme',prefs:'mwl_prefs',ver:'mwl_version',inst:'mwl_install_dismissed',sheetUrl:'mwl_sheet_url',
   wstandard:'mwl_wstandard'};
@@ -1416,6 +1440,8 @@ function splashInit(){
       applyLang(window._lang||'he');
       summaryRender();
       updateMenuSheetLink();
+      // Auto-pull WorkStandard on every launch
+      setTimeout(()=>syncWStandard(true).then(()=>summaryRender()),1500);
     },420);
   },900);
 }
@@ -1802,21 +1828,35 @@ async function flushWStandardQueue(){
 function renderDayWCStatus(ds,reports){
   const sec=$('day-wc-section');if(!sec)return;
   const{status,actualMins,minMins,diffMins,wdStr,notes,pct}=getDayStatus(ds,reports);
-  if(status==='nostandard'&&!notes){sec.style.display='none';return;}
+  // Always show section so user can edit standard even when no data
+  // Notes
+  const notesEl=$('day-wc-notes');
+  if(notesEl){notesEl.textContent=notes?'📝 '+notes:'';notesEl.style.display=notes?'':'none';}
+  // Store current date for edit button
+  $('day-wc-section').dataset.date=ds;
   let html='';
-  if(notes)html+=`<span style="font-size:.78rem;color:var(--amber)">📝 ${notes}</span>`;
   if(status==='nostandard'){
-    html+='<span class="day-status-badge nodata">אין תקן ליום זה</span>';
+    html=`<span class="day-status-badge nodata">אין תקן ליום זה</span><span style="font-size:.75rem;color:var(--text3)">לחץ "ערוך תקן" להגדרה</span>`;
   }else{
     const badge=status==='ok'?'ok':'deficit';
-    const label=status==='ok'?`✅ תקין (${pct}%)`:`⚠️ חוסר שעות (${pct}%)`;
+    const label=status==='ok'?`✅ תקין`:`⚠️ חוסר`;
     html+=`<span class="day-status-badge ${badge}">${label}</span>`;
-    html+=`<span style="font-size:.8rem;color:var(--text2)">בפועל: <strong style="color:var(--text)">${wdStr}</strong></span>`;
-    html+=`<span style="font-size:.8rem;color:var(--text2)">תקן: <strong style="color:var(--text)">${minsToHHMM(minMins)}</strong></span>`;
-    if(status==='deficit')html+=`<span style="font-size:.8rem;color:var(--red)">חסר: <strong>${minsToHHMM(Math.abs(diffMins))}</strong></span>`;
-    if(status==='ok'&&diffMins>0)html+=`<span style="font-size:.8rem;color:var(--lime)">עודף: <strong>${minsToHHMM(diffMins)}</strong></span>`;
+    html+=`<span style="font-size:.82rem;color:var(--text2)">בפועל: <strong style="color:var(--text)">${wdStr}</strong></span>`;
+    html+=`<span style="font-size:.82rem;color:var(--text2)">תקן: <strong style="color:var(--amber)">${minsToHHMM(minMins)}</strong></span>`;
+    if(status==='deficit')html+=`<span style="font-size:.82rem;color:var(--red)">חסר: <strong>${minsToHHMM(Math.abs(diffMins))}</strong></span>`;
+    if(status==='ok'&&diffMins>0)html+=`<span style="font-size:.82rem;color:var(--lime)">עודף: <strong>${minsToHHMM(diffMins)}</strong></span>`;
   }
   $('day-wc-content').innerHTML=html;
+  // Progress meter
+  const meter=$('day-wc-meter'),mBar=$('day-wc-meter-bar'),mLbl=$('day-wc-meter-label'),mStd=$('day-wc-meter-std');
+  if(meter&&status!=='nostandard'&&minMins>0){
+    const p=Math.min(100,Math.round(actualMins/minMins*100));
+    const col=p>=100?'var(--lime)':p>=80?'var(--amber)':'var(--red)';
+    mBar.style.width=p+'%';mBar.style.background=col;
+    mLbl.textContent=pct+'% עמידה ביעד';mLbl.style.color=col;
+    mStd.textContent='תקן '+minsToHHMM(minMins);
+    meter.style.display='';
+  }else if(meter){meter.style.display='none';}
   sec.style.display='';
   // achievement stat card
   const ac=$('stat-achievement-card');
@@ -1825,6 +1865,12 @@ function renderDayWCStatus(ds,reports){
     $('stat-achievement').textContent=pct!=null?`${pct}%`:'—';
     $('stat-achievement').style.color=pct==null?'var(--text3)':pct>=100?'var(--lime)':pct>=80?'var(--amber)':'var(--red)';
   }
+}
+
+/* Called from "ערוך תקן" button in daily view */
+function editTodayStd(){
+  const ds=$('day-wc-section').dataset.date||isoD(new Date());
+  editDayConfig(ds);
 }
 
 /* ─ Monthly calendar grid ─ */
@@ -1859,16 +1905,21 @@ function renderWCCalendar(year,month,reports){
 /* ─ Monthly stats ─ */
 function renderMonthlyWCStats(year,month,reports){
   const el=$('monthly-wc-stats');if(!el)return;
+  const todayStr=isoD(new Date());
   const lastDate=new Date(year,month+1,0).getDate();
-  let reqMins=0,actualMins=0,surplusMins=0,deficitMins=0,deficitDays=0,workDays=0;
+  let reqMins=0,actualMins=0,surplusMins=0,deficitMins=0,deficitDays=0,okDays=0,workDays=0,pastDays=0;
   for(let d=1;d<=lastDate;d++){
     const ds=`${year}-${pad(month+1)}-${pad(d)}`;
     const{status,actualMins:am,minMins}=getDayStatus(ds,reports);
     if(status==='nostandard')continue;
-    workDays++;reqMins+=minMins;actualMins+=am;
-    const diff=am-minMins;
-    if(diff>0)surplusMins+=diff;
-    else if(diff<0){deficitMins+=Math.abs(diff);deficitDays++;}
+    workDays++;
+    // only count past+today days for achievement (future days have no data yet)
+    if(ds<=todayStr){
+      pastDays++;reqMins+=minMins;actualMins+=am;
+      const diff=am-minMins;
+      if(diff>=0){surplusMins+=diff;okDays++;}
+      else{deficitMins+=Math.abs(diff);deficitDays++;}
+    }
   }
   const balance=surplusMins-deficitMins;
   const balClass=balance>=0?'balpos':'balneg';
@@ -1876,17 +1927,17 @@ function renderMonthlyWCStats(year,month,reports){
   const pctColor=pctAch==null?'var(--text3)':pctAch>=100?'var(--lime)':pctAch>=80?'var(--amber)':'var(--red)';
 
   el.innerHTML=`
-    <div class="wc-stat"><div class="wc-stat-lbl">ימי תקן</div><div class="wc-stat-val">${workDays}</div></div>
-    <div class="wc-stat"><div class="wc-stat-lbl">נדרש</div><div class="wc-stat-val">${minsToHHMM(reqMins)}</div></div>
-    <div class="wc-stat actual-s"><div class="wc-stat-lbl">בפועל</div><div class="wc-stat-val">${minsToHHMM(actualMins)}</div></div>
-    <div class="wc-stat surplus-s"><div class="wc-stat-lbl">עודף</div><div class="wc-stat-val">${minsToHHMM(surplusMins)}</div></div>
-    <div class="wc-stat deficit-s"><div class="wc-stat-lbl">חוסר</div><div class="wc-stat-val">${minsToHHMM(deficitMins)}</div></div>
-    <div class="wc-stat ${balClass}"><div class="wc-stat-lbl">מאזן</div><div class="wc-stat-val">${balance>=0?'+':''}${minsToHHMM(balance)}</div></div>
-    <div class="wc-stat" style="${pctAch!=null?'border-color:'+pctColor:''}"><div class="wc-stat-lbl">עמידה ביעד</div><div class="wc-stat-val" style="color:${pctColor}">${pctAch!=null?pctAch+'%':'—'}</div></div>
-    <div class="wc-stat deficit-s"><div class="wc-stat-lbl">ימי חוסר</div><div class="wc-stat-val" style="color:${deficitDays>0?'var(--red)':'var(--text)'}">${deficitDays}</div></div>`;
-  // also update achievement stat card
+    <div class="wc-stat"><div class="wc-stat-lbl">ימי עבודה</div><div class="wc-stat-val">${workDays}</div></div>
+    <div class="wc-stat"><div class="wc-stat-lbl">נדרש עד היום</div><div class="wc-stat-val" style="font-size:.82rem">${minsToHHMM(reqMins)}</div></div>
+    <div class="wc-stat actual-s"><div class="wc-stat-lbl">בפועל</div><div class="wc-stat-val" style="font-size:.82rem">${minsToHHMM(actualMins)}</div></div>
+    <div class="wc-stat surplus-s"><div class="wc-stat-lbl">עודף</div><div class="wc-stat-val" style="font-size:.82rem">${minsToHHMM(surplusMins)}</div></div>
+    <div class="wc-stat deficit-s"><div class="wc-stat-lbl">חוסר</div><div class="wc-stat-val" style="font-size:.82rem">${minsToHHMM(deficitMins)}</div></div>
+    <div class="wc-stat ${balClass}"><div class="wc-stat-lbl">מאזן</div><div class="wc-stat-val" style="font-size:.82rem">${balance>=0?'+':''}${minsToHHMM(balance)}</div></div>
+    <div class="wc-stat" style="border-color:var(--lime)"><div class="wc-stat-lbl">ימים בתקן ✓</div><div class="wc-stat-val" style="color:var(--lime)">${okDays}<span style="font-size:.65rem;color:var(--text3)">/${pastDays}</span></div></div>
+    <div class="wc-stat deficit-s"><div class="wc-stat-lbl">ימי חוסר ✗</div><div class="wc-stat-val" style="color:${deficitDays>0?'var(--red)':'var(--text)'}">${deficitDays}<span style="font-size:.65rem;color:var(--text3)">/${pastDays}</span></div></div>
+    <div class="wc-stat" style="border-color:${pctColor}"><div class="wc-stat-lbl">עמידה ביעד</div><div class="wc-stat-val" style="color:${pctColor}">${pctAch!=null?pctAch+'%':'—'}</div></div>`;
   const ac=$('stat-achievement-card');
-  if(ac){ac.style.display='none';}
+  if(ac)ac.style.display='none';
 }
 
 /* ─ Edit day modal ─ */
@@ -1895,14 +1946,18 @@ function editDayConfig(ds){
   _editDs=ds;
   const reports=store(K.reps)||[];
   const{stdHours,notes,isWorkDay}=getDayStd(ds);
-  const{actualMins,wdStr}=getDayStatus(ds,reports);
+  const{actualMins,wdStr,status,diffMins,minMins,pct}=getDayStatus(ds,reports);
   const[y,m,d]=ds.split('-');
   $('dayedit-title').textContent=`📅 ${d}/${m}/${y} — ${hebDow(ds)}`;
   const infoEl=$('dayedit-info');
-  infoEl.innerHTML=`
-    <div><span style="color:var(--text3);font-size:.7rem">יום בשבוע</span><span style="margin-right:8px;color:var(--text)">${hebDow(ds)}</span></div>
-    <div><span style="color:var(--text3);font-size:.7rem">שעות בפועל</span><span style="margin-right:8px;color:${actualMins>0?'var(--blue)':'var(--text3)'};font-weight:700">${wdStr}</span></div>
-    ${isWorkDay?`<div><span style="color:var(--text3);font-size:.7rem">תקן נוכחי</span><span style="margin-right:8px;color:var(--amber)">${minsToHHMM(Math.round(stdHours*60))}</span></div>`:''}`;
+  let infoHtml=`<div style="display:flex;gap:18px;flex-wrap:wrap">
+    <div><div style="font-size:.62rem;color:var(--text3);margin-bottom:2px">יום</div><div style="font-weight:700">${hebDow(ds)}</div></div>
+    <div><div style="font-size:.62rem;color:var(--text3);margin-bottom:2px">שעות בפועל</div><div style="font-weight:700;color:${actualMins>0?'var(--blue)':'var(--text3)'}">${wdStr}</div></div>
+    ${isWorkDay?`<div><div style="font-size:.62rem;color:var(--text3);margin-bottom:2px">תקן נוכחי</div><div style="font-weight:700;color:var(--amber)">${minsToHHMM(Math.round(stdHours*60))}</div></div>`:''}
+    ${pct!=null?`<div><div style="font-size:.62rem;color:var(--text3);margin-bottom:2px">עמידה</div><div style="font-weight:700;color:${pct>=100?'var(--lime)':pct>=80?'var(--amber)':'var(--red)'}">${pct}%</div></div>`:''}
+  </div>`;
+  if(status==='deficit')infoHtml+=`<div style="margin-top:6px;font-size:.75rem;color:var(--red)">⚠️ חסר ${minsToHHMM(Math.abs(diffMins))}</div>`;
+  infoEl.innerHTML=infoHtml;
   $('dayedit-stdhours').value=stdHours>0?stdHours:'';
   $('dayedit-notes').value=notes;
   $('dayedit-offline-hint').style.display=navigator.onLine?'none':'';
