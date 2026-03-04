@@ -1,41 +1,38 @@
 // ============================================================
-//  MyWorkLog – Google Apps Script  v2.1
+//  MyWorkLog – Google Apps Script  v2.4
 //  הדבק קוד זה ב-Apps Script של הגיליון שלך
 //  לאחר מכן: Deploy > New deployment > Web App
 //  ✅ הרשאות: Anyone (אנונימי) / Execute as: Me
 // ============================================================
 
-const SHEET_NAME       = 'WorkLog';
-const SHEET_ATTENDANCE = 'Attendance';
-const SHEET_TASKS      = 'Tasks';
-const SHEET_PROJECTS   = 'Projects';
+const SHEET_NAME        = 'WorkLog';
+const SHEET_ATTENDANCE  = 'Attendance';
+const SHEET_TASKS       = 'Tasks';
+const SHEET_PROJECTS    = 'Projects';
+const SHEET_WSTANDARD   = 'WorkStandard';
 
 const HEADERS            = ['Timestamp','Report_Date','Report_Time','Category','Description','Project','Record_ID'];
 const ATTENDANCE_HEADERS = ['Report_Date','Report_Time – כניסה','Report_Time – יציאה','משך יום עבודה'];
 const TASK_HEADERS       = ['Report_Date','משך משימה','Project','Description'];
 const PROJECT_HEADERS    = ['Project_Name','Created_At'];
+const WSTANDARD_HEADERS  = ['Date','WeekDay','Day_Standard_Hours','Notes'];
 
 // ─── Router ──────────────────────────────────────────────────
 function doPost(e) {
   try {
     const data = JSON.parse(e.postData.contents);
-
-    if (data.action === 'addProject')    return ok(addProject(data.project));
-    if (data.action === 'deleteProject') return ok(deleteProject(data.project));
-    if (data.action === 'delete')        { deleteById(data.id, data.category, data.report_date); return ok('נמחק'); }
-
-    // Normal report
+    if (data.action === 'setDayStandard') return ok(updateWorkStandard(data.date, data.weekDay, data.stdHours, data.notes||''));
+    if (data.action === 'addProject')     return ok(addProject(data.project));
+    if (data.action === 'deleteProject')  return ok(deleteProject(data.project));
+    if (data.action === 'delete')         { deleteById(data.id, data.category, data.report_date); return ok('נמחק'); }
     const ss   = SpreadsheetApp.getActiveSpreadsheet();
     const main = getOrCreateSheet(ss, SHEET_NAME, HEADERS);
     const ts   = new Date().toLocaleString('he-IL', { timeZone: 'Asia/Jerusalem' });
-
     main.appendRow([ts, data.report_date||'', data.report_time||'',
       translateCategory(data.category)||'', data.description||'', data.project||'', data.id||'']);
     autoFormatLastRow(main, HEADERS.length);
-
     if (data.category === 'entry' || data.category === 'exit') updateAttendance(ss, data);
     if (data.category === 'task') updateTasks(ss, data);
-
     return ok('נשמר');
   } catch (err) {
     return errResp(err.toString());
@@ -44,6 +41,23 @@ function doPost(e) {
 
 function doGet(e) {
   const action = (e && e.parameter && e.parameter.action) || '';
+
+  if (action === 'getWorkStandard') {
+    const ss    = SpreadsheetApp.getActiveSpreadsheet();
+    const sheet = getOrCreateSheet(ss, SHEET_WSTANDARD, WSTANDARD_HEADERS);
+    const lastRow = sheet.getLastRow();
+    if (lastRow <= 1) return jsonResp({ workStandard: [] });
+    const rows = sheet.getRange(2, 1, lastRow - 1, 4).getValues();
+    const workStandard = rows
+      .map(r => ({
+        date:     fmtDateCell(r[0]),
+        weekDay:  String(r[1]||'').trim(),
+        stdHours: parseFloat(r[2]) || 0,
+        notes:    String(r[3]||'').trim(),
+      }))
+      .filter(r => r.date);
+    return jsonResp({ workStandard });
+  }
 
   if (action === 'getProjects') {
     const ss    = SpreadsheetApp.getActiveSpreadsheet();
@@ -68,24 +82,68 @@ function doGet(e) {
       id:          String(r[6]||''),
       sent:        true,
     })).filter(r => r.id);
-    // Also return current projects
-    const pSheet  = ss.getSheetByName(SHEET_PROJECTS);
+    const pSheet   = ss.getSheetByName(SHEET_PROJECTS);
     const projects = pSheet
       ? pSheet.getDataRange().getValues().slice(1).map(r => String(r[0]).trim()).filter(Boolean)
       : [];
     return jsonResp({ reports, projects });
   }
 
-  return jsonResp({ status: 'ok', app: 'MyWorkLog', version: '2.1' });
+  return jsonResp({ status: 'ok', app: 'MyWorkLog', version: '2.4' });
+}
+
+// ─── WorkStandard ─────────────────────────────────────────────
+function updateWorkStandard(date, weekDay, stdHours, notes) {
+  if (!date) return 'no date';
+  const dateStr = String(date).trim();
+  const ss    = SpreadsheetApp.getActiveSpreadsheet();
+  const sheet = getOrCreateSheet(ss, SHEET_WSTANDARD, WSTANDARD_HEADERS);
+  const lastRow = sheet.getLastRow();
+  if (lastRow > 1) {
+    const col = sheet.getRange(2, 1, lastRow - 1, 1).getValues();
+    for (let i = 0; i < col.length; i++) {
+      if (fmtDateCell(col[i][0]) === dateStr) {
+        sheet.getRange(i + 2, 1, 1, 4).setValues([[dateStr, weekDay||'', Number(stdHours)||0, notes||'']]);
+        return 'updated';
+      }
+    }
+  }
+  sheet.appendRow([dateStr, weekDay||'', Number(stdHours)||0, notes||'']);
+  autoFormatLastRow(sheet, WSTANDARD_HEADERS.length);
+  return 'added';
+}
+
+// ── הפעל פעם אחת מה-editor כדי להקים את גיליון WorkStandard ──
+function setupWorkStandard() {
+  const ss    = SpreadsheetApp.getActiveSpreadsheet();
+  const sheet = getOrCreateSheet(ss, SHEET_WSTANDARD, WSTANDARD_HEADERS);
+  sheet.getRange('A2:A1000').setNumberFormat('@STRING@');
+  sheet.setColumnWidth(1, 120);
+  sheet.setColumnWidth(2, 100);
+  sheet.setColumnWidth(3, 170);
+  sheet.setColumnWidth(4, 260);
+  if (sheet.getLastRow() <= 1) {
+    const today = Utilities.formatDate(new Date(), 'Asia/Jerusalem', 'yyyy-MM-dd');
+    const dow   = ['ראשון','שני','שלישי','רביעי','חמישי','שישי','שבת'][new Date().getDay()];
+    sheet.appendRow([today, dow, 8, 'דוגמה — ניתן למחוק']);
+  }
+  SpreadsheetApp.getUi().alert(
+    'גיליון WorkStandard מוכן!\n\n' +
+    'עמודות:\n' +
+    '  A  Date               — YYYY-MM-DD\n' +
+    '  B  WeekDay            — יום בשבוע\n' +
+    '  C  Day_Standard_Hours — תקן שעות (מספר)\n' +
+    '  D  Notes              — הערות (חופש, חג...)\n\n' +
+    'ימים עם תקן 0 נחשבים ללא דרישה.'
+  );
 }
 
 // ─── Attendance ───────────────────────────────────────────────
 function updateAttendance(ss, data) {
-  const sheet   = getOrCreateSheet(ss, SHEET_ATTENDANCE, ATTENDANCE_HEADERS);
-  const date    = data.report_date;
-  const time    = data.report_time;
-  const all     = sheet.getDataRange().getValues();
-  let rowIdx    = -1;
+  const sheet  = getOrCreateSheet(ss, SHEET_ATTENDANCE, ATTENDANCE_HEADERS);
+  const date   = data.report_date, time = data.report_time;
+  const all    = sheet.getDataRange().getValues();
+  let rowIdx   = -1;
   for (let i = 1; i < all.length; i++) {
     if (all[i][0] === date) { rowIdx = i + 1; break; }
   }
@@ -100,9 +158,9 @@ function updateAttendance(ss, data) {
     } else {
       sheet.getRange(rowIdx, 3).setValue(time);
     }
-    const entry = sheet.getRange(rowIdx, 2).getValue();
-    const exit  = sheet.getRange(rowIdx, 3).getValue();
-    sheet.getRange(rowIdx, 4).setValue(calcDuration(entry, exit));
+    sheet.getRange(rowIdx, 4).setValue(
+      calcDuration(sheet.getRange(rowIdx, 2).getValue(), sheet.getRange(rowIdx, 3).getValue())
+    );
   }
 }
 
@@ -113,11 +171,9 @@ function updateTasks(ss, data) {
   autoFormatLastRow(sheet, TASK_HEADERS.length);
 }
 
-// ─── Delete by ID — also cleans Attendance and Tasks ─────────
+// ─── Delete ───────────────────────────────────────────────────
 function deleteById(id, category, report_date) {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-
-  // 1. Remove from WorkLog
+  const ss   = SpreadsheetApp.getActiveSpreadsheet();
   const main = ss.getSheetByName(SHEET_NAME);
   if (main) {
     const data = main.getDataRange().getValues();
@@ -125,48 +181,34 @@ function deleteById(id, category, report_date) {
       if (String(data[i][6]) === String(id)) main.deleteRow(i + 1);
     }
   }
-
-  // 2. Clean Attendance if entry or exit
   if ((category === 'entry' || category === 'exit') && report_date) {
-    const attSheet = ss.getSheetByName(SHEET_ATTENDANCE);
-    if (attSheet) {
-      const attData = attSheet.getDataRange().getValues();
-      for (let i = 1; i < attData.length; i++) {
-        if (attData[i][0] === report_date) {
-          const rowIdx = i + 1;
-          if (category === 'entry') {
-            attSheet.getRange(rowIdx, 2).setValue('');  // clear entry time
-            attSheet.getRange(rowIdx, 4).setValue('');  // clear duration
-          } else {
-            attSheet.getRange(rowIdx, 3).setValue('');  // clear exit time
-            attSheet.getRange(rowIdx, 4).setValue('');  // clear duration
-          }
-          // If both entry and exit are now empty, delete the whole row
-          const entryVal = attSheet.getRange(rowIdx, 2).getValue();
-          const exitVal  = attSheet.getRange(rowIdx, 3).getValue();
-          if (!entryVal && !exitVal) attSheet.deleteRow(rowIdx);
+    const att = ss.getSheetByName(SHEET_ATTENDANCE);
+    if (att) {
+      const rows = att.getDataRange().getValues();
+      for (let i = 1; i < rows.length; i++) {
+        if (rows[i][0] === report_date) {
+          const r = i + 1;
+          if (category === 'entry') { att.getRange(r,2).setValue(''); att.getRange(r,4).setValue(''); }
+          else                      { att.getRange(r,3).setValue(''); att.getRange(r,4).setValue(''); }
+          if (!att.getRange(r,2).getValue() && !att.getRange(r,3).getValue()) att.deleteRow(r);
           break;
         }
       }
     }
   }
-
-  // 3. Clean Tasks if task (match by id in description — not ideal, but WorkLog is source of truth)
-  // Tasks sheet doesn't store Record_ID, so we rely on WorkLog deletion only.
 }
 
 // ─── Projects ────────────────────────────────────────────────
 function addProject(name) {
-  if (!name || !name.trim()) return 'empty';
+  if (!name||!name.trim()) return 'empty';
   const ss    = SpreadsheetApp.getActiveSpreadsheet();
   const sheet = getOrCreateSheet(ss, SHEET_PROJECTS, PROJECT_HEADERS);
   const rows  = sheet.getDataRange().getValues().slice(1);
   if (rows.some(r => String(r[0]).trim().toLowerCase() === name.trim().toLowerCase())) return 'exists';
-  sheet.appendRow([name.trim(), new Date().toLocaleString('he-IL', { timeZone: 'Asia/Jerusalem' })]);
+  sheet.appendRow([name.trim(), new Date().toLocaleString('he-IL',{timeZone:'Asia/Jerusalem'})]);
   autoFormatLastRow(sheet, PROJECT_HEADERS.length);
   return 'added';
 }
-
 function deleteProject(name) {
   if (!name) return 'no name';
   const ss    = SpreadsheetApp.getActiveSpreadsheet();
@@ -174,34 +216,37 @@ function deleteProject(name) {
   if (!sheet) return 'no sheet';
   const rows = sheet.getDataRange().getValues();
   for (let i = rows.length - 1; i >= 1; i--) {
-    if (String(rows[i][0]).trim().toLowerCase() === name.trim().toLowerCase()) sheet.deleteRow(i + 1);
+    if (String(rows[i][0]).trim().toLowerCase() === name.trim().toLowerCase()) sheet.deleteRow(i+1);
   }
   return 'deleted';
 }
 
 // ─── Helpers ─────────────────────────────────────────────────
 function calcDuration(entry, exit) {
-  if (!entry || !exit) return '';
-  const toMins = t => { const p = String(t).split(':'); return parseInt(p[0])*60 + parseInt(p[1]||0); };
-  const diff = toMins(exit) - toMins(entry);
-  if (diff <= 0) return '';
-  return pad(Math.floor(diff/60)) + ':' + pad(diff % 60);
+  if (!entry||!exit) return '';
+  const m = t => { const p=String(t).split(':'); return parseInt(p[0])*60+parseInt(p[1]||0); };
+  const d = m(exit)-m(entry);
+  return d>0 ? pad(Math.floor(d/60))+':'+pad(d%60) : '';
 }
 
-function pad(n) { return String(n).padStart(2, '0'); }
+// Handles Date objects and common string formats → YYYY-MM-DD
+function fmtDateCell(v) {
+  if (!v) return '';
+  if (v instanceof Date) {
+    return v.getFullYear()+'-'+String(v.getMonth()+1).padStart(2,'0')+'-'+String(v.getDate()).padStart(2,'0');
+  }
+  const s = String(v).trim();
+  if (/^\d{4}-\d{2}-\d{2}/.test(s)) return s.substring(0,10);
+  const m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+  if (m) return `${m[3]}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`;
+  return s;
+}
 
-function ok(msg) {
-  return ContentService.createTextOutput(JSON.stringify({ status:'ok', message:msg }))
-    .setMimeType(ContentService.MimeType.JSON);
-}
-function errResp(msg) {
-  return ContentService.createTextOutput(JSON.stringify({ status:'error', message:msg }))
-    .setMimeType(ContentService.MimeType.JSON);
-}
-function jsonResp(obj) {
-  return ContentService.createTextOutput(JSON.stringify(obj))
-    .setMimeType(ContentService.MimeType.JSON);
-}
+function pad(n) { return String(n).padStart(2,'0'); }
+
+function ok(msg)      { return ContentService.createTextOutput(JSON.stringify({status:'ok',message:msg})).setMimeType(ContentService.MimeType.JSON); }
+function errResp(msg) { return ContentService.createTextOutput(JSON.stringify({status:'error',message:msg})).setMimeType(ContentService.MimeType.JSON); }
+function jsonResp(o)  { return ContentService.createTextOutput(JSON.stringify(o)).setMimeType(ContentService.MimeType.JSON); }
 
 function getOrCreateSheet(ss, name, headers) {
   let sheet = ss.getSheetByName(name);
@@ -213,42 +258,38 @@ function getOrCreateSheet(ss, name, headers) {
     hRow.setBackground('#1a1d27');
     hRow.setFontColor('#4ade80');
     sheet.setFrozenRows(1);
-    headers.forEach((_, i) => sheet.setColumnWidth(i+1, i >= 2 ? 200 : 130));
+    headers.forEach((_,i) => sheet.setColumnWidth(i+1, i>=2?200:130));
   }
   return sheet;
 }
-
 function autoFormatLastRow(sheet, colCount) {
-  const lastRow = sheet.getLastRow();
-  if (lastRow % 2 === 0) sheet.getRange(lastRow, 1, 1, colCount).setBackground('#f8f9fa');
+  const r = sheet.getLastRow();
+  if (r%2===0) sheet.getRange(r,1,1,colCount).setBackground('#f8f9fa');
 }
-
-function translateCategory(cat) {
-  return { entry:'כניסה', exit:'יציאה', task:'משימה' }[cat] || cat;
-}
-function reverseCategory(heb) {
-  return { 'כניסה':'entry', 'יציאה':'exit', 'משימה':'task' }[heb] || heb;
-}
+function translateCategory(c) { return {entry:'כניסה',exit:'יציאה',task:'משימה'}[c]||c; }
+function reverseCategory(h)   { return {'כניסה':'entry','יציאה':'exit','משימה':'task'}[h]||h; }
 
 /*
-  SETUP (v2.1):
-  1. פתח גיליון Google Sheets חדש
-  2. Extensions > Apps Script
-  3. הדבק קוד זה ושמור (Ctrl+S)
-  4. Deploy > New deployment > Web App
+  ═══════════════════════════════════════════════════════
+  SETUP (v2.4)
+  ═══════════════════════════════════════════════════════
+  1. פתח את גיליון Google Sheets שלך
+  2. Extensions → Apps Script → הדבק קוד זה → שמור
+  3. בחר הפונקציה setupWorkStandard → לחץ Run
+     (יוצר/מעצב את גיליון WorkStandard)
+  4. Deploy → New deployment → Web App
      Execute as: Me | Who has access: Anyone
-  5. העתק Web App URL → הגדרות האפליקציה
-  6. הדבק URL הגיליון → הגדרות האפליקציה
+  5. העתק Web App URL → הגדרות האפליקציה → שמור
 
-  גיליונות שייווצרו אוטומטית:
-  ✅ WorkLog    - כל הדיווחים
-  ✅ Attendance - כניסה + יציאה + משך יום
-  ✅ Tasks      - דיווחי משימות
-  ✅ Projects   - פרויקטים (חדש v2.1, דו-כיווני)
+  ═══════════════════════════════════════════════════════
+  גיליון WorkStandard
+  ═══════════════════════════════════════════════════════
+  A: Date               YYYY-MM-DD
+  B: WeekDay            ראשון / שני / ... / שישי
+  C: Day_Standard_Hours תקן שעות (8 / 8.5 / 0 לשבת-חג)
+  D: Notes              הערה חופשית
 
-  GET actions: ?action=getProjects | ?action=getReports
-  POST actions: { action:'delete', id, category, report_date }
-              | { action:'addProject', project }
-              | { action:'deleteProject', project }
-              | { ...report } — שמירת דיווח
+  עריכה: ישירות בגיליון -או- דרך כפתור "ערוך תקן"
+  בדוח היומי באפליקציה.
+  ═══════════════════════════════════════════════════════
 */
