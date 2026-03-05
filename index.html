@@ -170,6 +170,14 @@ html,body{height:100%;background:var(--bg0);color:var(--text);
   transition:border-color .2s;width:100%;color-scheme:dark}
 .fi:focus{outline:none;border-color:var(--lime)}
 .fi.input-err{border-color:var(--red)!important;animation:shake .35s ease}
+.session-banner{display:flex;align-items:center;gap:10px;padding:11px 14px;border-radius:var(--rs);
+  border:1.5px solid;font-size:.82rem;font-weight:600;margin-bottom:0}
+.session-banner.open{background:var(--limeDim);border-color:var(--lime);color:var(--lime)}
+.session-banner.closed{background:var(--glass);border-color:var(--border2);color:var(--text3)}
+.session-banner.warn{background:var(--redDim);border-color:var(--red);color:var(--red)}
+.session-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;background:currentColor}
+.session-dot.pulse{animation:pulse 1.4s ease infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(1.3)}}
 @keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-6px)}40%{transform:translateX(6px)}60%{transform:translateX(-4px)}80%{transform:translateX(4px)}}
 .fi::placeholder{color:var(--text3)}
 textarea.fi{resize:vertical;min-height:72px}
@@ -438,7 +446,7 @@ details summary::-webkit-details-marker{display:none}
       <a id="menu-sheet-link" href="#" target="_blank" rel="noopener" style="display:none;align-items:center;gap:7px;font-size:.8rem;color:var(--blue);text-decoration:none;padding:3px 2px">
         📊 פתח גיליון הדיווחים
       </a>
-      <span id="menu-vbadge" class="vbadge" title="לחץ לאיפוס">v2.7.0</span>
+      <span id="menu-vbadge" class="vbadge" title="לחץ לאיפוס">v2.8.0</span>
     </div>
   </aside>
 
@@ -450,7 +458,7 @@ details summary::-webkit-details-marker{display:none}
         <span class="hdr-name">MyWorkLog</span>
       </div>
       <div class="hdr-acts">
-        <span id="version-badge" class="vbadge" title="לחץ לאיפוס">v2.7.0</span>
+        <span id="version-badge" class="vbadge" title="לחץ לאיפוס">v2.8.0</span>
       </div>
     </div>
   </header>
@@ -473,6 +481,10 @@ details summary::-webkit-details-marker{display:none}
           <button class="cat-btn active" data-cat="entry" data-i18n="catEntry">🟢 כניסה</button>
           <button class="cat-btn"        data-cat="exit"  data-i18n="catExit">🔴 יציאה</button>
           <button class="cat-btn"        data-cat="task"  data-i18n="catTask">📋 משימה</button>
+        </div>
+        <div id="session-banner" class="session-banner closed" style="margin-top:10px">
+          <span class="session-dot"></span>
+          <span id="session-banner-text">טוען...</span>
         </div>
       </div>
 
@@ -1419,7 +1431,7 @@ function applyLang(lang){
 /* ─────────────────────────────────────────────────────
    App
 ───────────────────────────────────────────────────── */
-const VER='2.7.0';
+const VER='2.8.0';
 const K={ep:'mwl_endpoint',reps:'mwl_reports',q:'mwl_queue',delQ:'mwl_delete_queue',proj:'mwl_projects',
   lang:'mwl_lang',theme:'mwl_theme',prefs:'mwl_prefs',ver:'mwl_version',inst:'mwl_install_dismissed',sheetUrl:'mwl_sheet_url',
   wstandard:'mwl_wstandard'};
@@ -1457,6 +1469,7 @@ document.addEventListener('DOMContentLoaded',()=>{
     toast(t('toastNowUpdated'));buzz([20]);
   });
   netInit();netQInit();projLoad();histRender();
+  updateSessionBanner();
   flushDeleteQueue();
   menuInit();vBadgeInit();swipeInit();ptrInit();swInit();installInit();scrollInit();
   backBtnInit();
@@ -1674,11 +1687,89 @@ function menuClose(){
 }
 
 /* CATEGORY */
+
+/* ═══════════════════════════════════════════════════════
+   SESSION MANAGEMENT — entry/exit open-session logic
+═══════════════════════════════════════════════════════ */
+
+/** Return the latest "open" entry record for today (entry with no paired exit).
+ *  An entry on date D is "open" if there is no exit record on date D
+ *  whose time is >= the entry's time.
+ *  Returns the report record or null.
+ */
+function getOpenSession(reports){
+  const today=isoD(new Date());
+  const todayReps=reports.filter(r=>r.report_date===today);
+  const entries=todayReps.filter(r=>r.category==='entry')
+    .sort((a,b)=>a.report_time>b.report_time?-1:1); // newest first
+  const exits=todayReps.filter(r=>r.category==='exit')
+    .map(r=>r.report_time).sort();
+  for(const en of entries){
+    // Is there an exit >= this entry's time?
+    const paired=exits.find(exT=>exT>=en.report_time);
+    if(!paired) return en; // open session found
+  }
+  return null;
+}
+
+/** Validate an entry attempt — returns error string or null if OK */
+function validateEntry(date, reports){
+  // Only enforce today's date for open-session check
+  const today=isoD(new Date());
+  if(date!==today) return null; // historical edits allowed freely
+  const open=getOpenSession(reports);
+  if(open){
+    return `הנך כבר רשום כנמצא (כניסה ${open.report_time}) — עליך לדווח יציאה לפני כניסה חדשה`;
+  }
+  return null;
+}
+
+/** Validate an exit attempt — returns error string or null if OK */
+function validateExit(date, reports){
+  const today=isoD(new Date());
+  if(date!==today) return null; // historical edits allowed
+  const open=getOpenSession(reports);
+  if(!open){
+    return 'לא נמצאה כניסה פעילה להיום — עליך לדווח כניסה תחילה';
+  }
+  return null;
+}
+
+/** Update the session status banner on the report tab */
+function updateSessionBanner(){
+  const banner=$('session-banner');
+  const txt=$('session-banner-text');
+  if(!banner||!txt)return;
+  const reports=store(K.reps)||[];
+  const open=getOpenSession(reports);
+
+  // Also compute today's accumulated work
+  const today=isoD(new Date());
+  const{mins:accMins}=calcDayWorkMins(today,reports);
+  const accStr=accMins>0?` · סה"כ היום: ${minsToHHMM(accMins)}`:'';
+
+  if(open){
+    banner.className='session-banner open';
+    banner.querySelector('.session-dot').classList.add('pulse');
+    txt.textContent=`בפנים מ-${open.report_time}${accStr}`;
+  }else{
+    banner.className='session-banner closed';
+    banner.querySelector('.session-dot').classList.remove('pulse');
+    if(accMins>0){
+      txt.textContent=`לא נמצאת${accStr}`;
+    }else{
+      txt.textContent='לא דווחה כניסה להיום';
+    }
+  }
+}
+
 function catInit(){
   document.querySelectorAll('.cat-btn').forEach(btn=>btn.addEventListener('click',()=>{
     document.querySelectorAll('.cat-btn').forEach(b=>b.classList.remove('active'));
     btn.classList.add('active');ST.cat=btn.dataset.cat;
-    $('task-fields').style.display=ST.cat==='task'?'flex':'none';buzz([15]);
+    $('task-fields').style.display=ST.cat==='task'?'flex':'none';
+    updateSessionBanner();
+    buzz([15]);
   }));
   $('task-fields').style.display='none';
 }
@@ -1737,10 +1828,31 @@ function submitInit(){
   $('btn-submit').addEventListener('click',async()=>{
     const date=$('report-date').value,time=$('report-time').value;
     if(!date||!time){toast(t('toastNoTime'),'warn');buzz([80]);return}
+
+    // ── Session validation (entry/exit) ───────────────────────
+    const reports=store(K.reps)||[];
+    if(ST.cat==='entry'){
+      const err=validateEntry(date,reports);
+      if(err){
+        const banner=$('session-banner');
+        if(banner){banner.className='session-banner warn';banner.querySelector('.session-dot').classList.remove('pulse');$('session-banner-text').textContent=err;}
+        toast('⛔ '+err,'warn',5000);buzz([80,80]);return;
+      }
+    }
+    if(ST.cat==='exit'){
+      const err=validateExit(date,reports);
+      if(err){
+        const banner=$('session-banner');
+        if(banner){banner.className='session-banner warn';banner.querySelector('.session-dot').classList.remove('pulse');$('session-banner-text').textContent=err;}
+        toast('⛔ '+err,'warn',5000);buzz([80,80]);return;
+      }
+    }
+
     const rep=buildRep(date,time);if(!rep)return;
 
     // ── Save locally and reset UI immediately ─────────────────
     saveLocal(rep);histRender();summaryRender();resetForm();
+    updateSessionBanner();
     buzz([30,20,60]);
     toast('💾 נשמר מקומית...','success',1200);
 
@@ -1878,7 +1990,7 @@ function delReport(id){
     dq.push({id,category:cat,report_date:date});
     store('mwl_delete_queue',dq);
   }
-  histRender();summaryRender();toast(t('toastDeleted')||'🗑 דיווח נמחק','success');
+  histRender();summaryRender();updateSessionBanner();toast(t('toastDeleted')||'🗑 דיווח נמחק','success');
 }
 function hItem(r,showDel=false){
   const delBtn=showDel?`<button class="btn-d sm hitem-del" data-id="${r.id}" onclick="delReport('${r.id}')" style="padding:4px 8px;font-size:.7rem;flex-shrink:0">🗑</button>`:'';
@@ -1934,39 +2046,58 @@ function parseTaskMins(rt){
   return(h||0)*60+(m||0);
 }
 
-/* Returns {mins, fromTasks}
-   fromTasks=true  → no entry/exit found, fell back to task sum */
+/* Returns {mins, fromTasks, pairs, hasOpen}
+   Aggregates ALL entry/exit pairs for the day (handles multiple check-in/out cycles).
+   hasOpen=true  → there is an unclosed entry (currently inside).
+   fromTasks=true → no pairs found, fell back to task sum.
+*/
 function calcDayWorkMins(ds,reports){
   const dr=reports.filter(r=>r.report_date===ds);
-  const en=dr.filter(r=>r.category==='entry').map(r=>r.report_time).filter(Boolean).sort();
-  const ex=dr.filter(r=>r.category==='exit').map(r=>r.report_time).filter(Boolean).sort();
-  if(en.length&&ex.length){
-    const[eh,em]=en[0].split(':').map(Number);
-    const[xh,xm]=ex[ex.length-1].split(':').map(Number);
-    const d=(xh*60+xm)-(eh*60+em);
-    return{mins:d>0?d:0,fromTasks:false};
+  const entries=dr.filter(r=>r.category==='entry').map(r=>r.report_time).filter(Boolean).sort();
+  const exits  =dr.filter(r=>r.category==='exit' ).map(r=>r.report_time).filter(Boolean).sort();
+
+  let totalMins=0;
+  const pairs=[];
+  const usedExits=new Set();
+
+  // For each entry, find the nearest exit that is >= entry time and not yet used
+  for(const enT of entries){
+    const matchExit=exits.find(exT=>exT>=enT&&!usedExits.has(exT));
+    if(matchExit){
+      usedExits.add(matchExit);
+      const[eh,em]=enT.split(':').map(Number);
+      const[xh,xm]=matchExit.split(':').map(Number);
+      const diff=(xh*60+xm)-(eh*60+em);
+      if(diff>0){totalMins+=diff;pairs.push({entry:enT,exit:matchExit,mins:diff});}
+    }
   }
-  // Fallback: sum task durations
+
+  // Check for open session (entry without paired exit)
+  const pairedEntries=new Set(pairs.map(p=>p.entry));
+  const hasOpen=entries.some(e=>!pairedEntries.has(e));
+
+  if(pairs.length>0) return{mins:totalMins,fromTasks:false,pairs,hasOpen};
+
+  // Fallback: sum task durations if no entry/exit at all
   const tasks=dr.filter(r=>r.category==='task');
-  if(!tasks.length)return{mins:0,fromTasks:false};
+  if(!tasks.length)return{mins:0,fromTasks:false,pairs:[],hasOpen:false};
   const total=tasks.reduce((s,r)=>s+parseTaskMins(r.report_time),0);
-  return{mins:total,fromTasks:true};
+  return{mins:total,fromTasks:true,pairs:[],hasOpen:false};
 }
 
 /* Full status for a day */
 function getDayStatus(ds,reports){
   const{stdHours,notes,isWorkDay,dayType}=getDayStd(ds);
-  const{mins:actualMins,fromTasks}=calcDayWorkMins(ds,reports);
+  const{mins:actualMins,fromTasks,pairs,hasOpen}=calcDayWorkMins(ds,reports);
   const wdStr=actualMins>0?`${pad(Math.floor(actualMins/60))}:${pad(actualMins%60)}`:'-';
   if(!isWorkDay){
-    // Special-day with 0 hours required — still show type
-    return{status:dayType!=='normal'?dayType:'nostandard',actualMins,minMins:0,diffMins:actualMins,wdStr,notes,pct:null,fromTasks,dayType};
+    return{status:dayType!=='normal'?dayType:'nostandard',actualMins,minMins:0,diffMins:actualMins,wdStr,notes,pct:null,fromTasks,dayType,pairs,hasOpen};
   }
   const minMins=Math.round(stdHours*60);
   const diffMins=actualMins-minMins;
   const status=diffMins>=0?'ok':'deficit';
   const pct=minMins>0?Math.min(999,Math.round(actualMins/minMins*100)):100;
-  return{status,actualMins,minMins,diffMins,wdStr,notes,pct,fromTasks,dayType};
+  return{status,actualMins,minMins,diffMins,wdStr,notes,pct,fromTasks,dayType,pairs,hasOpen};
 }
 
 function minsToHHMM(m){
@@ -2095,7 +2226,7 @@ async function flushWStandardQueue(){
 /* ─ Daily status card ─ */
 function renderDayWCStatus(ds,reports){
   const sec=$('day-wc-section');if(!sec)return;
-  const{status,actualMins,minMins,diffMins,wdStr,notes,pct,fromTasks,dayType}=getDayStatus(ds,reports);
+  const{status,actualMins,minMins,diffMins,wdStr,notes,pct,fromTasks,dayType,pairs,hasOpen}=getDayStatus(ds,reports);
   const notesEl=$('day-wc-notes');
   const dayTypeLabels={vacation:'🏖 חופש',sick:'🤒 מחלה',holiday:'✡ חג'};
   const dayTypeColors={vacation:'var(--amber)',sick:'var(--purple)',holiday:'var(--blue)'};
@@ -2129,6 +2260,17 @@ function renderDayWCStatus(ds,reports){
     if(status==='deficit')html+=`<span style="font-size:.82rem;color:var(--red)">חסר: <strong>${minsToHHMM(Math.abs(diffMins))}</strong></span>`;
     if(status==='ok'&&diffMins>0)html+=`<span style="font-size:.82rem;color:var(--lime)">עודף: <strong>${minsToHHMM(diffMins)}</strong></span>`;
     if(fromTasks)html+=`<span style="font-size:.75rem;color:var(--amber);margin-top:2px">⚠️ חושב ממשימות — חסרים נתוני כניסה/יציאה</span>`;
+    // Multiple pairs breakdown
+    if(pairs&&pairs.length>1){
+      html+=`<div style="margin-top:8px;font-size:.72rem;color:var(--text3);border-top:1px solid var(--border);padding-top:6px;width:100%">`;
+      html+=`<div style="margin-bottom:3px;font-weight:700;color:var(--text2)">פירוט ${pairs.length} מחזורים:</div>`;
+      pairs.forEach((p,i)=>{html+=`<div style="display:flex;gap:8px;padding:1px 0"><span style="color:var(--lime)">🟢 ${p.entry}</span><span style="color:var(--red)">🔴 ${p.exit}</span><span style="color:var(--text3)">${minsToHHMM(p.mins)}</span></div>`;});
+      html+=`</div>`;
+    }
+    // Open session indicator
+    if(hasOpen){
+      html+=`<span style="font-size:.75rem;color:var(--lime);display:flex;align-items:center;gap:5px;margin-top:4px"><span style="width:7px;height:7px;border-radius:50%;background:var(--lime);animation:pulse 1.4s ease infinite;flex-shrink:0"></span>סשן פתוח — טרם דווחה יציאה</span>`;
+    }
   }
   $('day-wc-content').innerHTML=html;
   // Progress meter
@@ -2461,15 +2603,10 @@ function summaryRender(){
   if(ST.sumPer==='day'){
     const tgt=new Date(now);tgt.setDate(tgt.getDate()+ST.sumOff);
     const ds=isoD(tgt);fil=rs.filter(r=>r.report_date===ds);lbl=fmtD(ds);
-    const entries=fil.filter(r=>r.category==='entry').map(r=>r.report_time).sort();
-    const exits=fil.filter(r=>r.category==='exit').map(r=>r.report_time).sort();
-    let wdStr='-';
-    if(entries.length&&exits.length){
-      const[eh,em]=entries[0].split(':').map(Number);
-      const[xh,xm]=exits[exits.length-1].split(':').map(Number);
-      const diff=(xh*60+xm)-(eh*60+em);
-      if(diff>0)wdStr=`${pad(Math.floor(diff/60))}:${pad(diff%60)}`;
-    }
+    // Aggregate ALL entry/exit pairs (not just first/last)
+    const{mins:dayMins,hasOpen}=calcDayWorkMins(ds,rs);
+    let wdStr=dayMins>0?`${pad(Math.floor(dayMins/60))}:${pad(dayMins%60)}`:'-';
+    if(hasOpen)wdStr+=' ⬤'; // indicate open session
     const wdEl=$('stat-workday');if(wdEl)wdEl.textContent=wdStr;
     const wdCard=$('stat-workday-card');if(wdCard)wdCard.style.display='';
     const dCard=$('stat-days-card');if(dCard)dCard.style.display='none';
