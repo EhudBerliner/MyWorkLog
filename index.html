@@ -446,7 +446,7 @@ details summary::-webkit-details-marker{display:none}
       <a id="menu-sheet-link" href="#" target="_blank" rel="noopener" style="display:none;align-items:center;gap:7px;font-size:.8rem;color:var(--blue);text-decoration:none;padding:3px 2px">
         📊 פתח גיליון הדיווחים
       </a>
-      <span id="menu-vbadge" class="vbadge" title="לחץ לאיפוס">v2.8.0</span>
+      <span id="menu-vbadge" class="vbadge" title="לחץ לאיפוס">v2.8.2</span>
     </div>
   </aside>
 
@@ -458,7 +458,7 @@ details summary::-webkit-details-marker{display:none}
         <span class="hdr-name">MyWorkLog</span>
       </div>
       <div class="hdr-acts">
-        <span id="version-badge" class="vbadge" title="לחץ לאיפוס">v2.8.0</span>
+        <span id="version-badge" class="vbadge" title="לחץ לאיפוס">v2.8.2</span>
       </div>
     </div>
   </header>
@@ -1431,7 +1431,7 @@ function applyLang(lang){
 /* ─────────────────────────────────────────────────────
    App
 ───────────────────────────────────────────────────── */
-const VER='2.8.0';
+const VER='2.8.2';
 const K={ep:'mwl_endpoint',reps:'mwl_reports',q:'mwl_queue',delQ:'mwl_delete_queue',proj:'mwl_projects',
   lang:'mwl_lang',theme:'mwl_theme',prefs:'mwl_prefs',ver:'mwl_version',inst:'mwl_install_dismissed',sheetUrl:'mwl_sheet_url',
   wstandard:'mwl_wstandard'};
@@ -2617,6 +2617,7 @@ function summaryRender(){
     renderDayWCStatus(ds,rs);
     $('sum-prev').disabled=false;
     $('sum-next').disabled=false;
+    const todayBtnD=$('btn-today');if(todayBtnD){todayBtnD.style.display='';todayBtnD.disabled=ST.sumOff===0;todayBtnD.style.opacity=ST.sumOff===0?'0.4':'1';}
   }else if(ST.sumPer==='month'){
     const tgt=new Date(now.getFullYear(),now.getMonth()+ST.sumOff,1);
     const y=tgt.getFullYear(),mo=tgt.getMonth();
