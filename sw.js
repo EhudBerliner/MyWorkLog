@@ -1,57 +1,97 @@
-// MyWorkLog Service Worker v2.1.0
-const APP_VERSION = '2.1.0';
-const CACHE_NAME  = `mwl-${APP_VERSION}`;
+// MyWorkLog Service Worker v2.6.0
+// Strategy: Cache-First for app shell, Network-First for GAS API calls
+const APP_VERSION = '2.6.0';
+const CACHE_SHELL = `mwl-shell-${APP_VERSION}`;
+const CACHE_DATA  = `mwl-data-${APP_VERSION}`;
 
-const ASSETS = [
-  './', './index.html', './manifest.json',
-  './logo.png', './icon-192.png', './icon-512.png', './apple-touch-icon.png',
+// App shell — cached on install, served immediately offline
+const SHELL_ASSETS = [
+  './',
+  './index.html',
+  './manifest.json',
 ];
 
+// ── Install: pre-cache app shell ──────────────────────────────
 self.addEventListener('install', e => {
   e.waitUntil(
-    caches.open(CACHE_NAME).then(c =>
-      Promise.allSettled(ASSETS.map(u => c.add(u).catch(() => {})))
-    ).then(() => self.skipWaiting())
+    caches.open(CACHE_SHELL)
+      .then(c => Promise.allSettled(
+        SHELL_ASSETS.map(u => c.add(u).catch(() => {}))
+      ))
+      .then(() => self.skipWaiting()) // activate immediately
   );
 });
 
+// ── Activate: delete old caches ───────────────────────────────
 self.addEventListener('activate', e => {
   e.waitUntil(
-    caches.keys()
-      .then(ks => Promise.all(ks.filter(k => k.startsWith('mwl-') && k !== CACHE_NAME).map(k => caches.delete(k))))
-      .then(() => self.clients.claim())
+    caches.keys().then(ks =>
+      Promise.all(
+        ks.filter(k => k.startsWith('mwl-') && k !== CACHE_SHELL && k !== CACHE_DATA)
+          .map(k => caches.delete(k))
+      )
+    ).then(() => self.clients.claim())
   );
-  setTimeout(() => setInterval(checkUpdate, 300000), 15000);
 });
 
+// ── Fetch: routing strategy ────────────────────────────────────
 self.addEventListener('fetch', e => {
+  const url = new URL(e.request.url);
+
+  // Skip non-GET
   if (e.request.method !== 'GET') return;
-  if (e.request.url.includes('version.json')) {
-    e.respondWith(fetch(e.request, { cache: 'no-store' }).catch(() => new Response('{}', { headers: { 'Content-Type': 'application/json' }})));
+
+  // GAS endpoint calls — Network only (external domain, no-cors)
+  // These are always opaque responses; don't cache them
+  if (url.hostname.includes('script.google.com') ||
+      url.hostname.includes('googleapis.com')) {
+    return; // let browser handle normally
+  }
+
+  // Same-origin app assets — Cache first, fallback to network
+  if (url.origin === self.location.origin) {
+    e.respondWith(cacheFirstStrategy(e.request));
     return;
   }
-  if (!e.request.url.startsWith(self.location.origin)) return;
-  e.respondWith(
-    caches.match(e.request).then(hit => hit || fetch(e.request).then(r => {
-      if (r && r.status === 200 && r.type !== 'opaque') {
-        caches.open(CACHE_NAME).then(c => c.put(e.request, r.clone()));
-      }
-      return r;
-    }).catch(() => caches.match('./index.html')))
-  );
+  // External fonts / CDN — Network first, cache fallback
+  if (url.hostname.includes('fonts.g') || url.hostname.includes('cdnjs')) {
+    e.respondWith(networkFirstStrategy(e.request, CACHE_DATA));
+  }
 });
 
+async function cacheFirstStrategy(req) {
+  const cached = await caches.match(req);
+  if (cached) return cached;
+  try {
+    const res = await fetch(req);
+    if (res && res.status === 200) {
+      const cache = await caches.open(CACHE_SHELL);
+      cache.put(req, res.clone());
+    }
+    return res;
+  } catch (_) {
+    // Offline fallback: return index.html for navigation requests
+    if (req.mode === 'navigate') {
+      return caches.match('./index.html') || new Response('Offline', { status: 503 });
+    }
+    return new Response('Offline', { status: 503 });
+  }
+}
+
+async function networkFirstStrategy(req, cacheName) {
+  try {
+    const res = await fetch(req);
+    if (res && res.status === 200) {
+      const cache = await caches.open(cacheName);
+      cache.put(req, res.clone());
+    }
+    return res;
+  } catch (_) {
+    return caches.match(req) || new Response('Offline', { status: 503 });
+  }
+}
+
+// ── Messages from app ─────────────────────────────────────────
 self.addEventListener('message', e => {
   if (e.data?.type === 'SKIP_WAITING') self.skipWaiting();
 });
-
-async function checkUpdate() {
-  try {
-    const r = await fetch('./version.json?t=' + Date.now(), { cache: 'no-store' });
-    const d = await r.json();
-    if (d.version && d.version !== APP_VERSION) {
-      (await self.clients.matchAll({ type: 'window' }))
-        .forEach(c => c.postMessage({ type: 'UPDATE_AVAILABLE', version: d.version }));
-    }
-  } catch (_) {}
-}

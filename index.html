@@ -431,7 +431,7 @@ details summary::-webkit-details-marker{display:none}
       <a id="menu-sheet-link" href="#" target="_blank" rel="noopener" style="display:none;align-items:center;gap:7px;font-size:.8rem;color:var(--blue);text-decoration:none;padding:3px 2px">
         📊 פתח גיליון הדיווחים
       </a>
-      <span id="menu-vbadge" class="vbadge" title="לחץ לאיפוס">v2.5.0</span>
+      <span id="menu-vbadge" class="vbadge" title="לחץ לאיפוס">v2.6.0</span>
     </div>
   </aside>
 
@@ -443,7 +443,7 @@ details summary::-webkit-details-marker{display:none}
         <span class="hdr-name">MyWorkLog</span>
       </div>
       <div class="hdr-acts">
-        <span id="version-badge" class="vbadge" title="לחץ לאיפוס">v2.5.0</span>
+        <span id="version-badge" class="vbadge" title="לחץ לאיפוס">v2.6.0</span>
       </div>
     </div>
   </header>
@@ -583,8 +583,9 @@ details summary::-webkit-details-marker{display:none}
         </div>
         <div class="date-nav">
           <button class="ibtn" id="sum-prev">&lsaquo;</button>
-          <span id="sum-period-label" class="period-lbl"></span>
+          <span id="sum-period-label" class="period-lbl" style="cursor:pointer" onclick="goToday()" title="חזרה להיום"></span>
           <button class="ibtn" id="sum-next">&rsaquo;</button>
+          <button class="btn-g sm" id="btn-today" style="font-size:.68rem;padding:3px 9px;line-height:1.4">היום</button>
         </div>
       </div>
       <div class="stats-grid">
@@ -1392,7 +1393,7 @@ function applyLang(lang){
 /* ─────────────────────────────────────────────────────
    App
 ───────────────────────────────────────────────────── */
-const VER='2.5.0';
+const VER='2.6.0';
 const K={ep:'mwl_endpoint',reps:'mwl_reports',q:'mwl_queue',delQ:'mwl_delete_queue',proj:'mwl_projects',
   lang:'mwl_lang',theme:'mwl_theme',prefs:'mwl_prefs',ver:'mwl_version',inst:'mwl_install_dismissed',sheetUrl:'mwl_sheet_url',
   wstandard:'mwl_wstandard'};
@@ -1457,19 +1458,30 @@ function splashInit(){
 async function bgSync(){
   const ep=store(K.ep);
   if(!ep||!navigator.onLine)return;
-  // Flush any queued reports
-  flushWStandardQueue();
-  // Sync projects silently
-  try{
-    const res=await fetch(ep+'?action=getProjects&t='+Date.now(),{cache:'no-store'});
-    if(res.ok){
-      const d=await res.json();
-      if(Array.isArray(d.projects)&&d.projects.length){store(K.proj,d.projects);projLoad();}
-    }
-  }catch(_){}
-  // Sync WorkStandard silently (quiet=true, no toast unless error)
+  // Throttle: skip if last full sync was <5 min ago
+  const lastFull=store('mwl_last_full_sync');
+  if(lastFull&&(Date.now()-Number(lastFull))<5*60*1000)return;
+  // Flush queued items first (no network if nothing queued)
+  await flushWStandardQueue();
+  await syncQ_silent();
+  // Sync WorkStandard (handles its own 10-min throttle)
   const ok=await syncWStandard(true);
-  if(ok)summaryRender();
+  if(ok) summaryRender();
+  store('mwl_last_full_sync',String(Date.now()));
+}
+
+/* Silent queue flush — no UI, no toast, just sends pending reports */
+async function syncQ_silent(){
+  const ep=store(K.ep);if(!ep||!navigator.onLine)return;
+  const q=store(K.q)||[];if(!q.length)return;
+  const fail=[];
+  for(const r of q){
+    try{
+      await fetch(ep,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(r),mode:'no-cors'});
+      markSent(r.id);
+    }catch{fail.push(r);}
+  }
+  store(K.q,fail);pendUI();
 }
 
 
@@ -1789,9 +1801,21 @@ async function syncQ(){
 
 /* NETWORK */
 function netInit(){
-  const upd=()=>{$('offline-banner').classList.toggle('hidden',navigator.onLine);if(navigator.onLine){toast(t('toastOnlineBack'),'success');syncQ()}};
-  window.addEventListener('online',upd);window.addEventListener('offline',upd);
-  $('offline-banner').classList.toggle('hidden',navigator.onLine);pendUI();
+  const onOnline=()=>{
+    $('offline-banner').classList.add('hidden');
+    toast(t('toastOnlineBack'),'success',2000);
+    // Clear throttle so we sync immediately when back online
+    localStorage.removeItem('mwl_last_full_sync');
+    syncQ().then(()=>bgSync());
+  };
+  const onOffline=()=>{
+    $('offline-banner').classList.remove('hidden');
+    toast('📴 מצב אופליין — כל הנתונים נשמרים מקומית','warn',3000);
+  };
+  window.addEventListener('online', onOnline);
+  window.addEventListener('offline', onOffline);
+  $('offline-banner').classList.toggle('hidden',navigator.onLine);
+  pendUI();
 }
 function netQInit(){
   const c=navigator.connection||navigator.mozConnection||navigator.webkitConnection;if(!c)return;
@@ -2242,8 +2266,10 @@ function summaryInit(){
   }));
   $('sum-prev').addEventListener('click',()=>{ST.sumOff--;summaryRender();buzz([15])});
   $('sum-next').addEventListener('click',()=>{ST.sumOff++;summaryRender();buzz([15])});
+  $('btn-today')?.addEventListener('click',()=>{goToday();buzz([15]);});
   workcalInit();
 }
+function goToday(){ST.sumOff=0;summaryRender();}
 function summaryRender(){
   const rs=store(K.reps)||[],now=new Date();let fil=[],lbl='';
   const lblEl=$('sum-period-label')||$('sum-lbl'); // support both IDs
@@ -2266,7 +2292,7 @@ function summaryRender(){
     const mwcSec=$('monthly-wc-section');if(mwcSec)mwcSec.style.display='none';
     renderDayWCStatus(ds,rs);
     $('sum-prev').disabled=false;
-    $('sum-next').disabled=ST.sumOff>=0;
+    $('sum-next').disabled=false;
   }else{
     const tgt=new Date(now.getFullYear(),now.getMonth()+ST.sumOff,1);
     const y=tgt.getFullYear(),mo=tgt.getMonth();
@@ -2287,7 +2313,9 @@ function summaryRender(){
     renderMonthlyWCStats(y,mo,rs);
     renderWCCalendar(y,mo,rs);
     $('sum-prev').disabled=false;
-    $('sum-next').disabled=ST.sumOff>=0;
+    // today btn visibility
+    const todayBtn=$('btn-today');if(todayBtn)todayBtn.style.display=ST.sumOff===0?'none':'';
+    $('sum-next').disabled=false;
   }
   if(lblEl)lblEl.textContent=lbl;
   $('stat-entries').textContent=fil.filter(r=>r.category==='entry').length;
@@ -2393,25 +2421,32 @@ async function syncFromSheet(){
   const ep=store(K.ep);
   if(!ep||!navigator.onLine)return;
   try{
-    const res=await fetch(ep+'?action=getReports&t='+Date.now(),{cache:'no-store'});
+    // Use If-None-Match to avoid re-downloading unchanged data
+    const headers={};
+    const etag=store('mwl_etag_reports');
+    if(etag)headers['If-None-Match']=etag;
+    const res=await fetch(ep+'?action=getReports',{headers,cache:'no-store'});
+    if(res.status===304)return; // not modified — skip
+    const newEtag=res.headers.get('ETag');
+    if(newEtag)store('mwl_etag_reports',newEtag);
     const data=await res.json();
     if(!Array.isArray(data.reports))return;
     const sheetIds=new Set(data.reports.map(r=>String(r.id)).filter(Boolean));
     const local=store(K.reps)||[];
-    // Keep report if: not-yet-sent (no sent flag), OR still in sheet
     const kept=local.filter(r=>!r.sent||sheetIds.has(String(r.id)));
     if(kept.length!==local.length){
       store(K.reps,kept);histRender();summaryRender();
     }
-    // Also pull projects
     if(Array.isArray(data.projects)){
       const localP=store(K.proj)||[];
       const toAdd=data.projects.filter(p=>!localP.includes(p));
       if(toAdd.length){store(K.proj,[...localP,...toAdd]);projLoad();projChipsRender();}
     }
   }catch(_){}
-  // Also sync WorkStandard
-  await syncWStandard(true);
+  // WorkStandard: only if >10 min since last sync (bandwidth saver)
+  const lastSync=store('mwl_wstandard_sync');
+  const staleMins=lastSync?Math.floor((Date.now()-new Date(lastSync.replace(/(\d+)\/(\d+)\/(\d+)/,'$3-$2-$1')).getTime())/60000):999;
+  if(staleMins>10) await syncWStandard(true);
 }
 
 /* Push a new project to GAS */
@@ -2448,9 +2483,8 @@ async function syncProjects(){
 /* SERVICE WORKER */
 function swInit(){
   if(!('serviceWorker'in navigator))return;
-  navigator.serviceWorker.register('sw.js').then(reg=>{
+  navigator.serviceWorker.register('./sw.js',{scope:'./'}).then(reg=>{
     ST.swReg=reg;
-    // Already waiting (updated in background while tab was open)
     if(reg.waiting) showUpd();
     reg.addEventListener('updatefound',()=>{
       const sw=reg.installing;
@@ -2458,14 +2492,11 @@ function swInit(){
         if(sw.state==='installed'&&navigator.serviceWorker.controller) showUpd();
       });
     });
-    // Poll for updates every 30 min while app is open
     setInterval(()=>reg.update().catch(()=>{}), 30*60*1000);
   }).catch(()=>{});
   navigator.serviceWorker.addEventListener('message',e=>{
     if(e.data?.type==='UPDATE_AVAILABLE') showUpd(e.data.version);
-    if(e.data?.type==='SKIP_WAITING') window.location.reload();
   });
-  // When a new SW takes control, reload to get fresh assets
   navigator.serviceWorker.addEventListener('controllerchange',()=>{
     if(!ST._reloading){ST._reloading=true;window.location.reload();}
   });
