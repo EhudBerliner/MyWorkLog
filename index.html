@@ -21,6 +21,7 @@
   --border:rgba(255,255,255,.08);--border2:rgba(255,255,255,.14);
   --lime:#52d68a;--lime2:#3bb870;--limeDim:rgba(82,214,138,.12);
   --red:#ff4d6a;--redDim:rgba(255,77,106,.12);
+  --purple:#a78bfa;--purpleDim:rgba(167,139,250,.13);
   --blue:#4dabff;--blueDim:rgba(77,171,255,.12);
   --amber:#ffb830;--amberDim:rgba(255,184,48,.12);
   --text:#e8e8f0;--text2:#8888aa;--text3:#4a4a66;
@@ -231,6 +232,8 @@ textarea.fi{resize:vertical;min-height:72px}
 .sum-tab{padding:7px 18px;border-radius:20px;border:1.5px solid var(--border);
   background:none;color:var(--text2);font-family:var(--fhe);font-size:.8rem;font-weight:600;cursor:pointer;transition:all .2s}
 .sum-tab.active{border-color:var(--blue);color:var(--blue);background:var(--blueDim)}
+.range-inputs{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:6px}
+.range-inputs .fi{flex:1;min-width:120px;font-size:.82rem}
 .date-nav{display:flex;align-items:center;gap:8px}
 .period-lbl{flex:1;text-align:center;font-family:'Syne',monospace;font-size:.85rem;font-weight:700;color:var(--text)}
 .stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:0 12px}
@@ -347,11 +350,13 @@ textarea.fi{resize:vertical;min-height:72px}
 .wc-cell.ok{background:rgba(200,241,53,.07);border-color:rgba(200,241,53,.25)}
 .wc-cell.deficit{background:rgba(255,77,106,.07);border-color:rgba(255,77,106,.25)}
 .wc-cell.vacation{background:rgba(255,184,48,.07);border-color:rgba(255,184,48,.25)}
+.wc-cell.sick{background:rgba(167,139,250,.08);border-color:rgba(167,139,250,.28)}
 .wc-cell.today{border-color:var(--blue)!important;border-width:2px}
 .wc-day-num{font-family:'Syne',monospace;font-size:.75rem;font-weight:700;color:var(--text2);line-height:1}
 .wc-cell.ok .wc-day-num{color:var(--lime)}
 .wc-cell.deficit .wc-day-num{color:var(--red)}
 .wc-cell.vacation .wc-day-num{color:var(--amber)}
+.wc-cell.sick .wc-day-num{color:var(--purple)}
 .wc-actual{font-family:'Syne',monospace;font-size:.57rem;font-weight:700;color:var(--text3);line-height:1}
 .wc-cell.ok .wc-actual{color:rgba(200,241,53,.75)}
 .wc-cell.deficit .wc-actual{color:rgba(255,77,106,.8)}
@@ -371,6 +376,7 @@ textarea.fi{resize:vertical;min-height:72px}
 .day-status-badge.ok{background:var(--limeDim);color:var(--lime)}
 .day-status-badge.deficit{background:var(--redDim);color:var(--red)}
 .day-status-badge.vacation{background:var(--amberDim);color:var(--amber)}
+.day-status-badge.sick{background:var(--purpleDim);color:var(--purple)}
 .day-status-badge.nodata{background:var(--glass);color:var(--text3)}
 .wc-legend{display:flex;gap:10px;flex-wrap:wrap;padding:4px 0}
 .wc-legend-item{display:flex;align-items:center;gap:5px;font-size:.67rem;color:var(--text3)}
@@ -378,6 +384,7 @@ textarea.fi{resize:vertical;min-height:72px}
 .wc-legend-dot.ok{background:var(--lime)}
 .wc-legend-dot.deficit{background:var(--red)}
 .wc-legend-dot.vacation{background:var(--amber)}
+.wc-legend-dot.sick{background:var(--purple)}
 .wc-sect-lbl{font-size:.67rem;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:1.5px;margin:2px 0 6px}
 .workcal-hint{font-size:.72rem;color:var(--text3);text-align:center;padding:6px 0}
 details summary::-webkit-details-marker{display:none}
@@ -431,7 +438,7 @@ details summary::-webkit-details-marker{display:none}
       <a id="menu-sheet-link" href="#" target="_blank" rel="noopener" style="display:none;align-items:center;gap:7px;font-size:.8rem;color:var(--blue);text-decoration:none;padding:3px 2px">
         📊 פתח גיליון הדיווחים
       </a>
-      <span id="menu-vbadge" class="vbadge" title="לחץ לאיפוס">v2.6.0</span>
+      <span id="menu-vbadge" class="vbadge" title="לחץ לאיפוס">v2.7.0</span>
     </div>
   </aside>
 
@@ -443,7 +450,7 @@ details summary::-webkit-details-marker{display:none}
         <span class="hdr-name">MyWorkLog</span>
       </div>
       <div class="hdr-acts">
-        <span id="version-badge" class="vbadge" title="לחץ לאיפוס">v2.6.0</span>
+        <span id="version-badge" class="vbadge" title="לחץ לאיפוס">v2.7.0</span>
       </div>
     </div>
   </header>
@@ -577,15 +584,24 @@ details summary::-webkit-details-marker{display:none}
     <!-- SUMMARY TAB -->
     <section class="tab-panel" id="tab-summary" role="tabpanel">
       <div class="card">
-        <div class="sum-tabs">
-          <button class="sum-tab active" data-period="day"   data-i18n="sumPeriodDay">&#1497;&#1493;&#1501;</button>
-          <button class="sum-tab"        data-period="month" data-i18n="sumPeriodMonth">&#1495;&#1493;&#1491;&#1513;</button>
+        <div class="sum-tabs" style="flex-wrap:wrap">
+          <button class="sum-tab active" data-period="day"   data-i18n="sumPeriodDay">יום</button>
+          <button class="sum-tab"        data-period="month" data-i18n="sumPeriodMonth">חודש</button>
+          <button class="sum-tab"        data-period="year">שנה</button>
+          <button class="sum-tab"        data-period="range">טווח</button>
         </div>
         <div class="date-nav">
           <button class="ibtn" id="sum-prev">&lsaquo;</button>
           <span id="sum-period-label" class="period-lbl" style="cursor:pointer" onclick="goToday()" title="חזרה להיום"></span>
           <button class="ibtn" id="sum-next">&rsaquo;</button>
           <button class="btn-g sm" id="btn-today" style="font-size:.68rem;padding:3px 9px;line-height:1.4">היום</button>
+        </div>
+        <!-- Range date inputs (visible only in range mode) -->
+        <div id="range-period-inputs" class="range-inputs" style="display:none">
+          <input type="date" id="range-from" class="fi" title="מ-"/>
+          <span style="color:var(--text3);font-size:.8rem">עד</span>
+          <input type="date" id="range-to" class="fi" title="עד-"/>
+          <button class="btn-p sm" id="btn-range-go" style="font-size:.75rem">הצג</button>
         </div>
       </div>
       <div class="stats-grid">
@@ -614,6 +630,8 @@ details summary::-webkit-details-marker{display:none}
           </div>
         </div>
       </div>
+      <!-- Annual / range summary (year + range views) -->
+      <div id="annual-section" style="display:none"></div>
       <!-- Monthly work calendar (month view only) -->
       <div id="monthly-wc-section" style="display:none">
         <div class="card" style="padding:0;overflow:hidden">
@@ -632,9 +650,10 @@ details summary::-webkit-details-marker{display:none}
           <div id="wc-dow-row" class="wc-dow-row"></div>
           <div id="wc-days-grid" class="wc-days-grid"></div>
           <div class="wc-legend" style="margin-top:8px">
-            <div class="wc-legend-item"><div class="wc-legend-dot ok"></div><span>&#1506;&#1502;&#1491; &#1489;&#1491;&#1512;&#1497;&#1513;&#1492;</span></div>
-            <div class="wc-legend-item"><div class="wc-legend-dot deficit"></div><span>&#1495;&#1493;&#1505;&#1512; &#1513;&#1506;&#1493;&#1514;</span></div>
-            <div class="wc-legend-item"><div class="wc-legend-dot vacation"></div><span>&#1497;&#1493;&#1501; &#1495;&#1493;&#1508;&#1513;</span></div>
+            <div class="wc-legend-item"><div class="wc-legend-dot ok"></div><span>עמד בדרישה</span></div>
+            <div class="wc-legend-item"><div class="wc-legend-dot deficit"></div><span>חוסר שעות</span></div>
+            <div class="wc-legend-item"><div class="wc-legend-dot vacation"></div><span>חופש</span></div>
+            <div class="wc-legend-item"><div class="wc-legend-dot sick"></div><span>מחלה</span></div>
           </div>
           <p class="workcal-hint">&#1500;&#1495;&#1509; &#1506;&#1500; &#1497;&#1493;&#1501; &#1500;&#1506;&#1512;&#1497;&#1499;&#1492;</p>
         </div>
@@ -800,8 +819,15 @@ details summary::-webkit-details-marker{display:none}
         <p class="fhint">0 = &#1489;&#1497;&#1493;&#1501; &#1494;&#1492; &#1488;&#1497;&#1503; &#1491;&#1512;&#1497;&#1513;&#1492; &#x28;&#1513;&#1489;&#1514;, &#1495;&#1490;, &#1495;&#1493;&#1508;&#1513;&#x29;</p>
       </div>
       <div class="fg">
-        <label class="flbl">&#1492;&#1506;&#1512;&#1493;&#1514; &#x28;&#1497;&#1493;&#1501; &#1495;&#1493;&#1508;&#1513;, &#1495;&#1490;, &#1493;&#1499;&#x27;&#x29;</label>
-        <input type="text" id="dayedit-notes" class="fi" placeholder="&#1500;&#1491;&#1493;&#1490;&#1502;&#1492;: &#1497;&#1493;&#1501; &#1495;&#1493;&#1508;&#1513;, &#1512;&#1488;&#1513; &#1492;&#1513;&#1504;&#1492;..."/>
+        <label class="flbl">סטאטוס מהיר</label>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px">
+          <button class="status-quick-btn" data-status="vacation" style="background:var(--amberDim);border:1.5px solid var(--amber);color:var(--amber);border-radius:16px;padding:5px 13px;font-size:.76rem;font-weight:700;cursor:pointer">🏖 חופש</button>
+          <button class="status-quick-btn" data-status="sick"     style="background:var(--purpleDim);border:1.5px solid var(--purple);color:var(--purple);border-radius:16px;padding:5px 13px;font-size:.76rem;font-weight:700;cursor:pointer">🤒 מחלה</button>
+          <button class="status-quick-btn" data-status="holiday"  style="background:var(--blueDim);border:1.5px solid var(--blue);color:var(--blue);border-radius:16px;padding:5px 13px;font-size:.76rem;font-weight:700;cursor:pointer">✡ חג</button>
+          <button class="status-quick-btn" data-status="clear"    style="background:var(--glass);border:1.5px solid var(--border2);color:var(--text2);border-radius:16px;padding:5px 13px;font-size:.76rem;font-weight:700;cursor:pointer">✕ נקה</button>
+        </div>
+        <label class="flbl">הערות</label>
+        <input type="text" id="dayedit-notes" class="fi" placeholder="לדוגמה: יום חופש, ראש השנה..."/>
       </div>
       <div id="dayedit-offline-hint" style="display:none;background:var(--amberDim);border:1px solid var(--amber);border-radius:var(--rxs);padding:8px 11px;font-size:.76rem;color:var(--amber)">
         &#9888;&#65039; &#1488;&#1497;&#1503; &#1495;&#1497;&#1489;&#1493;&#1512; &#8212; &#1492;&#1513;&#1497;&#1504;&#1493;&#1497; &#1497;&#1513;&#1502;&#1512; &#1502;&#1511;&#1493;&#1502;&#1497;&#1514; &#1493;&#1497;&#1505;&#1493;&#1504;&#1499;&#1512;&#1503; &#1489;&#1514;&#1493;&#1505;&#1508;&#1514; &#1495;&#1497;&#1489;&#1493;&#1512;
@@ -1393,7 +1419,7 @@ function applyLang(lang){
 /* ─────────────────────────────────────────────────────
    App
 ───────────────────────────────────────────────────── */
-const VER='2.6.0';
+const VER='2.7.0';
 const K={ep:'mwl_endpoint',reps:'mwl_reports',q:'mwl_queue',delQ:'mwl_delete_queue',proj:'mwl_projects',
   lang:'mwl_lang',theme:'mwl_theme',prefs:'mwl_prefs',ver:'mwl_version',inst:'mwl_install_dismissed',sheetUrl:'mwl_sheet_url',
   wstandard:'mwl_wstandard'};
@@ -1868,11 +1894,22 @@ function getWStandard(){ return store(K.wstandard)||[]; }
 function saveWStandardLocal(arr){ store(K.wstandard,arr); }
 
 /* Return standard for a specific date-string YYYY-MM-DD */
+/* Classify Notes field → 'vacation' | 'sick' | 'holiday' | 'normal' */
+function classifyNotes(notes){
+  if(!notes)return'normal';
+  const n=notes.trim().toLowerCase();
+  if(/חופש|vacation|holiday|חג|פסח|שבועות|ראש השנה|יום כיפור|סוכות|שמחת תורה|חנוכה|פורים|יום עצמאות/.test(n))return'vacation';
+  if(/מחלה|חולה|sick|ill|מחלה/.test(n))return'sick';
+  return'normal';
+}
+
 function getDayStd(ds){
   const row=getWStandard().find(r=>r.date===ds);
-  if(!row)return{stdHours:0,notes:'',isWorkDay:false};
+  if(!row)return{stdHours:0,notes:'',isWorkDay:false,dayType:'normal'};
   const h=parseFloat(row.stdHours)||0;
-  return{stdHours:h,notes:row.notes||'',isWorkDay:h>0};
+  const notes=row.notes||'';
+  const dayType=classifyNotes(notes);
+  return{stdHours:h,notes,isWorkDay:h>0,dayType};
 }
 
 /* Hebrew weekday */
@@ -1918,15 +1955,18 @@ function calcDayWorkMins(ds,reports){
 
 /* Full status for a day */
 function getDayStatus(ds,reports){
-  const{stdHours,notes,isWorkDay}=getDayStd(ds);
+  const{stdHours,notes,isWorkDay,dayType}=getDayStd(ds);
   const{mins:actualMins,fromTasks}=calcDayWorkMins(ds,reports);
   const wdStr=actualMins>0?`${pad(Math.floor(actualMins/60))}:${pad(actualMins%60)}`:'-';
-  if(!isWorkDay)return{status:'nostandard',actualMins,minMins:0,diffMins:actualMins,wdStr,notes,pct:null,fromTasks};
+  if(!isWorkDay){
+    // Special-day with 0 hours required — still show type
+    return{status:dayType!=='normal'?dayType:'nostandard',actualMins,minMins:0,diffMins:actualMins,wdStr,notes,pct:null,fromTasks,dayType};
+  }
   const minMins=Math.round(stdHours*60);
   const diffMins=actualMins-minMins;
   const status=diffMins>=0?'ok':'deficit';
   const pct=minMins>0?Math.min(999,Math.round(actualMins/minMins*100)):100;
-  return{status,actualMins,minMins,diffMins,wdStr,notes,pct,fromTasks};
+  return{status,actualMins,minMins,diffMins,wdStr,notes,pct,fromTasks,dayType};
 }
 
 function minsToHHMM(m){
@@ -2055,25 +2095,40 @@ async function flushWStandardQueue(){
 /* ─ Daily status card ─ */
 function renderDayWCStatus(ds,reports){
   const sec=$('day-wc-section');if(!sec)return;
-  const{status,actualMins,minMins,diffMins,wdStr,notes,pct,fromTasks}=getDayStatus(ds,reports);
-  // Always show section so user can edit standard even when no data
-  // Notes
+  const{status,actualMins,minMins,diffMins,wdStr,notes,pct,fromTasks,dayType}=getDayStatus(ds,reports);
   const notesEl=$('day-wc-notes');
-  if(notesEl){notesEl.textContent=notes?'📝 '+notes:'';notesEl.style.display=notes?'':'none';}
-  // Store current date for edit button
+  const dayTypeLabels={vacation:'🏖 חופש',sick:'🤒 מחלה',holiday:'✡ חג'};
+  const dayTypeColors={vacation:'var(--amber)',sick:'var(--purple)',holiday:'var(--blue)'};
+  if(notesEl){
+    notesEl.textContent=notes?notes:'';
+    const dtColor=dayTypeColors[dayType]||'var(--amber)';
+    notesEl.style.background=dayType==='sick'?'var(--purpleDim)':dayType==='vacation'?'var(--amberDim)':'var(--blueDim)';
+    notesEl.style.borderLeft=`3px solid ${dtColor}`;
+    notesEl.style.color=dtColor;
+    notesEl.style.display=notes?'':'none';
+  }
   $('day-wc-section').dataset.date=ds;
   let html='';
-  if(status==='nostandard'){
+  if(status==='vacation'||status==='sick'||status==='holiday'){
+    const dtLabel=dayTypeLabels[status]||('📝 '+notes);
+    const dtColor=dayTypeColors[status]||'var(--amber)';
+    html+=`<span class="day-status-badge ${status}">${dtLabel}</span>`;
+    html+=`<span style="font-size:.78rem;color:var(--text3)">יום זה אינו נספר כחוסר</span>`;
+  }else if(status==='nostandard'){
     html=`<span class="day-status-badge nodata">אין תקן ליום זה</span><span style="font-size:.75rem;color:var(--text3)">לחץ "ערוך תקן" להגדרה</span>`;
   }else{
+    // Show day-type badge alongside work status if relevant
+    if(dayType!=='normal'){
+      html+=`<span class="day-status-badge ${dayType}">${dayTypeLabels[dayType]||dayType}</span>`;
+    }
     const badge=status==='ok'?'ok':'deficit';
-    const label=status==='ok'?`✅ תקין`:`⚠️ חוסר`;
+    const label=status==='ok'?'✅ תקין':'⚠️ חוסר';
     html+=`<span class="day-status-badge ${badge}">${label}</span>`;
     html+=`<span style="font-size:.82rem;color:var(--text2)">בפועל: <strong style="color:var(--text)">${wdStr}</strong></span>`;
     html+=`<span style="font-size:.82rem;color:var(--text2)">תקן: <strong style="color:var(--amber)">${minsToHHMM(minMins)}</strong></span>`;
     if(status==='deficit')html+=`<span style="font-size:.82rem;color:var(--red)">חסר: <strong>${minsToHHMM(Math.abs(diffMins))}</strong></span>`;
     if(status==='ok'&&diffMins>0)html+=`<span style="font-size:.82rem;color:var(--lime)">עודף: <strong>${minsToHHMM(diffMins)}</strong></span>`;
-    if(fromTasks)html+=`<span style="font-size:.75rem;color:var(--amber);display:flex;align-items:center;gap:4px;margin-top:2px">⚠️ חושב ממשימות — חסרים נתוני כניסה/יציאה</span>`;
+    if(fromTasks)html+=`<span style="font-size:.75rem;color:var(--amber);margin-top:2px">⚠️ חושב ממשימות — חסרים נתוני כניסה/יציאה</span>`;
   }
   $('day-wc-content').innerHTML=html;
   // Progress meter
@@ -2116,16 +2171,18 @@ function renderWCCalendar(year,month,reports){
   for(let i=0;i<startDow;i++)html+='<div class="wc-empty-cell"></div>';
   for(let d=1;d<=lastDate;d++){
     const ds=`${year}-${pad(month+1)}-${pad(d)}`;
-    const{status,actualMins,wdStr,notes,minMins,fromTasks}=getDayStatus(ds,reports);
+    const{status,actualMins,wdStr,notes,minMins,fromTasks,dayType}=getDayStatus(ds,reports);
     const isToday=ds===todayStr;
     const showActual=actualMins>0;
-    const cellClass=status==='nostandard'?'':status;
+    const cellClass=dayType==='sick'?'sick':
+      dayType==='vacation'||dayType==='holiday'?'vacation':
+      status==='nostandard'?'':status;
     const stdStr=minMins>0?minsToHHMM(minMins):'';
     html+=`<div class="wc-cell ${cellClass}${isToday?' today':''}" onclick="editDayConfig('${ds}')">
       <span class="wc-day-num">${d}</span>
       ${showActual?`<span class="wc-actual">${wdStr}${fromTasks?'*':''}</span>`:''}
       ${stdStr&&!showActual?`<span class="wc-actual" style="color:var(--text3)">${stdStr}</span>`:''}
-      ${notes?`<span class="wc-vac-icon" title="${notes}">📝</span>`:''}
+      ${dayType==='sick'?`<span class="wc-vac-icon" title="${notes}">🤒</span>`:dayType==='vacation'||dayType==='holiday'?`<span class="wc-vac-icon" title="${notes}">🏖</span>`:notes?`<span class="wc-vac-icon" title="${notes}">📝</span>`:''}
     </div>`;
   }
   daysGrid.innerHTML=html;
@@ -2136,13 +2193,15 @@ function renderMonthlyWCStats(year,month,reports){
   const el=$('monthly-wc-stats');if(!el)return;
   const todayStr=isoD(new Date());
   const lastDate=new Date(year,month+1,0).getDate();
-  let reqMins=0,actualMins=0,surplusMins=0,deficitMins=0,deficitDays=0,okDays=0,workDays=0,pastDays=0;
+  let reqMins=0,actualMins=0,surplusMins=0,deficitMins=0,deficitDays=0,okDays=0,workDays=0,pastDays=0,vacDays=0,sickDays=0;
   for(let d=1;d<=lastDate;d++){
     const ds=`${year}-${pad(month+1)}-${pad(d)}`;
-    const{status,actualMins:am,minMins}=getDayStatus(ds,reports);
-    if(status==='nostandard')continue;
+    const{status,actualMins:am,minMins,dayType}=getDayStatus(ds,reports);
+    // Count special days regardless of work status
+    if(dayType==='vacation'||dayType==='holiday')vacDays++;
+    if(dayType==='sick')sickDays++;
+    if(status==='nostandard'||status==='vacation'||status==='sick'||status==='holiday')continue;
     workDays++;
-    // only count past+today days for achievement (future days have no data yet)
     if(ds<=todayStr){
       pastDays++;reqMins+=minMins;actualMins+=am;
       const diff=am-minMins;
@@ -2164,7 +2223,10 @@ function renderMonthlyWCStats(year,month,reports){
     <div class="wc-stat ${balClass}"><div class="wc-stat-lbl">מאזן</div><div class="wc-stat-val" style="font-size:.82rem">${balance>=0?'+':''}${minsToHHMM(balance)}</div></div>
     <div class="wc-stat" style="border-color:var(--lime)"><div class="wc-stat-lbl">ימים בתקן ✓</div><div class="wc-stat-val" style="color:var(--lime)">${okDays}<span style="font-size:.65rem;color:var(--text3)">/${pastDays}</span></div></div>
     <div class="wc-stat deficit-s"><div class="wc-stat-lbl">ימי חוסר ✗</div><div class="wc-stat-val" style="color:${deficitDays>0?'var(--red)':'var(--text)'}">${deficitDays}<span style="font-size:.65rem;color:var(--text3)">/${pastDays}</span></div></div>
-    <div class="wc-stat" style="border-color:${pctColor}"><div class="wc-stat-lbl">עמידה ביעד</div><div class="wc-stat-val" style="color:${pctColor}">${pctAch!=null?pctAch+'%':'—'}</div></div>`;
+    <div class="wc-stat" style="border-color:${pctColor}"><div class="wc-stat-lbl">עמידה ביעד</div><div class="wc-stat-val" style="color:${pctColor}">${pctAch!=null?pctAch+'%':'—'}</div></div>
+    ${vacDays>0?'<div class="wc-stat" style="border-color:var(--amber)"><div class="wc-stat-lbl">🏖 ימי חופש</div><div class="wc-stat-val" style="color:var(--amber)">'+vacDays+'</div></div>':''}
+    ${sickDays>0?'<div class="wc-stat" style="border-color:var(--purple)"><div class="wc-stat-lbl">🤒 ימי מחלה</div><div class="wc-stat-val" style="color:var(--purple)">'+sickDays+'</div></div>':''}
+  `;
   const ac=$('stat-achievement-card');
   if(ac)ac.style.display='none';
 }
@@ -2190,6 +2252,16 @@ function editDayConfig(ds){
   $('dayedit-stdhours').value=stdHours>0?stdHours:'';
   $('dayedit-notes').value=notes;
   $('dayedit-offline-hint').style.display=navigator.onLine?'none':'';
+  // Wire quick-status buttons
+  const STATUS_NOTES={vacation:'חופש',sick:'מחלה',holiday:'חג',clear:''};
+  document.querySelectorAll('.status-quick-btn').forEach(btn=>{
+    btn.onclick=()=>{
+      const sn=STATUS_NOTES[btn.dataset.status];
+      $('dayedit-notes').value=sn;
+      if(btn.dataset.status!=='clear'&&!$('dayedit-stdhours').value)
+        $('dayedit-stdhours').value='0';
+    };
+  });
   openM('modal-dayedit');
 }
 
@@ -2258,6 +2330,118 @@ function toggleMonthlyStats(){
   wrap.style.display=isOpen?'none':'';
   if(chev)chev.style.transform=isOpen?'rotate(0deg)':'rotate(180deg)';
 }
+
+/* ─── Annual summary ─────────────────────────────────────────── */
+function renderAnnualStats(year, reports){
+  const el=$('annual-section');if(!el)return;
+  const todayStr=isoD(new Date());
+  const locale=(window._lang==='he')?'he-IL':'en-US';
+  let totalReq=0,totalAct=0,totalSurplus=0,totalDeficit=0,totalVac=0,totalSick=0;
+  let totalOkDays=0,totalDefDays=0,totalWorkDays=0;
+  const monthRows=[];
+
+  for(let mo=0;mo<12;mo++){
+    const lastDate=new Date(year,mo+1,0).getDate();
+    let req=0,act=0,surplus=0,deficit=0,vac=0,sick=0,okD=0,defD=0,wDays=0;
+    for(let d=1;d<=lastDate;d++){
+      const ds=`${year}-${pad(mo+1)}-${pad(d)}`;
+      if(ds>todayStr)continue;
+      const{status,actualMins:am,minMins,dayType}=getDayStatus(ds,reports);
+      if(dayType==='vacation'||dayType==='holiday')vac++;
+      if(dayType==='sick')sick++;
+      if(status==='nostandard'||status==='vacation'||status==='sick'||status==='holiday')continue;
+      wDays++;req+=minMins;act+=am;
+      const diff=am-minMins;
+      if(diff>=0){surplus+=diff;okD++;}else{deficit+=Math.abs(diff);defD++;}
+    }
+    totalReq+=req;totalAct+=act;totalSurplus+=surplus;totalDeficit+=deficit;
+    totalVac+=vac;totalSick+=sick;totalOkDays+=okD;totalDefDays+=defD;totalWorkDays+=wDays;
+    const bal=surplus-deficit;
+    const pct=req>0?Math.round(act/req*100):null;
+    const moName=new Date(year,mo,1).toLocaleString(locale,{month:'long'});
+    const moColor=pct==null?'var(--text3)':pct>=100?'var(--lime)':pct>=80?'var(--amber)':'var(--red)';
+    monthRows.push(`<tr>
+      <td style="padding:5px 10px;font-size:.78rem;color:var(--text2)">${moName}</td>
+      <td style="padding:5px 8px;font-family:'Syne',monospace;font-size:.78rem;text-align:center">${wDays}</td>
+      <td style="padding:5px 8px;font-family:'Syne',monospace;font-size:.78rem;text-align:center;color:var(--blue)">${minsToHHMM(act)}</td>
+      <td style="padding:5px 8px;font-family:'Syne',monospace;font-size:.78rem;text-align:center;color:${bal>=0?'var(--lime)':'var(--red)'}">${bal>=0?'+':''}${minsToHHMM(bal)}</td>
+      <td style="padding:5px 8px;font-size:.78rem;text-align:center;color:${moColor}">${pct!=null?pct+'%':'—'}</td>
+      ${vac>0?`<td style="padding:5px 8px;font-size:.78rem;text-align:center;color:var(--amber)">🏖${vac}</td>`:'<td></td>'}
+      ${sick>0?`<td style="padding:5px 8px;font-size:.78rem;text-align:center;color:var(--purple)">🤒${sick}</td>`:'<td></td>'}
+    </tr>`);
+  }
+
+  const totBal=totalSurplus-totalDeficit;
+  const totPct=totalReq>0?Math.round(totalAct/totalReq*100):null;
+  const totColor=totPct==null?'var(--text3)':totPct>=100?'var(--lime)':totPct>=80?'var(--amber)':'var(--red)';
+
+  el.innerHTML=`
+  <div class="card">
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:12px">
+      <div class="wc-stat actual-s"><div class="wc-stat-lbl">שעות בפועל</div><div class="wc-stat-val" style="font-size:.82rem">${minsToHHMM(totalAct)}</div></div>
+      <div class="wc-stat"><div class="wc-stat-lbl">נדרש</div><div class="wc-stat-val" style="font-size:.82rem">${minsToHHMM(totalReq)}</div></div>
+      <div class="wc-stat ${totBal>=0?'balpos':'balneg'}"><div class="wc-stat-lbl">מאזן שנתי</div><div class="wc-stat-val" style="font-size:.82rem">${totBal>=0?'+':''}${minsToHHMM(totBal)}</div></div>
+      <div class="wc-stat" style="border-color:${totColor}"><div class="wc-stat-lbl">עמידה ביעד</div><div class="wc-stat-val" style="color:${totColor}">${totPct!=null?totPct+'%':'—'}</div></div>
+      ${totalVac>0?`<div class="wc-stat" style="border-color:var(--amber)"><div class="wc-stat-lbl">🏖 ימי חופש</div><div class="wc-stat-val" style="color:var(--amber)">${totalVac}</div></div>`:''}
+      ${totalSick>0?`<div class="wc-stat" style="border-color:var(--purple)"><div class="wc-stat-lbl">🤒 ימי מחלה</div><div class="wc-stat-val" style="color:var(--purple)">${totalSick}</div></div>`:''}
+    </div>
+    <div style="overflow-x:auto">
+      <table style="width:100%;border-collapse:collapse">
+        <thead><tr style="border-bottom:1px solid var(--border)">
+          <th style="padding:5px 10px;font-size:.62rem;color:var(--text3);text-align:right;font-weight:700">חודש</th>
+          <th style="padding:5px 8px;font-size:.62rem;color:var(--text3)">ימים</th>
+          <th style="padding:5px 8px;font-size:.62rem;color:var(--text3)">שעות</th>
+          <th style="padding:5px 8px;font-size:.62rem;color:var(--text3)">מאזן</th>
+          <th style="padding:5px 8px;font-size:.62rem;color:var(--text3)">%</th>
+          <th style="padding:5px 8px;font-size:.62rem;color:var(--amber)">חופש</th>
+          <th style="padding:5px 8px;font-size:.62rem;color:var(--purple)">מחלה</th>
+        </tr></thead>
+        <tbody>${monthRows.join('')}</tbody>
+      </table>
+    </div>
+  </div>`;
+}
+
+/* ─── Range summary ──────────────────────────────────────────── */
+function renderRangeStats(from, to, reports){
+  const el=$('annual-section');if(!el)return;
+  if(!from||!to||from>to){el.innerHTML='<div class="card"><p style="color:var(--text3);text-align:center;padding:16px">בחר תאריך התחלה וסיום</p></div>';return;}
+  const todayStr=isoD(new Date());
+  let req=0,act=0,surplus=0,deficit=0,vac=0,sick=0,okD=0,defD=0,wDays=0;
+  // Iterate days in range
+  const start=new Date(from),end=new Date(to);
+  for(let dt=new Date(start);dt<=end;dt.setDate(dt.getDate()+1)){
+    const ds=isoD(dt);
+    if(ds>todayStr)continue;
+    const{status,actualMins:am,minMins,dayType}=getDayStatus(ds,reports);
+    if(dayType==='vacation'||dayType==='holiday')vac++;
+    if(dayType==='sick')sick++;
+    if(status==='nostandard'||status==='vacation'||status==='sick'||status==='holiday')continue;
+    wDays++;req+=minMins;act+=am;
+    const diff=am-minMins;
+    if(diff>=0){surplus+=diff;okD++;}else{deficit+=Math.abs(diff);defD++;}
+  }
+  const bal=surplus-deficit;
+  const pct=req>0?Math.round(act/req*100):null;
+  const pctColor=pct==null?'var(--text3)':pct>=100?'var(--lime)':pct>=80?'var(--amber)':'var(--red)';
+  const rangeDays=Math.round((end-start)/(1000*60*60*24))+1;
+
+  el.innerHTML=`
+  <div class="card">
+    <div style="font-size:.68rem;color:var(--text3);margin-bottom:8px">סה"כ ${rangeDays} ימים בטווח · ${wDays} ימי עבודה</div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px">
+      <div class="wc-stat actual-s"><div class="wc-stat-lbl">שעות בפועל</div><div class="wc-stat-val" style="font-size:.82rem">${minsToHHMM(act)}</div></div>
+      <div class="wc-stat"><div class="wc-stat-lbl">נדרש</div><div class="wc-stat-val" style="font-size:.82rem">${minsToHHMM(req)}</div></div>
+      <div class="wc-stat ${bal>=0?'balpos':'balneg'}"><div class="wc-stat-lbl">מאזן</div><div class="wc-stat-val" style="font-size:.82rem">${bal>=0?'+':''}${minsToHHMM(bal)}</div></div>
+      <div class="wc-stat" style="border-color:${pctColor}"><div class="wc-stat-lbl">עמידה ביעד</div><div class="wc-stat-val" style="color:${pctColor}">${pct!=null?pct+'%':'—'}</div></div>
+      <div class="wc-stat" style="border-color:var(--lime)"><div class="wc-stat-lbl">ימים בתקן ✓</div><div class="wc-stat-val" style="color:var(--lime)">${okD}<span style="font-size:.65rem;color:var(--text3)">/${wDays}</span></div></div>
+      <div class="wc-stat deficit-s"><div class="wc-stat-lbl">ימי חוסר ✗</div><div class="wc-stat-val" style="color:${defD>0?'var(--red)':'var(--text)'}">${defD}<span style="font-size:.65rem;color:var(--text3)">/${wDays}</span></div></div>
+      ${vac>0?`<div class="wc-stat" style="border-color:var(--amber)"><div class="wc-stat-lbl">🏖 ימי חופש</div><div class="wc-stat-val" style="color:var(--amber)">${vac}</div></div>`:''}
+      ${sick>0?`<div class="wc-stat" style="border-color:var(--purple)"><div class="wc-stat-lbl">🤒 ימי מחלה</div><div class="wc-stat-val" style="color:var(--purple)">${sick}</div></div>`:''}
+    </div>
+  </div>`;
+}
+
 /* SUMMARY */
 function summaryInit(){
   document.querySelectorAll('.sum-tab').forEach(btn=>btn.addEventListener('click',()=>{
@@ -2267,6 +2451,7 @@ function summaryInit(){
   $('sum-prev').addEventListener('click',()=>{ST.sumOff--;summaryRender();buzz([15])});
   $('sum-next').addEventListener('click',()=>{ST.sumOff++;summaryRender();buzz([15])});
   $('btn-today')?.addEventListener('click',()=>{goToday();buzz([15]);});
+  $('btn-range-go')?.addEventListener('click',()=>summaryRender());
   workcalInit();
 }
 function goToday(){ST.sumOff=0;summaryRender();}
@@ -2290,10 +2475,12 @@ function summaryRender(){
     const dCard=$('stat-days-card');if(dCard)dCard.style.display='none';
     // Work calendar daily status
     const mwcSec=$('monthly-wc-section');if(mwcSec)mwcSec.style.display='none';
+    const annSec2=$('annual-section');if(annSec2)annSec2.style.display='none';
+    const riSec=$('range-period-inputs');if(riSec)riSec.style.display='none';
     renderDayWCStatus(ds,rs);
     $('sum-prev').disabled=false;
     $('sum-next').disabled=false;
-  }else{
+  }else if(ST.sumPer==='month'){
     const tgt=new Date(now.getFullYear(),now.getMonth()+ST.sumOff,1);
     const y=tgt.getFullYear(),mo=tgt.getMonth();
     fil=rs.filter(r=>{const d=new Date(r.report_date);return d.getFullYear()===y&&d.getMonth()===mo;});
@@ -2302,20 +2489,41 @@ function summaryRender(){
     const wdEl=$('stat-workday');if(wdEl)wdEl.textContent='-';
     const wdCard=$('stat-workday-card');if(wdCard)wdCard.style.display='none';
     const dCard=$('stat-days-card');
-    if(dCard){
-      dCard.style.display='';
-      const dDays=new Set(fil.map(r=>r.report_date)).size;
-      const dEl=$('stat-days');if(dEl)dEl.textContent=dDays;
-    }
-    // Work calendar monthly
+    if(dCard){dCard.style.display='';const dDays=new Set(fil.map(r=>r.report_date)).size;const dEl=$('stat-days');if(dEl)dEl.textContent=dDays;}
     const dwcSec=$('day-wc-section');if(dwcSec)dwcSec.style.display='none';
+    const annSec=$('annual-section');if(annSec)annSec.style.display='none';
     const mwcSec=$('monthly-wc-section');if(mwcSec)mwcSec.style.display='';
+    $('range-period-inputs').style.display='none';
     renderMonthlyWCStats(y,mo,rs);
     renderWCCalendar(y,mo,rs);
     $('sum-prev').disabled=false;
-    // today btn visibility
     const todayBtn=$('btn-today');if(todayBtn)todayBtn.style.display=ST.sumOff===0?'none':'';
     $('sum-next').disabled=false;
+  }else if(ST.sumPer==='year'){
+    const y=now.getFullYear()+ST.sumOff;
+    fil=rs.filter(r=>r.report_date&&r.report_date.startsWith(String(y)));
+    lbl=`שנת ${y}`;
+    [$('stat-workday-card'),$('stat-days-card'),$('stat-achievement-card')].forEach(el=>{if(el)el.style.display='none';});
+    [$('day-wc-section'),$('monthly-wc-section')].forEach(el=>{if(el)el.style.display='none';});
+    $('range-period-inputs').style.display='none';
+    const annSec=$('annual-section');if(annSec){annSec.style.display='';renderAnnualStats(y,rs);}
+    const todayBtn=$('btn-today');if(todayBtn)todayBtn.style.display=ST.sumOff===0?'none':'';
+    $('sum-prev').disabled=false;$('sum-next').disabled=false;
+  }else if(ST.sumPer==='range'){
+    lbl='טווח תאריכים';
+    const from=$('range-from')?.value,to=$('range-to')?.value;
+    $('range-period-inputs').style.display='';
+    if(from&&to&&from<=to){
+      fil=rs.filter(r=>r.report_date>=from&&r.report_date<=to);
+      lbl=`${fmtD(from)} – ${fmtD(to)}`;
+    }else{fil=[];}
+    [$('stat-workday-card')].forEach(el=>{if(el)el.style.display='none';});
+    [$('day-wc-section'),$('monthly-wc-section')].forEach(el=>{if(el)el.style.display='none';});
+    const annSec=$('annual-section');if(annSec){annSec.style.display='';renderRangeStats(from,to,rs);}
+    const todayBtn=$('btn-today');if(todayBtn)todayBtn.style.display='none';
+    const dCard=$('stat-days-card');
+    if(dCard){dCard.style.display='';const dDays=new Set(fil.map(r=>r.report_date)).size;const dEl=$('stat-days');if(dEl)dEl.textContent=dDays;}
+    $('sum-prev').disabled=true;$('sum-next').disabled=true;
   }
   if(lblEl)lblEl.textContent=lbl;
   $('stat-entries').textContent=fil.filter(r=>r.category==='entry').length;
