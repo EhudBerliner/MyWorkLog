@@ -434,31 +434,31 @@ details summary::-webkit-details-marker{display:none}
       <button class="menu-item" data-tab="history" data-i18n="menuHistory">היסטוריה</button>
       <button class="menu-item" data-tab="summary" data-i18n="menuSummary">סיכום</button>
       <hr class="menu-div"/>
-      <button class="menu-item" id="menu-theme-btn">🌙 מצב כהה</button>
+      <button class="menu-item" id="menu-theme-btn"data-i18n="menuThemeDark">🌙 מצב כהה</button>
       <hr class="menu-div"/>
       <button class="menu-item" id="menu-settings-btn" data-i18n="menuSettings">⚙️ הגדרות</button>
-      <button class="menu-item" id="menu-help-btn">📄 עזרה — Apps Script</button>
-      <button class="menu-item" id="menu-gs-btn">🔗 קוד google-apps-script.gs</button>
+      <button class="menu-item" id="menu-help-btn"data-i18n="menuHelp2">📄 עזרה — Apps Script</button>
+      <button class="menu-item" id="menu-gs-btn"data-i18n="menuGS">🔗 קוד google-apps-script.gs</button>
       <hr class="menu-div"/>
-      <button class="menu-item" id="menu-wstandard-btn">📊 תקן שעות — WorkStandard</button>
+      <button class="menu-item" id="menu-wstandard-btn"data-i18n="menuWorkstandard">📊 תקן שעות — WorkStandard</button>
     </nav>
     <div class="menu-foot" style="display:flex;flex-direction:column;gap:8px">
       <a id="menu-sheet-link" href="#" target="_blank" rel="noopener" style="display:none;align-items:center;gap:7px;font-size:.8rem;color:var(--blue);text-decoration:none;padding:3px 2px">
         📊 פתח גיליון הדיווחים
       </a>
-      <span id="menu-vbadge" class="vbadge" title="לחץ לאיפוס">v2.8.2</span>
+      <span id="menu-vbadge" class="vbadge" title="לחץ לאיפוס">v2.9.0</span>
     </div>
   </aside>
 
   <header class="app-hdr">
     <div class="hdr-inner">
-      <button class="ibtn hbg" id="btn-hamburger" aria-label="תפריט">☰</button>
+      <button class="ibtn hbg" id="btn-hamburger" data-i18n-attr="aria-label" data-i18n="menuHamburgerLabel" aria-label="תפריט">☰</button>
       <div class="hdr-brand">
         <img src="logo.png" alt="" class="hdr-logo"/>
         <span class="hdr-name">MyWorkLog</span>
       </div>
       <div class="hdr-acts">
-        <span id="version-badge" class="vbadge" title="לחץ לאיפוס">v2.8.2</span>
+        <span id="version-badge" class="vbadge" title="לחץ לאיפוס">v2.9.0</span>
       </div>
     </div>
   </header>
@@ -484,7 +484,7 @@ details summary::-webkit-details-marker{display:none}
         </div>
         <div id="session-banner" class="session-banner closed" style="margin-top:10px">
           <span class="session-dot"></span>
-          <span id="session-banner-text">טוען...</span>
+          <span id="session-banner-text"data-i18n="sessionLoading">טוען...</span>
         </div>
       </div>
 
@@ -509,7 +509,7 @@ details summary::-webkit-details-marker{display:none}
           <label class="flbl" data-i18n="labelProject">פרויקט <span style="color:var(--red);font-size:.75rem">*</span></label>
           <input type="text" id="task-project" class="fi" list="projects-list"
             data-i18n="placeholderProj" data-i18n-attr="placeholder"
-            placeholder="שם הפרויקט (חובה)"/>
+            data-i18n="placeholderProjRequired" data-i18n-attr="placeholder" placeholder="שם הFprojected (חובה)"/>
           <datalist id="projects-list"></datalist>
         </div>
         <div class="fg">
@@ -586,7 +586,7 @@ details summary::-webkit-details-marker{display:none}
     <!-- HISTORY TAB -->
     <section class="tab-panel" id="tab-history" role="tabpanel">
       <div class="card">
-        <div class="card-lbl" data-i18n="historyTitle">דיווחים - 30 ימים אחרונים</div>
+        <div class="card-lbl" data-i18n="historyRecent">דיווחים - 30 ימים אחרונים</div>
         <div id="history-list" class="hlist">
           <p class="empty" data-i18n="historyEmpty">אין דיווחים עדיין</p>
         </div>
@@ -599,21 +599,21 @@ details summary::-webkit-details-marker{display:none}
         <div class="sum-tabs" style="flex-wrap:wrap">
           <button class="sum-tab active" data-period="day"   data-i18n="sumPeriodDay">יום</button>
           <button class="sum-tab"        data-period="month" data-i18n="sumPeriodMonth">חודש</button>
-          <button class="sum-tab"        data-period="year">שנה</button>
-          <button class="sum-tab"        data-period="range">טווח</button>
+          <button class="sum-tab"        data-period="year"data-i18n="sumPeriodYear">שנה</button>
+          <button class="sum-tab"        data-period="range"data-i18n="sumPeriodRange">טווח</button>
         </div>
         <div class="date-nav">
           <button class="ibtn" id="sum-prev">&lsaquo;</button>
           <span id="sum-period-label" class="period-lbl" style="cursor:pointer" onclick="goToday()" title="חזרה להיום"></span>
           <button class="ibtn" id="sum-next">&rsaquo;</button>
-          <button class="btn-g sm" id="btn-today" style="font-size:.68rem;padding:3px 9px;line-height:1.4">היום</button>
+          <button class="btn-g sm" id="btn-today" style="font-size:.68rem;padding:3px 9px;line-height:1.4"data-i18n="btnToday">היום</button>
         </div>
         <!-- Range date inputs (visible only in range mode) -->
         <div id="range-period-inputs" class="range-inputs" style="display:none">
           <input type="date" id="range-from" class="fi" title="מ-"/>
-          <span style="color:var(--text3);font-size:.8rem">עד</span>
+          <span style="color:var(--text3);font-size:.8rem" data-i18n="labelRangeSep">עד</span>
           <input type="date" id="range-to" class="fi" title="עד-"/>
-          <button class="btn-p sm" id="btn-range-go" style="font-size:.75rem">הצג</button>
+          <button class="btn-p sm" id="btn-range-go" style="font-size:.75rem"data-i18n="btnRangeGo">הצג</button>
         </div>
       </div>
       <div class="stats-grid">
@@ -662,10 +662,10 @@ details summary::-webkit-details-marker{display:none}
           <div id="wc-dow-row" class="wc-dow-row"></div>
           <div id="wc-days-grid" class="wc-days-grid"></div>
           <div class="wc-legend" style="margin-top:8px">
-            <div class="wc-legend-item"><div class="wc-legend-dot ok"></div><span>עמד בדרישה</span></div>
-            <div class="wc-legend-item"><div class="wc-legend-dot deficit"></div><span>חוסר שעות</span></div>
-            <div class="wc-legend-item"><div class="wc-legend-dot vacation"></div><span>חופש</span></div>
-            <div class="wc-legend-item"><div class="wc-legend-dot sick"></div><span>מחלה</span></div>
+            <div class="wc-legend-item"><div class="wc-legend-dot ok"></div><span data-i18n="legendOk">עמד בדרישה</span></div>
+            <div class="wc-legend-item"><div class="wc-legend-dot deficit"></div><span data-i18n="legendDeficit">חוסר שעות</span></div>
+            <div class="wc-legend-item"><div class="wc-legend-dot vacation"></div><span data-i18n="legendVacation">חופש</span></div>
+            <div class="wc-legend-item"><div class="wc-legend-dot sick"></div><span data-i18n="legendSick">מחלה</span></div>
           </div>
           <p class="workcal-hint">&#1500;&#1495;&#1509; &#1506;&#1500; &#1497;&#1493;&#1501; &#1500;&#1506;&#1512;&#1497;&#1499;&#1492;</p>
         </div>
@@ -831,15 +831,15 @@ details summary::-webkit-details-marker{display:none}
         <p class="fhint">0 = &#1489;&#1497;&#1493;&#1501; &#1494;&#1492; &#1488;&#1497;&#1503; &#1491;&#1512;&#1497;&#1513;&#1492; &#x28;&#1513;&#1489;&#1514;, &#1495;&#1490;, &#1495;&#1493;&#1508;&#1513;&#x29;</p>
       </div>
       <div class="fg">
-        <label class="flbl">סטאטוס מהיר</label>
+        <label class="flbl" data-i18n="labelQuickStatus">סטאטוס מהיר</label>
         <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px">
-          <button class="status-quick-btn" data-status="vacation" style="background:var(--amberDim);border:1.5px solid var(--amber);color:var(--amber);border-radius:16px;padding:5px 13px;font-size:.76rem;font-weight:700;cursor:pointer">🏖 חופש</button>
-          <button class="status-quick-btn" data-status="sick"     style="background:var(--purpleDim);border:1.5px solid var(--purple);color:var(--purple);border-radius:16px;padding:5px 13px;font-size:.76rem;font-weight:700;cursor:pointer">🤒 מחלה</button>
-          <button class="status-quick-btn" data-status="holiday"  style="background:var(--blueDim);border:1.5px solid var(--blue);color:var(--blue);border-radius:16px;padding:5px 13px;font-size:.76rem;font-weight:700;cursor:pointer">✡ חג</button>
-          <button class="status-quick-btn" data-status="clear"    style="background:var(--glass);border:1.5px solid var(--border2);color:var(--text2);border-radius:16px;padding:5px 13px;font-size:.76rem;font-weight:700;cursor:pointer">✕ נקה</button>
+          <button class="status-quick-btn" data-status="vacation" data-i18n="statusVacation" style="background:var(--amberDim);border:1.5px solid var(--amber);color:var(--amber);border-radius:16px;padding:5px 13px;font-size:.76rem;font-weight:700;cursor:pointer">🏖 חופש</button>
+          <button class="status-quick-btn" data-status="sick"     data-i18n="statusSick" style="background:var(--purpleDim);border:1.5px solid var(--purple);color:var(--purple);border-radius:16px;padding:5px 13px;font-size:.76rem;font-weight:700;cursor:pointer">🤒 מחלה</button>
+          <button class="status-quick-btn" data-status="holiday"  data-i18n="statusHoliday" style="background:var(--blueDim);border:1.5px solid var(--blue);color:var(--blue);border-radius:16px;padding:5px 13px;font-size:.76rem;font-weight:700;cursor:pointer">✡ חג</button>
+          <button class="status-quick-btn" data-status="clear"    data-i18n="statusClear" style="background:var(--glass);border:1.5px solid var(--border2);color:var(--text2);border-radius:16px;padding:5px 13px;font-size:.76rem;font-weight:700;cursor:pointer">✕ נקה</button>
         </div>
-        <label class="flbl">הערות</label>
-        <input type="text" id="dayedit-notes" class="fi" placeholder="לדוגמה: יום חופש, ראש השנה..."/>
+        <label class="flbl" data-i18n="labelNotes">הערות</label>
+        <input type="text" id="dayedit-notes" class="fi" data-i18n="placeholderNotes" data-i18n-attr="placeholder" placeholder="לדוגמה: יום חופש, ראש השנה..."/>
       </div>
       <div id="dayedit-offline-hint" style="display:none;background:var(--amberDim);border:1px solid var(--amber);border-radius:var(--rxs);padding:8px 11px;font-size:.76rem;color:var(--amber)">
         &#9888;&#65039; &#1488;&#1497;&#1503; &#1495;&#1497;&#1489;&#1493;&#1512; &#8212; &#1492;&#1513;&#1497;&#1504;&#1493;&#1497; &#1497;&#1513;&#1502;&#1512; &#1502;&#1511;&#1493;&#1502;&#1497;&#1514; &#1493;&#1497;&#1505;&#1493;&#1504;&#1499;&#1512;&#1503; &#1489;&#1514;&#1493;&#1505;&#1508;&#1514; &#1495;&#1497;&#1489;&#1493;&#1512;
@@ -1407,6 +1407,135 @@ const I18N={
   sheetUrlLabel:{he:'כתובת גיליון Google Sheets',en:'Google Sheets URL'},
   sheetUrlHint:{he:'הדבק את ה-URL של הגיליון (לקישור ישיר)',en:'Paste the Sheets URL (for direct link)'},
   labelSavedProjects:{he:'פרויקטים שמורים',en:'Saved Projects'},
+
+  /* ── Menu items ── */
+  menuClose:{he:'סגור',en:'Close'},
+  menuThemeDark:{he:'🌙 מצב כהה',en:'🌙 Dark Mode'},
+  menuThemeLight:{he:'☀️ מצב בהיר',en:'☀️ Light Mode'},
+  menuHelp2:{he:'📄 עזרה — Apps Script',en:'📄 Help — Apps Script'},
+  menuGS:{he:'🔗 קוד google-apps-script.gs',en:'🔗 Download GAS code'},
+  menuWorkstandard:{he:'📊 תקן שעות — WorkStandard',en:'📊 Hour Standard — WorkStandard'},
+  menuOpenSheet:{he:'📊 פתח גיליון הדיווחים',en:'📊 Open Reports Sheet'},
+  menuVersionTooltip:{he:'לחץ לאיפוס',en:'Click to reset'},
+  menuHamburgerLabel:{he:'תפריט',en:'Menu'},
+
+  /* ── Session banner ── */
+  sessionLoading:{he:'טוען...',en:'Loading...'},
+  sessionOpen:{he:'בפנים מ-',en:'Active since '},
+  sessionClosed:{he:'לא דווחה כניסה להיום',en:'No check-in today'},
+  sessionClosedWithHours:{he:'לא נמצאת',en:'Checked out'},
+  sessionBlockEntry:{he:'הנך כבר רשום כנמצא — עליך לדווח יציאה לפני כניסה חדשה',en:'Already checked in — please check out before a new entry'},
+  sessionBlockExit:{he:'לא נמצאה כניסה פעילה להיום — עליך לדווח כניסה תחילה',en:'No active check-in today — please check in first'},
+  sessionOpenLabel:{he:'סשן פתוח — טרם דווחה יציאה',en:'Open session — no exit recorded'},
+  sessionPairs:{he:'פירוט',en:'Breakdown'},
+  sessionCycles:{he:'מחזורים',en:'cycles'},
+
+  /* ── Report form ── */
+  placeholderProjRequired:{he:'שם הפרויקט (חובה)',en:'Project name (required)'},
+  placeholderTaskDesc:{he:'מה בוצע...',en:'What was done...'},
+  hourMinLabel:{he:"שע׳:דק׳",en:'h:m'},
+  preset15:{he:"15 דק׳",en:'15 min'},
+  preset30:{he:"30 דק׳",en:'30 min'},
+  preset1h:{he:'1 שעה',en:'1 hour'},
+  preset15h:{he:'1.5 שעה',en:'1.5 hrs'},
+  preset2h:{he:'2 שעות',en:'2 hrs'},
+  preset4h:{he:'4 שעות',en:'4 hrs'},
+
+  /* ── Summary periods / navigation ── */
+  sumPeriodYear:{he:'שנה',en:'Year'},
+  sumPeriodRange:{he:'טווח',en:'Range'},
+  btnToday:{he:'היום',en:'Today'},
+  rangeFrom:{he:'מ-',en:'From'},
+  rangeTo:{he:'עד',en:'To'},
+  btnRangeGo:{he:'הצג',en:'Show'},
+  labelRangeSep:{he:'עד',en:'to'},
+
+  /* ── Work calendar legend ── */
+  legendOk:{he:'עמד בדרישה',en:'Met standard'},
+  legendDeficit:{he:'חוסר שעות',en:'Hour deficit'},
+  legendVacation:{he:'חופש',en:'Vacation'},
+  legendSick:{he:'מחלה',en:'Sick'},
+
+  /* ── Day edit modal — quick status ── */
+  labelQuickStatus:{he:'סטאטוס מהיר',en:'Quick Status'},
+  labelNotes:{he:'הערות',en:'Notes'},
+  statusVacation:{he:'🏖 חופש',en:'🏖 Vacation'},
+  statusSick:{he:'🤒 מחלה',en:'🤒 Sick'},
+  statusHoliday:{he:'✡ חג',en:'✡ Holiday'},
+  statusClear:{he:'✕ נקה',en:'✕ Clear'},
+  placeholderNotes:{he:'לדוגמה: יום חופש, ראש השנה...',en:'e.g. vacation, holiday...'},
+
+  /* ── WC stats labels ── */
+  wcStatWorkdays:{he:'ימי עבודה',en:'Work Days'},
+  wcStatRequired:{he:'נדרש עד היום',en:'Required to date'},
+  wcStatActual:{he:'בפועל',en:'Actual'},
+  wcStatSurplus:{he:'עודף',en:'Surplus'},
+  wcStatDeficit:{he:'חוסר',en:'Deficit'},
+  wcStatBalance:{he:'מאזן',en:'Balance'},
+  wcStatOkDays:{he:'ימים בתקן ✓',en:'Days met ✓'},
+  wcStatDefDays:{he:'ימי חוסר ✗',en:'Deficit days ✗'},
+  wcStatAchieve:{he:'עמידה ביעד',en:'Goal rate'},
+  wcStatVacDays:{he:'🏖 ימי חופש',en:'🏖 Vacation days'},
+  wcStatSickDays:{he:'🤒 ימי מחלה',en:'🤒 Sick days'},
+  wcStatAnnualBal:{he:'מאזן שנתי',en:'Annual balance'},
+  wcStatHours:{he:'שעות בפועל',en:'Actual hours'},
+  wcStatNeeded:{he:'נדרש',en:'Required'},
+  wcDayNotCount:{he:'יום זה אינו נספר כחוסר',en:'This day is not counted as deficit'},
+  wcNoStandard:{he:'אין תקן ליום זה',en:'No standard for this day'},
+  wcEditHint:{he:'לחץ "ערוך תקן" להגדרה',en:'Tap "Edit Standard" to configure'},
+  wcFromTasks:{he:t('wcFromTasks'),en:'⚠️ Calculated from tasks — no entry/exit data'},
+  wcOpenSession:{he:'סשן פתוח — טרם דווחה יציאה',en:'Open session — no exit recorded'},
+  wcActualLabel:{he:'בפועל:',en:'Actual:'},
+  wcStandardLabel:{he:'תקן:',en:'Standard:'},
+  wcDeficitLabel:{he:'חסר:',en:'Deficit:'},
+  wcSurplusLabel:{he:'עודף:',en:'Surplus:'},
+
+  /* ── Annual / range view ── */
+  annualYear:{he:(y)=>`שנת ${y}`,en:(y)=>`Year ${y}`},
+  rangePeriod:{he:'טווח תאריכים',en:'Date Range'},
+  rangeSelectDates:{he:'בחר תאריך התחלה וסיום',en:'Select start and end dates'},
+  rangeTotalDays:{he:(r,w)=>`סה"כ ${r} ימים בטווח · ${w} ימי עבודה`,en:(r,w)=>`${r} days in range · ${w} work days`},
+  annualMonthCol:{he:'חודש',en:'Month'},
+  annualDaysCol:{he:'ימים',en:'Days'},
+  annualHoursCol:{he:'שעות',en:'Hours'},
+  annualBalCol:{he:'מאזן',en:'Balance'},
+  annualPctCol:{he:'%',en:'%'},
+  annualVacCol:{he:'חופש',en:'Vac'},
+  annualSickCol:{he:'מחלה',en:'Sick'},
+
+  /* ── Toast / status messages ── */
+  toastSavedLocal:{he:'💾 נשמר מקומית...',en:'💾 Saved locally...'},
+  toastOpenSessionEntry:{he:'הנך כבר רשום כנמצא',en:'Already checked in'},
+  toastNoActiveEntry:{he:'לא נמצאה כניסה פעילה',en:'No active check-in found'},
+  toastOfflineSave:{he:'📴 מצב אופליין — כל הנתונים נשמרים מקומית',en:'📴 Offline — all data saved locally'},
+  toastSyncStart2:{he:'⏳ מסנכרן...',en:'⏳ Syncing...'},
+  syncStatusEp:{he:'Endpoint לא הוגדר',en:'Endpoint not configured'},
+  syncStatusNoEp:{he:'⚠️ Endpoint לא הוגדר — פתח הגדרות',en:'⚠️ Endpoint not set — open Settings'},
+  syncStatusOld:{he:'⚠️ ה-GAS אינו כולל WorkStandard — יש לפרוס מחדש',en:'⚠️ GAS lacks WorkStandard — redeploy required'},
+  toastWStdSent:{he:'✅ כל עדכוני WorkStandard נשלחו',en:'✅ All WorkStandard updates sent'},
+  toastWStdSaved:{he:'✅ נשמר בגיליון WorkStandard',en:'✅ Saved to WorkStandard sheet'},
+  toastSyncError:{he:'❌ שגיאת סנכרון',en:'❌ Sync error'},
+  toastSentLabel:{he:(l)=>`✅ ${l} נשלח לגיליון`,en:(l)=>`✅ ${l} sent to sheet`},
+  toastQueuedLabel:{he:(l)=>`⚠️ ${l} בתור — יישלח בחיבור הבא`,en:(l)=>`⚠️ ${l} queued — will send on reconnect`},
+  pendingQueue:{he:(q)=>`⏳ ${q} ממתינים לשליחה`,en:(q)=>`⏳ ${q} pending`},
+  wstdQueue:{he:(q)=>`· ⏳ ${q} עדכונים בתור`,en:(q)=>`· ⏳ ${q} updates queued`},
+  syncedStatus:{he:(last,cnt)=>`✅ סנכרן: ${last} · ${cnt} ימים`,en:(last,cnt)=>`✅ Synced: ${last} · ${cnt} days`},
+  notSyncedYet:{he:'לא סונכרן עדיין — לחץ',en:'Not yet synced — tap'},
+  btnSyncFromSheet:{he:'🔄 סנכרן מגיליון',en:'🔄 Sync from Sheet'},
+  btnEditStd:{he:'ערוך תקן',en:'Edit Standard'},
+  btnSaveSync:{he:'⚡ שמור וסנכרן',en:'⚡ Save & Sync'},
+  labelCurrentStd:{he:'תקן נוכחי',en:'Current standard'},
+  labelActualHours:{he:'שעות בפועל',en:'Actual hours'},
+  labelGoalPct:{he:'עמידה',en:'Goal'},
+  labelDeficitAmt:{he:'⚠️ חסר',en:'⚠️ Deficit'},
+  wcPairsDetail:{he:'פירוט',en:'Breakdown'},
+
+  /* ── Settings ── */
+  settingsLang:{he:'עברית',en:'English'},
+  settingsLangEn:{he:'English',en:'English'},
+
+  /* ── History ── */
+  historyRecent:{he:'דיווחים - 30 ימים אחרונים',en:'Reports — last 30 days'},
 };
 function t(key,...args){
   const lang=window._lang||'he',entry=I18N[key];
@@ -1431,7 +1560,7 @@ function applyLang(lang){
 /* ─────────────────────────────────────────────────────
    App
 ───────────────────────────────────────────────────── */
-const VER='2.8.2';
+const VER='2.9.0';
 const K={ep:'mwl_endpoint',reps:'mwl_reports',q:'mwl_queue',delQ:'mwl_delete_queue',proj:'mwl_projects',
   lang:'mwl_lang',theme:'mwl_theme',prefs:'mwl_prefs',ver:'mwl_version',inst:'mwl_install_dismissed',sheetUrl:'mwl_sheet_url',
   wstandard:'mwl_wstandard'};
@@ -1719,7 +1848,7 @@ function validateEntry(date, reports){
   if(date!==today) return null; // historical edits allowed freely
   const open=getOpenSession(reports);
   if(open){
-    return `הנך כבר רשום כנמצא (כניסה ${open.report_time}) — עליך לדווח יציאה לפני כניסה חדשה`;
+    return t('sessionBlockEntry')+` (כניסה ${open.report_time})`;
   }
   return null;
 }
@@ -1730,7 +1859,7 @@ function validateExit(date, reports){
   if(date!==today) return null; // historical edits allowed
   const open=getOpenSession(reports);
   if(!open){
-    return 'לא נמצאה כניסה פעילה להיום — עליך לדווח כניסה תחילה';
+    return t('sessionBlockExit');
   }
   return null;
 }
@@ -1746,19 +1875,19 @@ function updateSessionBanner(){
   // Also compute today's accumulated work
   const today=isoD(new Date());
   const{mins:accMins}=calcDayWorkMins(today,reports);
-  const accStr=accMins>0?` · סה"כ היום: ${minsToHHMM(accMins)}`:'';
+  const accStr=accMins>0?` · ${t('wcStatActual')}: ${minsToHHMM(accMins)}`:'';
 
   if(open){
     banner.className='session-banner open';
     banner.querySelector('.session-dot').classList.add('pulse');
-    txt.textContent=`בפנים מ-${open.report_time}${accStr}`;
+    txt.textContent=t('sessionOpen')+open.report_time+accStr;
   }else{
     banner.className='session-banner closed';
     banner.querySelector('.session-dot').classList.remove('pulse');
     if(accMins>0){
-      txt.textContent=`לא נמצאת${accStr}`;
+      txt.textContent=t('sessionClosedWithHours')+accStr;
     }else{
-      txt.textContent='לא דווחה כניסה להיום';
+      txt.textContent=t('sessionClosed');
     }
   }
 }
@@ -1854,7 +1983,7 @@ function submitInit(){
     saveLocal(rep);histRender();summaryRender();resetForm();
     updateSessionBanner();
     buzz([30,20,60]);
-    toast('💾 נשמר מקומית...','success',1200);
+    toast(t('toastSavedLocal'),'success',1200);
 
     // ── Send to sheet in background ───────────────────────────
     const ep=store(K.ep);
@@ -1875,7 +2004,7 @@ function buildRep(date,time){
       inp.classList.add('input-err');
       inp.focus();
       setTimeout(()=>inp.classList.remove('input-err'),1500);
-      toast('⚠️ יש להזין שם פרויקט','warn');buzz([80,40,80]);return null;
+      toast(t('toastNoDesc'),'warn');buzz([80,40,80]);return null;
     }
     // auto-save new project
     const ps=store(K.proj)||[];
@@ -1903,16 +2032,15 @@ async function send(rep,ep){
 
 /* Non-blocking background send for new reports */
 function sendBackground(rep,ep){
-  const catLabels={entry:'כניסה',exit:'יציאה',task:'משימה'};
-  const label=catLabels[rep.category]||rep.category;
+  const label=catLbl(rep.category);
   fetch(ep,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(rep),mode:'no-cors'})
     .then(()=>{
       markSent(rep.id);
-      toast(`✅ ${label} נשלח לגיליון`,'success');
+      toast(t('toastSentLabel',label),'success');
     })
     .catch(()=>{
       addQ(rep);pendUI();
-      toast(`⚠️ ${label} בתור — יישלח בחיבור הבא`,'warn',3500);
+      toast(t('toastQueuedLabel',label),'warn',3500);
     });
 }
 
@@ -1948,7 +2076,7 @@ function netInit(){
   };
   const onOffline=()=>{
     $('offline-banner').classList.remove('hidden');
-    toast('📴 מצב אופליין — כל הנתונים נשמרים מקומית','warn',3000);
+    toast(t('toastOfflineSave'),'warn',3000);
   };
   window.addEventListener('online', onOnline);
   window.addEventListener('offline', onOffline);
@@ -2110,11 +2238,11 @@ function minsToHHMM(m){
 async function syncWStandard(quiet=false){
   const ep=store(K.ep);
   if(!ep){
-    if(!quiet)toast('⚠️ לא הוגדר Endpoint — פתח הגדרות','warn',4000);
+    if(!quiet)toast(t('syncStatusNoEp'),'warn',4000);
     return false;
   }
   if(!navigator.onLine){
-    if(!quiet)toast('📴 אין חיבור — לא ניתן לסנכרן','warn');
+    if(!quiet)toast(t('toastSavedOffline'),'warn');
     return false;
   }
   try{
@@ -2124,32 +2252,32 @@ async function syncWStandard(quiet=false){
 
     /* GAS returned error */
     if(data.status==='error'){
-      if(!quiet)toast('❌ GAS שגיאה: '+(data.message||''),'error',5000);
+      if(!quiet)toast(t('toastSyncError')+': '+(data.message||''),'error',5000);
       return false;
     }
 
     /* GAS is old version — no getWorkStandard action */
     if(!Array.isArray(data.workStandard)){
       // Always show this error — user must redeploy GAS
-      toast('⚠️ ה-GAS אינו כולל WorkStandard — יש לפרוס מחדש (New Deployment)','warn',7000);
+      toast(t('syncStatusOld'),'warn',7000);
       return false;
     }
 
     /* Don't overwrite local data with an empty server response */
     const local=getWStandard();
     if(data.workStandard.length===0&&local.length>0){
-      if(!quiet)toast('⚠️ הגיליון ריק — הנתונים המקומיים נשמרו','warn');
+      if(!quiet)toast(t('toastNoDuration'),'warn');
       return false;
     }
 
     saveWStandardLocal(data.workStandard);
     store('mwl_wstandard_sync',new Date().toLocaleString('he-IL'));
     summaryRender();
-    if(!quiet)toast('✅ WorkStandard סונכרן — '+data.workStandard.length+' ימים','success');
+    if(!quiet)toast(`✅ WorkStandard ${t('sumPeriodDay')} ${data.workStandard.length}`,'success');
     return true;
   }catch(err){
     console.error('[syncWStandard]',err);
-    if(!quiet)toast('❌ שגיאת סנכרון: '+err.message,'error',5000);
+    if(!quiet)toast(t('toastSyncError')+': '+err.message,'error',5000);
     return false;
   }
 }
@@ -2165,10 +2293,10 @@ async function setDayStd(ds,stdHours,notes){
   saveWStandardLocal(std);
   summaryRender();
   const ep=store(K.ep);
-  if(!ep){toast('⚠️ לא הוגדר Endpoint — פתח הגדרות','warn');return;}
+  if(!ep){toast(t('syncStatusNoEp'),'warn');return;}
   if(!navigator.onLine){
     _wstdQueue(rec);
-    toast('📴 נשמר מקומית — יסונכרן כשיחזור חיבור','warn');
+    toast(t('toastSavedOffline'),'warn');
     return;
   }
   await _wstdSend(rec);
@@ -2193,12 +2321,12 @@ async function _wstdSend(rec){
     });
     // no-cors response is opaque — verify by re-syncing
     setTimeout(()=>syncWStandard(true),1200);
-    toast('✅ נשמר בגיליון WorkStandard','success');
+    toast(t('toastWStdSaved'),'success');
     return true;
   }catch(err){
     console.warn('[wstd send]',err);
     _wstdQueue(rec);
-    toast('⚠️ שמירה נכשלה — בתור לשליחה','warn');
+    toast(t('toastSendError'),'warn');
     return false;
   }
 }
@@ -2220,7 +2348,7 @@ async function flushWStandardQueue(){
     if(!ok)fail.push(item);
   }
   store('mwl_wstandard_queue',fail);
-  if(fail.length===0&&q.length>0)toast('✅ כל עדכוני WorkStandard נשלחו','success');
+  if(fail.length===0&&q.length>0)toast(t('toastWStdSent'),'success');
 }
 
 /* ─ Daily status card ─ */
@@ -2228,7 +2356,7 @@ function renderDayWCStatus(ds,reports){
   const sec=$('day-wc-section');if(!sec)return;
   const{status,actualMins,minMins,diffMins,wdStr,notes,pct,fromTasks,dayType,pairs,hasOpen}=getDayStatus(ds,reports);
   const notesEl=$('day-wc-notes');
-  const dayTypeLabels={vacation:'🏖 חופש',sick:'🤒 מחלה',holiday:'✡ חג'};
+  const dayTypeLabels={vacation:t('statusVacation'),sick:t('statusSick'),holiday:t('statusHoliday')};
   const dayTypeColors={vacation:'var(--amber)',sick:'var(--purple)',holiday:'var(--blue)'};
   if(notesEl){
     notesEl.textContent=notes?notes:'';
@@ -2244,32 +2372,32 @@ function renderDayWCStatus(ds,reports){
     const dtLabel=dayTypeLabels[status]||('📝 '+notes);
     const dtColor=dayTypeColors[status]||'var(--amber)';
     html+=`<span class="day-status-badge ${status}">${dtLabel}</span>`;
-    html+=`<span style="font-size:.78rem;color:var(--text3)">יום זה אינו נספר כחוסר</span>`;
+    html+=`<span style="font-size:.78rem;color:var(--text3)">${t('wcDayNotCount')}</span>`;
   }else if(status==='nostandard'){
-    html=`<span class="day-status-badge nodata">אין תקן ליום זה</span><span style="font-size:.75rem;color:var(--text3)">לחץ "ערוך תקן" להגדרה</span>`;
+    html=`<span class="day-status-badge nodata">${t('wcNoStandard')}</span><span style="font-size:.75rem;color:var(--text3)">${t('wcEditHint')}</span>`;
   }else{
     // Show day-type badge alongside work status if relevant
     if(dayType!=='normal'){
       html+=`<span class="day-status-badge ${dayType}">${dayTypeLabels[dayType]||dayType}</span>`;
     }
     const badge=status==='ok'?'ok':'deficit';
-    const label=status==='ok'?'✅ תקין':'⚠️ חוסר';
+    const label=status==='ok'?`✅ ${t('statWorkday')}`:"⚠️ "+t('wcStatDeficit');
     html+=`<span class="day-status-badge ${badge}">${label}</span>`;
-    html+=`<span style="font-size:.82rem;color:var(--text2)">בפועל: <strong style="color:var(--text)">${wdStr}</strong></span>`;
-    html+=`<span style="font-size:.82rem;color:var(--text2)">תקן: <strong style="color:var(--amber)">${minsToHHMM(minMins)}</strong></span>`;
-    if(status==='deficit')html+=`<span style="font-size:.82rem;color:var(--red)">חסר: <strong>${minsToHHMM(Math.abs(diffMins))}</strong></span>`;
-    if(status==='ok'&&diffMins>0)html+=`<span style="font-size:.82rem;color:var(--lime)">עודף: <strong>${minsToHHMM(diffMins)}</strong></span>`;
-    if(fromTasks)html+=`<span style="font-size:.75rem;color:var(--amber);margin-top:2px">⚠️ חושב ממשימות — חסרים נתוני כניסה/יציאה</span>`;
+    html+=`<span style="font-size:.82rem;color:var(--text2)">${t('wcActualLabel')} <strong style="color:var(--text)">${wdStr}</strong></span>`;
+    html+=`<span style="font-size:.82rem;color:var(--text2)">${t('wcStandardLabel')} <strong style="color:var(--amber)">${minsToHHMM(minMins)}</strong></span>`;
+    if(status==='deficit')html+=`<span style="font-size:.82rem;color:var(--red)">${t('wcDeficitLabel')} <strong>${minsToHHMM(Math.abs(diffMins))}</strong></span>`;
+    if(status==='ok'&&diffMins>0)html+=`<span style="font-size:.82rem;color:var(--lime)">${t('wcSurplusLabel')} <strong>${minsToHHMM(diffMins)}</strong></span>`;
+    if(fromTasks)html+=`<span style="font-size:.75rem;color:var(--amber);margin-top:2px">${t('wcFromTasks')}</span>`;
     // Multiple pairs breakdown
     if(pairs&&pairs.length>1){
       html+=`<div style="margin-top:8px;font-size:.72rem;color:var(--text3);border-top:1px solid var(--border);padding-top:6px;width:100%">`;
-      html+=`<div style="margin-bottom:3px;font-weight:700;color:var(--text2)">פירוט ${pairs.length} מחזורים:</div>`;
+      html+=`<div style="margin-bottom:3px;font-weight:700;color:var(--text2)">${t('sessionPairs')} ${pairs.length} ${t('sessionCycles')}:</div>`;
       pairs.forEach((p,i)=>{html+=`<div style="display:flex;gap:8px;padding:1px 0"><span style="color:var(--lime)">🟢 ${p.entry}</span><span style="color:var(--red)">🔴 ${p.exit}</span><span style="color:var(--text3)">${minsToHHMM(p.mins)}</span></div>`;});
       html+=`</div>`;
     }
     // Open session indicator
     if(hasOpen){
-      html+=`<span style="font-size:.75rem;color:var(--lime);display:flex;align-items:center;gap:5px;margin-top:4px"><span style="width:7px;height:7px;border-radius:50%;background:var(--lime);animation:pulse 1.4s ease infinite;flex-shrink:0"></span>סשן פתוח — טרם דווחה יציאה</span>`;
+      html+=`<span style="font-size:.75rem;color:var(--lime);display:flex;align-items:center;gap:5px;margin-top:4px"><span style="width:7px;height:7px;border-radius:50%;background:var(--lime);animation:pulse 1.4s ease infinite;flex-shrink:0"></span>${t('sessionOpenLabel')}</span>`;
     }
   }
   $('day-wc-content').innerHTML=html;
@@ -2279,8 +2407,8 @@ function renderDayWCStatus(ds,reports){
     const p=Math.min(100,Math.round(actualMins/minMins*100));
     const col=p>=100?'var(--lime)':p>=80?'var(--amber)':'var(--red)';
     mBar.style.width=p+'%';mBar.style.background=col;
-    mLbl.textContent=pct+'% עמידה ביעד';mLbl.style.color=col;
-    mStd.textContent='תקן '+minsToHHMM(minMins);
+    mLbl.textContent=pct+'% '+t('wcStatAchieve');mLbl.style.color=col;
+    mStd.textContent=t('wcStandardLabel')+' '+minsToHHMM(minMins);
     meter.style.display='';
   }else if(meter){meter.style.display='none';}
   sec.style.display='';
@@ -2357,17 +2485,17 @@ function renderMonthlyWCStats(year,month,reports){
   const pctColor=pctAch==null?'var(--text3)':pctAch>=100?'var(--lime)':pctAch>=80?'var(--amber)':'var(--red)';
 
   el.innerHTML=`
-    <div class="wc-stat"><div class="wc-stat-lbl">ימי עבודה</div><div class="wc-stat-val">${workDays}</div></div>
-    <div class="wc-stat"><div class="wc-stat-lbl">נדרש עד היום</div><div class="wc-stat-val" style="font-size:.82rem">${minsToHHMM(reqMins)}</div></div>
-    <div class="wc-stat actual-s"><div class="wc-stat-lbl">בפועל</div><div class="wc-stat-val" style="font-size:.82rem">${minsToHHMM(actualMins)}</div></div>
-    <div class="wc-stat surplus-s"><div class="wc-stat-lbl">עודף</div><div class="wc-stat-val" style="font-size:.82rem">${minsToHHMM(surplusMins)}</div></div>
-    <div class="wc-stat deficit-s"><div class="wc-stat-lbl">חוסר</div><div class="wc-stat-val" style="font-size:.82rem">${minsToHHMM(deficitMins)}</div></div>
-    <div class="wc-stat ${balClass}"><div class="wc-stat-lbl">מאזן</div><div class="wc-stat-val" style="font-size:.82rem">${balance>=0?'+':''}${minsToHHMM(balance)}</div></div>
-    <div class="wc-stat" style="border-color:var(--lime)"><div class="wc-stat-lbl">ימים בתקן ✓</div><div class="wc-stat-val" style="color:var(--lime)">${okDays}<span style="font-size:.65rem;color:var(--text3)">/${pastDays}</span></div></div>
-    <div class="wc-stat deficit-s"><div class="wc-stat-lbl">ימי חוסר ✗</div><div class="wc-stat-val" style="color:${deficitDays>0?'var(--red)':'var(--text)'}">${deficitDays}<span style="font-size:.65rem;color:var(--text3)">/${pastDays}</span></div></div>
-    <div class="wc-stat" style="border-color:${pctColor}"><div class="wc-stat-lbl">עמידה ביעד</div><div class="wc-stat-val" style="color:${pctColor}">${pctAch!=null?pctAch+'%':'—'}</div></div>
-    ${vacDays>0?'<div class="wc-stat" style="border-color:var(--amber)"><div class="wc-stat-lbl">🏖 ימי חופש</div><div class="wc-stat-val" style="color:var(--amber)">'+vacDays+'</div></div>':''}
-    ${sickDays>0?'<div class="wc-stat" style="border-color:var(--purple)"><div class="wc-stat-lbl">🤒 ימי מחלה</div><div class="wc-stat-val" style="color:var(--purple)">'+sickDays+'</div></div>':''}
+    <div class="wc-stat"><div class="wc-stat-lbl">${t('wcStatWorkdays')}</div><div class="wc-stat-val">${workDays}</div></div>
+    <div class="wc-stat"><div class="wc-stat-lbl">${t('wcStatRequired')}</div><div class="wc-stat-val" style="font-size:.82rem">${minsToHHMM(reqMins)}</div></div>
+    <div class="wc-stat actual-s"><div class="wc-stat-lbl">${t('wcStatActual')}</div><div class="wc-stat-val" style="font-size:.82rem">${minsToHHMM(actualMins)}</div></div>
+    <div class="wc-stat surplus-s"><div class="wc-stat-lbl">${t('wcStatSurplus')}</div><div class="wc-stat-val" style="font-size:.82rem">${minsToHHMM(surplusMins)}</div></div>
+    <div class="wc-stat deficit-s"><div class="wc-stat-lbl">${t('wcStatDeficit')}</div><div class="wc-stat-val" style="font-size:.82rem">${minsToHHMM(deficitMins)}</div></div>
+    <div class="wc-stat ${balClass}"><div class="wc-stat-lbl">${t('wcStatBalance')}</div><div class="wc-stat-val" style="font-size:.82rem">${balance>=0?'+':''}${minsToHHMM(balance)}</div></div>
+    <div class="wc-stat" style="border-color:var(--lime)"><div class="wc-stat-lbl">${t('wcStatOkDays')}</div><div class="wc-stat-val" style="color:var(--lime)">${okDays}<span style="font-size:.65rem;color:var(--text3)">/${pastDays}</span></div></div>
+    <div class="wc-stat deficit-s"><div class="wc-stat-lbl">${t('wcStatDefDays')}</div><div class="wc-stat-val" style="color:${deficitDays>0?'var(--red)':'var(--text)'}">${deficitDays}<span style="font-size:.65rem;color:var(--text3)">/${pastDays}</span></div></div>
+    <div class="wc-stat" style="border-color:${pctColor}"><div class="wc-stat-lbl">${t('wcStatAchieve')}</div><div class="wc-stat-val" style="color:${pctColor}">${pctAch!=null?pctAch+'%':'—'}</div></div>
+    ${vacDays>0?'<div class="wc-stat" style="border-color:var(--amber)"><div class="wc-stat-lbl">'+t('wcStatVacDays')+'</div><div class="wc-stat-val" style="color:var(--amber)">'+vacDays+'</div></div>':''}
+    ${sickDays>0?'<div class="wc-stat" style="border-color:var(--purple)"><div class="wc-stat-lbl">'+t('wcStatSickDays')+'</div><div class="wc-stat-val" style="color:var(--purple)">'+sickDays+'</div></div>':''}
   `;
   const ac=$('stat-achievement-card');
   if(ac)ac.style.display='none';
@@ -2384,12 +2512,12 @@ function editDayConfig(ds){
   $('dayedit-title').textContent=`📅 ${d}/${m}/${y} — ${hebDow(ds)}`;
   const infoEl=$('dayedit-info');
   let infoHtml=`<div style="display:flex;gap:18px;flex-wrap:wrap">
-    <div><div style="font-size:.62rem;color:var(--text3);margin-bottom:2px">יום</div><div style="font-weight:700">${hebDow(ds)}</div></div>
-    <div><div style="font-size:.62rem;color:var(--text3);margin-bottom:2px">שעות בפועל</div><div style="font-weight:700;color:${actualMins>0?'var(--blue)':'var(--text3)'}">${wdStr}</div></div>
-    ${isWorkDay?`<div><div style="font-size:.62rem;color:var(--text3);margin-bottom:2px">תקן נוכחי</div><div style="font-weight:700;color:var(--amber)">${minsToHHMM(Math.round(stdHours*60))}</div></div>`:''}
-    ${pct!=null?`<div><div style="font-size:.62rem;color:var(--text3);margin-bottom:2px">עמידה</div><div style="font-weight:700;color:${pct>=100?'var(--lime)':pct>=80?'var(--amber)':'var(--red)'}">${pct}%</div></div>`:''}
+    <div><div style="font-size:.62rem;color:var(--text3);margin-bottom:2px">${t('sumPeriodDay')}</div><div style="font-weight:700">${hebDow(ds)}</div></div>
+    <div><div style="font-size:.62rem;color:var(--text3);margin-bottom:2px">${t('wcStatActual')}</div><div style="font-weight:700;color:${actualMins>0?'var(--blue)':'var(--text3)'}">${wdStr}</div></div>
+    ${isWorkDay?`<div><div style="font-size:.62rem;color:var(--text3);margin-bottom:2px">${t('labelCurrentStd')}</div><div style="font-weight:700;color:var(--amber)">${minsToHHMM(Math.round(stdHours*60))}</div></div>`:''}
+    ${pct!=null?`<div><div style="font-size:.62rem;color:var(--text3);margin-bottom:2px">${t('labelGoalPct')}</div><div style="font-weight:700;color:${pct>=100?'var(--lime)':pct>=80?'var(--amber)':'var(--red)'}">${pct}%</div></div>`:''}
   </div>`;
-  if(status==='deficit')infoHtml+=`<div style="margin-top:6px;font-size:.75rem;color:var(--red)">⚠️ חסר ${minsToHHMM(Math.abs(diffMins))}</div>`;
+  if(status==='deficit')infoHtml+=`<div style="margin-top:6px;font-size:.75rem;color:var(--red)">⚠️ ${t('wcDeficitLabel')} ${minsToHHMM(Math.abs(diffMins))}</div>`;
   infoEl.innerHTML=infoHtml;
   $('dayedit-stdhours').value=stdHours>0?stdHours:'';
   $('dayedit-notes').value=notes;
@@ -2414,7 +2542,7 @@ async function saveDayConfig(){
   const btn=$('btn-dayedit-save');
   btn.disabled=true;btn.textContent='...';
   await setDayStd(_editDs,stdHours,notes);
-  btn.disabled=false;btn.textContent='⚡ שמור וסנכרן';
+  btn.disabled=false;btn.textContent=t('btnSaveSync');
   closeM('modal-dayedit');
   buzz([20,20]);
 }
@@ -2427,9 +2555,9 @@ function workcalInit(){
   $('modal-workcal').addEventListener('click',e=>{if(e.target===$('modal-workcal'))closeM('modal-workcal')});
   $('btn-sync-wstandard').addEventListener('click',async()=>{
     const btn=$('btn-sync-wstandard');
-    btn.disabled=true;btn.textContent='⏳ מסנכרן...';
+    btn.disabled=true;btn.textContent=t('toastSyncStart2');
     await syncWStandard(false);
-    btn.disabled=false;btn.textContent='🔄 סנכרן מגיליון';
+    btn.disabled=false;btn.textContent=t('btnSyncFromSheet');
     updateSyncStatus();
   });
   $('btn-close-dayedit').addEventListener('click',()=>closeM('modal-dayedit'));
@@ -2446,13 +2574,13 @@ function updateSyncStatus(){
   const ep=store(K.ep);
   let html='';
   if(!ep){
-    html='<span style="color:var(--red)">⚠️ Endpoint לא הוגדר — פתח הגדרות ולחץ שמור</span>';
+    html=`<span style="color:var(--red)">${t('syncStatusNoEp')}</span>`;
   }else if(last){
-    html=`✅ סנכרן: ${last} · ${count} ימים`;
-    if(q>0)html+=` · <span style="color:var(--amber)">⏳ ${q} ממתינים לשליחה</span>`;
+    html=t('syncedStatus',last,count);
+    if(q>0)html+=` · <span style="color:var(--amber)">${t('pendingQueue',q)}</span>`;
   }else{
-    html=`<span style="color:var(--amber)">לא סונכרן עדיין — לחץ "משוך מגיליון"</span>`;
-    if(q>0)html+=` · ⏳ ${q} עדכונים בתור`;
+    html=`<span style="color:var(--amber)">${t('notSyncedYet')} "${t('btnSyncFromSheet')}"</span>`;
+    if(q>0)html+=` · ${t('wstdQueue',q)}`;
   }
   el.innerHTML=html;
 }
@@ -2520,23 +2648,23 @@ function renderAnnualStats(year, reports){
   el.innerHTML=`
   <div class="card">
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:12px">
-      <div class="wc-stat actual-s"><div class="wc-stat-lbl">שעות בפועל</div><div class="wc-stat-val" style="font-size:.82rem">${minsToHHMM(totalAct)}</div></div>
-      <div class="wc-stat"><div class="wc-stat-lbl">נדרש</div><div class="wc-stat-val" style="font-size:.82rem">${minsToHHMM(totalReq)}</div></div>
-      <div class="wc-stat ${totBal>=0?'balpos':'balneg'}"><div class="wc-stat-lbl">מאזן שנתי</div><div class="wc-stat-val" style="font-size:.82rem">${totBal>=0?'+':''}${minsToHHMM(totBal)}</div></div>
-      <div class="wc-stat" style="border-color:${totColor}"><div class="wc-stat-lbl">עמידה ביעד</div><div class="wc-stat-val" style="color:${totColor}">${totPct!=null?totPct+'%':'—'}</div></div>
+      <div class="wc-stat actual-s"><div class="wc-stat-lbl">${t('wcStatActual')}</div><div class="wc-stat-val" style="font-size:.82rem">${minsToHHMM(totalAct)}</div></div>
+      <div class="wc-stat"><div class="wc-stat-lbl">${t('wcStatNeeded')}</div><div class="wc-stat-val" style="font-size:.82rem">${minsToHHMM(totalReq)}</div></div>
+      <div class="wc-stat ${totBal>=0?'balpos':'balneg'}"><div class="wc-stat-lbl">${t('wcStatAnnualBal')}</div><div class="wc-stat-val" style="font-size:.82rem">${totBal>=0?'+':''}${minsToHHMM(totBal)}</div></div>
+      <div class="wc-stat" style="border-color:${totColor}"><div class="wc-stat-lbl">${t('wcStatAchieve')}</div><div class="wc-stat-val" style="color:${totColor}">${totPct!=null?totPct+'%':'—'}</div></div>
       ${totalVac>0?`<div class="wc-stat" style="border-color:var(--amber)"><div class="wc-stat-lbl">🏖 ימי חופש</div><div class="wc-stat-val" style="color:var(--amber)">${totalVac}</div></div>`:''}
       ${totalSick>0?`<div class="wc-stat" style="border-color:var(--purple)"><div class="wc-stat-lbl">🤒 ימי מחלה</div><div class="wc-stat-val" style="color:var(--purple)">${totalSick}</div></div>`:''}
     </div>
     <div style="overflow-x:auto">
       <table style="width:100%;border-collapse:collapse">
         <thead><tr style="border-bottom:1px solid var(--border)">
-          <th style="padding:5px 10px;font-size:.62rem;color:var(--text3);text-align:right;font-weight:700">חודש</th>
-          <th style="padding:5px 8px;font-size:.62rem;color:var(--text3)">ימים</th>
-          <th style="padding:5px 8px;font-size:.62rem;color:var(--text3)">שעות</th>
-          <th style="padding:5px 8px;font-size:.62rem;color:var(--text3)">מאזן</th>
+          <th style="padding:5px 10px;font-size:.62rem;color:var(--text3);text-align:right;font-weight:700">${t('annualMonthCol')}</th>
+          <th style="padding:5px 8px;font-size:.62rem;color:var(--text3)">${t('annualDaysCol')}</th>
+          <th style="padding:5px 8px;font-size:.62rem;color:var(--text3)">${t('annualHoursCol')}</th>
+          <th style="padding:5px 8px;font-size:.62rem;color:var(--text3)">${t('annualBalCol')}</th>
           <th style="padding:5px 8px;font-size:.62rem;color:var(--text3)">%</th>
-          <th style="padding:5px 8px;font-size:.62rem;color:var(--amber)">חופש</th>
-          <th style="padding:5px 8px;font-size:.62rem;color:var(--purple)">מחלה</th>
+          <th style="padding:5px 8px;font-size:.62rem;color:var(--amber)">${t('annualVacCol')}</th>
+          <th style="padding:5px 8px;font-size:.62rem;color:var(--purple)">${t('annualSickCol')}</th>
         </tr></thead>
         <tbody>${monthRows.join('')}</tbody>
       </table>
@@ -2547,7 +2675,7 @@ function renderAnnualStats(year, reports){
 /* ─── Range summary ──────────────────────────────────────────── */
 function renderRangeStats(from, to, reports){
   const el=$('annual-section');if(!el)return;
-  if(!from||!to||from>to){el.innerHTML='<div class="card"><p style="color:var(--text3);text-align:center;padding:16px">בחר תאריך התחלה וסיום</p></div>';return;}
+  if(!from||!to||from>to){el.innerHTML=`<div class='card'><p style='color:var(--text3);text-align:center;padding:16px'>${t('rangeSelectDates')}</p></div>`;return;}
   const todayStr=isoD(new Date());
   let req=0,act=0,surplus=0,deficit=0,vac=0,sick=0,okD=0,defD=0,wDays=0;
   // Iterate days in range
@@ -2570,14 +2698,14 @@ function renderRangeStats(from, to, reports){
 
   el.innerHTML=`
   <div class="card">
-    <div style="font-size:.68rem;color:var(--text3);margin-bottom:8px">סה"כ ${rangeDays} ימים בטווח · ${wDays} ימי עבודה</div>
+    <div style="font-size:.68rem;color:var(--text3);margin-bottom:8px">${t('rangeTotalDays',rangeDays,wDays)}</div>
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px">
-      <div class="wc-stat actual-s"><div class="wc-stat-lbl">שעות בפועל</div><div class="wc-stat-val" style="font-size:.82rem">${minsToHHMM(act)}</div></div>
-      <div class="wc-stat"><div class="wc-stat-lbl">נדרש</div><div class="wc-stat-val" style="font-size:.82rem">${minsToHHMM(req)}</div></div>
-      <div class="wc-stat ${bal>=0?'balpos':'balneg'}"><div class="wc-stat-lbl">מאזן</div><div class="wc-stat-val" style="font-size:.82rem">${bal>=0?'+':''}${minsToHHMM(bal)}</div></div>
-      <div class="wc-stat" style="border-color:${pctColor}"><div class="wc-stat-lbl">עמידה ביעד</div><div class="wc-stat-val" style="color:${pctColor}">${pct!=null?pct+'%':'—'}</div></div>
-      <div class="wc-stat" style="border-color:var(--lime)"><div class="wc-stat-lbl">ימים בתקן ✓</div><div class="wc-stat-val" style="color:var(--lime)">${okD}<span style="font-size:.65rem;color:var(--text3)">/${wDays}</span></div></div>
-      <div class="wc-stat deficit-s"><div class="wc-stat-lbl">ימי חוסר ✗</div><div class="wc-stat-val" style="color:${defD>0?'var(--red)':'var(--text)'}">${defD}<span style="font-size:.65rem;color:var(--text3)">/${wDays}</span></div></div>
+      <div class="wc-stat actual-s"><div class="wc-stat-lbl">${t('wcStatActual')}</div><div class="wc-stat-val" style="font-size:.82rem">${minsToHHMM(act)}</div></div>
+      <div class="wc-stat"><div class="wc-stat-lbl">${t('wcStatNeeded')}</div><div class="wc-stat-val" style="font-size:.82rem">${minsToHHMM(req)}</div></div>
+      <div class="wc-stat ${bal>=0?'balpos':'balneg'}"><div class="wc-stat-lbl">${t('wcStatBalance')}</div><div class="wc-stat-val" style="font-size:.82rem">${bal>=0?'+':''}${minsToHHMM(bal)}</div></div>
+      <div class="wc-stat" style="border-color:${pctColor}"><div class="wc-stat-lbl">${t('wcStatAchieve')}</div><div class="wc-stat-val" style="color:${pctColor}">${pct!=null?pct+'%':'—'}</div></div>
+      <div class="wc-stat" style="border-color:var(--lime)"><div class="wc-stat-lbl">${t('wcStatOkDays')}</div><div class="wc-stat-val" style="color:var(--lime)">${okD}<span style="font-size:.65rem;color:var(--text3)">/${wDays}</span></div></div>
+      <div class="wc-stat deficit-s"><div class="wc-stat-lbl">${t('wcStatDefDays')}</div><div class="wc-stat-val" style="color:${defD>0?'var(--red)':'var(--text)'}">${defD}<span style="font-size:.65rem;color:var(--text3)">/${wDays}</span></div></div>
       ${vac>0?`<div class="wc-stat" style="border-color:var(--amber)"><div class="wc-stat-lbl">🏖 ימי חופש</div><div class="wc-stat-val" style="color:var(--amber)">${vac}</div></div>`:''}
       ${sick>0?`<div class="wc-stat" style="border-color:var(--purple)"><div class="wc-stat-lbl">🤒 ימי מחלה</div><div class="wc-stat-val" style="color:var(--purple)">${sick}</div></div>`:''}
     </div>
@@ -2640,7 +2768,7 @@ function summaryRender(){
   }else if(ST.sumPer==='year'){
     const y=now.getFullYear()+ST.sumOff;
     fil=rs.filter(r=>r.report_date&&r.report_date.startsWith(String(y)));
-    lbl=`שנת ${y}`;
+    lbl=t('annualYear',y);
     [$('stat-workday-card'),$('stat-days-card'),$('stat-achievement-card')].forEach(el=>{if(el)el.style.display='none';});
     [$('day-wc-section'),$('monthly-wc-section')].forEach(el=>{if(el)el.style.display='none';});
     $('range-period-inputs').style.display='none';
@@ -2648,7 +2776,7 @@ function summaryRender(){
     const todayBtn=$('btn-today');if(todayBtn)todayBtn.style.display=ST.sumOff===0?'none':'';
     $('sum-prev').disabled=false;$('sum-next').disabled=false;
   }else if(ST.sumPer==='range'){
-    lbl='טווח תאריכים';
+    lbl=t('rangePeriod');
     const from=$('range-from')?.value,to=$('range-to')?.value;
     $('range-period-inputs').style.display='';
     if(from&&to&&from<=to){
@@ -2823,7 +2951,7 @@ async function syncProjects(){
     store(K.proj,final);projLoad();projChipsRender();
     for(const p of local.filter(pp=>!remote.includes(pp)))await pushProjectToSheet(p);
     toast(t('toastProjectSynced')||'✅ פרויקטים סונכרנו','success');
-  }catch(_){toast('❌ שגיאת סנכרון','error');}
+  }catch(_){toast(t('toastSyncError'),'error');}
 }
 
 /* SERVICE WORKER */
@@ -2851,7 +2979,7 @@ function showUpd(newVer){
   const prompt=$('update-prompt');if(!prompt)return;
   if(newVer){
     const lbl=prompt.querySelector('.upd-ver-lbl');
-    if(lbl)lbl.textContent=`גרסה ${newVer} זמינה`;
+    if(lbl)lbl.textContent=t('annualYear',newVer)+' '+t('updateAvailable').split('!')[0];
   }
   prompt.classList.remove('hidden');buzz([30,30,60]);
   $('btn-update-now').onclick=()=>{
