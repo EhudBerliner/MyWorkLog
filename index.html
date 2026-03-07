@@ -446,7 +446,7 @@ details summary::-webkit-details-marker{display:none}
       <a id="menu-sheet-link" href="#" target="_blank" rel="noopener" style="display:none;align-items:center;gap:7px;font-size:.8rem;color:var(--blue);text-decoration:none;padding:3px 2px">
         📊 פתח גיליון הדיווחים
       </a>
-      <span id="menu-vbadge" class="vbadge" title="לחץ לאיפוס">v2.9.3</span>
+      <span id="menu-vbadge" class="vbadge" title="לחץ לאיפוס">v2.9.4</span>
     </div>
   </aside>
 
@@ -458,7 +458,7 @@ details summary::-webkit-details-marker{display:none}
         <span class="hdr-name">MyWorkLog</span>
       </div>
       <div class="hdr-acts">
-        <span id="version-badge" class="vbadge" title="לחץ לאיפוס">v2.9.3</span>
+        <span id="version-badge" class="vbadge" title="לחץ לאיפוס">v2.9.4</span>
       </div>
     </div>
   </header>
@@ -1567,7 +1567,7 @@ function applyLang(lang){
 /* ─────────────────────────────────────────────────────
    App
 ───────────────────────────────────────────────────── */
-const VER='2.9.3';
+const VER='2.9.4';
 // SW cache buster: if a stale SW is detected, unregister it so fresh content loads
 if('serviceWorker'in navigator){
   navigator.serviceWorker.getRegistration().then(reg=>{
@@ -1624,7 +1624,8 @@ document.addEventListener('DOMContentLoaded',()=>{
       const n=new Date();$('report-date').value=isoD(n);$('report-time').value=timeS(n);
       toast(t('toastNowUpdated'));buzz([20]);
     });
-    netInit();netQInit();projLoad();histRender();
+    fixStoredDates();
+  netInit();netQInit();projLoad();histRender();
     updateSessionBanner();
     flushDeleteQueue();
     menuInit();vBadgeInit();swipeInit();ptrInit();swInit();installInit();scrollInit();
@@ -1753,6 +1754,31 @@ function verCheck(){
 
 /* Safe migration: run on every version change.
    Only ADDS missing defaults — never overwrites existing user data. */
+/* Fix malformed report_date values already stored in localStorage.
+   Runs once on boot — safe to call repeatedly (idempotent). */
+function fixStoredDates(){
+  const normDate=s=>{
+    if(!s)return'';
+    const t=String(s).trim();
+    // Already correct YYYY-MM-DD
+    if(/^\d{4}-\d{2}-\d{2}$/.test(t))return t;
+    // DD/MM/YYYY
+    const slash=t.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+    if(slash)return`${slash[3]}-${slash[2].padStart(2,'0')}-${slash[1].padStart(2,'0')}`;
+    // Any other parseable date string (e.g. "Mon Jan 06 2025 00:00:00 GMT+0200")
+    const d=new Date(s);
+    if(!isNaN(d.getTime()))return`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    return t;
+  };
+  const reps=store(K.reps)||[];
+  let changed=false;
+  reps.forEach(r=>{
+    const fixed=normDate(r.report_date);
+    if(fixed!==r.report_date){r.report_date=fixed;changed=true;}
+  });
+  if(changed){store(K.reps,reps);console.info('[fixStoredDates] fixed',reps.length,'records');}
+}
+
 function migrateData(prevVer){
   // Ensure wstandard key exists (added in v2.3)
   if(!store(K.wstandard)) store(K.wstandard,[]);
