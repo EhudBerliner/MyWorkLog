@@ -446,7 +446,7 @@ details summary::-webkit-details-marker{display:none}
       <a id="menu-sheet-link" href="#" target="_blank" rel="noopener" style="display:none;align-items:center;gap:7px;font-size:.8rem;color:var(--blue);text-decoration:none;padding:3px 2px">
         📊 פתח גיליון הדיווחים
       </a>
-      <span id="menu-vbadge" class="vbadge" title="לחץ לאיפוס">v2.9.2</span>
+      <span id="menu-vbadge" class="vbadge" title="לחץ לאיפוס">v2.9.3</span>
     </div>
   </aside>
 
@@ -458,7 +458,7 @@ details summary::-webkit-details-marker{display:none}
         <span class="hdr-name">MyWorkLog</span>
       </div>
       <div class="hdr-acts">
-        <span id="version-badge" class="vbadge" title="לחץ לאיפוס">v2.9.2</span>
+        <span id="version-badge" class="vbadge" title="לחץ לאיפוס">v2.9.3</span>
       </div>
     </div>
   </header>
@@ -1103,9 +1103,9 @@ function doGet(e) {
     if (!sheet) return jsonResp({ reports: [], projects: [] });
     const rows    = sheet.getDataRange().getValues().slice(1);
     const reports = rows.map(r =&gt; ({
-      timestamp:   String(r[0]||&#x27;&#x27;),
-      report_date: String(r[1]||&#x27;&#x27;),
-      report_time: String(r[2]||&#x27;&#x27;),
+      timestamp:   fmtDateCell(r[0])||String(r[0]||&#x27;&#x27;),
+      report_date: fmtDateCell(r[1]),
+      report_time: String(r[2]||&#x27;&#x27;).trim(),
       category:    reverseCategory(String(r[3]||&#x27;&#x27;)),
       description: String(r[4]||&#x27;&#x27;),
       project:     String(r[5]||&#x27;&#x27;),
@@ -1567,7 +1567,7 @@ function applyLang(lang){
 /* ─────────────────────────────────────────────────────
    App
 ───────────────────────────────────────────────────── */
-const VER='2.9.2';
+const VER='2.9.3';
 // SW cache buster: if a stale SW is detected, unregister it so fresh content loads
 if('serviceWorker'in navigator){
   navigator.serviceWorker.getRegistration().then(reg=>{
@@ -2986,7 +2986,15 @@ async function syncFromSheet(){
     const sheetIds=new Set(data.reports.map(r=>String(r.id)).filter(Boolean));
 
     // ── Import: add sheet records that are missing locally ──────
-    const toImport=data.reports.filter(r=>r.id&&!localIds.has(String(r.id)));
+    // Normalise dates from sheet (Sheets may return various date formats)
+    const normDate=s=>{if(!s)return'';const t=String(s).trim();
+      if(/^\d{4}-\d{2}-\d{2}/.test(t))return t.slice(0,10);
+      const m=t.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+      if(m)return`${m[3]}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`;
+      const d=new Date(s);return isNaN(d)?t:`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    };
+    data.reports.forEach(r=>{r.report_date=normDate(r.report_date);});
+    const toImport=data.reports.filter(r=>r.id&&r.report_date&&!localIds.has(String(r.id)));
 
     // ── Prune: remove local records that were deleted from sheet
     //    (only sent records — unsent stay so they can be re-sent)
