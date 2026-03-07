@@ -446,7 +446,7 @@ details summary::-webkit-details-marker{display:none}
       <a id="menu-sheet-link" href="#" target="_blank" rel="noopener" style="display:none;align-items:center;gap:7px;font-size:.8rem;color:var(--blue);text-decoration:none;padding:3px 2px">
         📊 פתח גיליון הדיווחים
       </a>
-      <span id="menu-vbadge" class="vbadge" title="לחץ לאיפוס">v2.9.1</span>
+      <span id="menu-vbadge" class="vbadge" title="לחץ לאיפוס">v2.9.2</span>
     </div>
   </aside>
 
@@ -458,7 +458,7 @@ details summary::-webkit-details-marker{display:none}
         <span class="hdr-name">MyWorkLog</span>
       </div>
       <div class="hdr-acts">
-        <span id="version-badge" class="vbadge" title="לחץ לאיפוס">v2.9.1</span>
+        <span id="version-badge" class="vbadge" title="לחץ לאיפוס">v2.9.2</span>
       </div>
     </div>
   </header>
@@ -1567,7 +1567,7 @@ function applyLang(lang){
 /* ─────────────────────────────────────────────────────
    App
 ───────────────────────────────────────────────────── */
-const VER='2.9.1';
+const VER='2.9.2';
 // SW cache buster: if a stale SW is detected, unregister it so fresh content loads
 if('serviceWorker'in navigator){
   navigator.serviceWorker.getRegistration().then(reg=>{
@@ -1663,10 +1663,25 @@ async function bgSync(){
   // Throttle: skip if last full sync was <5 min ago
   const lastFull=store('mwl_last_full_sync');
   if(lastFull&&(Date.now()-Number(lastFull))<5*60*1000)return;
-  // Flush queued items first (no network if nothing queued)
+
+  // ── Sweep: find local reports not yet sent and add to queue ───
+  const reps=store(K.reps)||[];
+  const q=store(K.q)||[];
+  const qIds=new Set(q.map(r=>r.id));
+  const unsent=reps.filter(r=>!r.sent&&!qIds.has(r.id));
+  if(unsent.length){
+    const newQ=[...q,...unsent];
+    store(K.q,newQ);pendUI();
+  }
+
+  // ── Flush all queued outgoing reports ─────────────────────────
   await flushWStandardQueue();
   await syncQ_silent();
-  // Sync WorkStandard (handles its own 10-min throttle)
+
+  // ── Pull from sheet (imports missing records) ─────────────────
+  await syncFromSheet();
+
+  // ── Sync WorkStandard ─────────────────────────────────────────
   const ok=await syncWStandard(true);
   if(ok) summaryRender();
   store('mwl_last_full_sync',String(Date.now()));
@@ -2864,12 +2879,15 @@ function settingsInit(){
     try{
       // Force re-fetch by clearing ETag
       localStorage.removeItem('mwl_etag_reports');
-      const before=(store(K.reps)||[]).length;
-      await syncFromSheet();
-      const after=(store(K.reps)||[]).length;
-      const added=Math.max(0,after-before);
-      toast(added>0?t('toastSyncReports',added):t('toastSyncReportsUpToDate'),'success',3000);
-      histRender();summaryRender();updateSessionBanner();
+      // Also sweep unsent locals into queue before pulling
+      const rAll=store(K.reps)||[];
+      const qAll=store(K.q)||[];
+      const qIds=new Set(qAll.map(r=>r.id));
+      const unsent=rAll.filter(r=>!r.sent&&!qIds.has(r.id));
+      if(unsent.length){store(K.q,[...qAll,...unsent]);pendUI();}
+      await syncQ_silent(); // push unsent first
+      const imported=await syncFromSheet(); // pull from sheet
+      toast(imported>0?t('toastSyncReports',imported):t('toastSyncReportsUpToDate'),'success',3000);
     }catch(e){
       toast(t('toastSyncReportsError'),'error',4000);
     }finally{
@@ -2953,32 +2971,54 @@ async function syncFromSheet(){
   const ep=store(K.ep);
   if(!ep||!navigator.onLine)return;
   try{
-    // Use If-None-Match to avoid re-downloading unchanged data
     const headers={};
     const etag=store('mwl_etag_reports');
     if(etag)headers['If-None-Match']=etag;
     const res=await fetch(ep+'?action=getReports',{headers,cache:'no-store'});
-    if(res.status===304)return; // not modified — skip
+    if(res.status===304)return;
     const newEtag=res.headers.get('ETag');
     if(newEtag)store('mwl_etag_reports',newEtag);
     const data=await res.json();
     if(!Array.isArray(data.reports))return;
-    const sheetIds=new Set(data.reports.map(r=>String(r.id)).filter(Boolean));
+
     const local=store(K.reps)||[];
-    const kept=local.filter(r=>!r.sent||sheetIds.has(String(r.id)));
-    if(kept.length!==local.length){
-      store(K.reps,kept);histRender();summaryRender();
+    const localIds=new Set(local.map(r=>String(r.id)));
+    const sheetIds=new Set(data.reports.map(r=>String(r.id)).filter(Boolean));
+
+    // ── Import: add sheet records that are missing locally ──────
+    const toImport=data.reports.filter(r=>r.id&&!localIds.has(String(r.id)));
+
+    // ── Prune: remove local records that were deleted from sheet
+    //    (only sent records — unsent stay so they can be re-sent)
+    const pruned=local.filter(r=>!r.sent||sheetIds.has(String(r.id)));
+
+    // ── Merge: imported records + surviving local records ────────
+    // De-dupe by id, sheet record wins (has sent:true)
+    const merged=[...toImport,...pruned];
+    // Sort by timestamp desc
+    merged.sort((a,b)=>(b.timestamp||b.report_date||'').localeCompare(a.timestamp||a.report_date||''));
+
+    const changed=toImport.length>0||pruned.length!==local.length;
+    if(changed){
+      store(K.reps,merged.slice(0,300));
+      histRender();summaryRender();updateSessionBanner();
     }
+
+    // ── Sync projects ────────────────────────────────────────────
     if(Array.isArray(data.projects)){
       const localP=store(K.proj)||[];
       const toAdd=data.projects.filter(p=>!localP.includes(p));
       if(toAdd.length){store(K.proj,[...localP,...toAdd]);projLoad();projChipsRender();}
     }
-  }catch(_){}
-  // WorkStandard: only if >10 min since last sync (bandwidth saver)
-  const lastSync=store('mwl_wstandard_sync');
-  const staleMins=lastSync?Math.floor((Date.now()-new Date(lastSync.replace(/(\d+)\/(\d+)\/(\d+)/,'$3-$2-$1')).getTime())/60000):999;
-  if(staleMins>10) await syncWStandard(true);
+
+    return toImport.length; // return count of new records imported
+  }catch(e){console.warn('[syncFromSheet]',e);return 0;}
+  finally{
+    // WorkStandard: only if >10 min since last sync
+    const lastSync=store('mwl_wstandard_sync');
+    const staleMins=lastSync?Math.floor((Date.now()-new Date(lastSync.replace(/(\d+)\/(\d+)\/(\d+)/,'$3-$2-$1')).getTime())/60000):999;
+    if(staleMins>10) await syncWStandard(true);
+  }
 }
 
 /* Push a new project to GAS */
