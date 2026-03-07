@@ -446,7 +446,7 @@ details summary::-webkit-details-marker{display:none}
       <a id="menu-sheet-link" href="#" target="_blank" rel="noopener" style="display:none;align-items:center;gap:7px;font-size:.8rem;color:var(--blue);text-decoration:none;padding:3px 2px">
         📊 פתח גיליון הדיווחים
       </a>
-      <span id="menu-vbadge" class="vbadge" title="לחץ לאיפוס">v2.9.4</span>
+      <span id="menu-vbadge" class="vbadge" title="לחץ לאיפוס">v2.9.5</span>
     </div>
   </aside>
 
@@ -458,7 +458,7 @@ details summary::-webkit-details-marker{display:none}
         <span class="hdr-name">MyWorkLog</span>
       </div>
       <div class="hdr-acts">
-        <span id="version-badge" class="vbadge" title="לחץ לאיפוס">v2.9.4</span>
+        <span id="version-badge" class="vbadge" title="לחץ לאיפוס">v2.9.5</span>
       </div>
     </div>
   </header>
@@ -1105,7 +1105,7 @@ function doGet(e) {
     const reports = rows.map(r =&gt; ({
       timestamp:   fmtDateCell(r[0])||String(r[0]||&#x27;&#x27;),
       report_date: fmtDateCell(r[1]),
-      report_time: String(r[2]||&#x27;&#x27;).trim(),
+      report_time: (function(v){if(!v)return&#x27;&#x27;;if(v instanceof Date)return String(v.getHours()).padStart(2,&#x27;0&#x27;)+&#x27;:&#x27;+String(v.getMinutes()).padStart(2,&#x27;0&#x27;);var s=String(v).trim();if(/^\d{1,2}:\d{2}/.test(s))return s.substring(0,5);var n=parseFloat(s);if(!isNaN(n)&&n>=0&&n<1){var tot=Math.round(n*1440);return String(Math.floor(tot/60)).padStart(2,&#x27;0&#x27;)+&#x27;:&#x27;+String(tot%60).padStart(2,&#x27;0&#x27;);}return s;})(r[2]),
       category:    reverseCategory(String(r[3]||&#x27;&#x27;)),
       description: String(r[4]||&#x27;&#x27;),
       project:     String(r[5]||&#x27;&#x27;),
@@ -1567,7 +1567,7 @@ function applyLang(lang){
 /* ─────────────────────────────────────────────────────
    App
 ───────────────────────────────────────────────────── */
-const VER='2.9.4';
+const VER='2.9.5';
 // SW cache buster: if a stale SW is detected, unregister it so fresh content loads
 if('serviceWorker'in navigator){
   navigator.serviceWorker.getRegistration().then(reg=>{
@@ -1760,23 +1760,33 @@ function fixStoredDates(){
   const normDate=s=>{
     if(!s)return'';
     const t=String(s).trim();
-    // Already correct YYYY-MM-DD
     if(/^\d{4}-\d{2}-\d{2}$/.test(t))return t;
-    // DD/MM/YYYY
     const slash=t.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
     if(slash)return`${slash[3]}-${slash[2].padStart(2,'0')}-${slash[1].padStart(2,'0')}`;
-    // Any other parseable date string (e.g. "Mon Jan 06 2025 00:00:00 GMT+0200")
     const d=new Date(s);
     if(!isNaN(d.getTime()))return`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    return t;
+  };
+  const normTime=s=>{
+    if(!s)return'';
+    const t=String(s).trim();
+    if(/^\d{1,2}:\d{2}(:\d{2})?$/.test(t))return t.slice(0,5); // HH:MM[:SS]
+    if(/^\d{1,2}:\d{2}-\d{1,2}:\d{2}/.test(t))return t; // range
+    const n=parseFloat(t);
+    if(!isNaN(n)&&n>0&&n<1){const tot=Math.round(n*1440);return String(Math.floor(tot/60)).padStart(2,'0')+':'+String(tot%60).padStart(2,'0');}
     return t;
   };
   const reps=store(K.reps)||[];
   let changed=false;
   reps.forEach(r=>{
-    const fixed=normDate(r.report_date);
-    if(fixed!==r.report_date){r.report_date=fixed;changed=true;}
+    const fd=normDate(r.report_date);
+    if(fd!==r.report_date){r.report_date=fd;changed=true;}
+    if(r.category==='entry'||r.category==='exit'){
+      const ft=normTime(r.report_time);
+      if(ft!==r.report_time){r.report_time=ft;changed=true;}
+    }
   });
-  if(changed){store(K.reps,reps);console.info('[fixStoredDates] fixed',reps.length,'records');}
+  if(changed){store(K.reps,reps);console.info('[fixStoredDates] normalised stored records');}
 }
 
 function migrateData(prevVer){
@@ -3012,6 +3022,16 @@ async function syncFromSheet(){
     const sheetIds=new Set(data.reports.map(r=>String(r.id)).filter(Boolean));
 
     // ── Import: add sheet records that are missing locally ──────
+    // Normalise times from sheet (Sheets time cells → decimal fraction or Date string)
+    const normTime=s=>{
+      if(!s)return'';
+      const t=String(s).trim();
+      if(/^\d{1,2}:\d{2}/.test(t))return t.slice(0,5); // already HH:MM
+      if(/^\d{1,2}:\d{2}-\d{1,2}:\d{2}/.test(t))return t; // range HH:MM-HH:MM
+      const n=parseFloat(t);
+      if(!isNaN(n)&&n>=0&&n<1){const tot=Math.round(n*1440);return String(Math.floor(tot/60)).padStart(2,'0')+':'+String(tot%60).padStart(2,'0');}
+      return t;
+    };
     // Normalise dates from sheet (Sheets may return various date formats)
     const normDate=s=>{if(!s)return'';const t=String(s).trim();
       if(/^\d{4}-\d{2}-\d{2}/.test(t))return t.slice(0,10);
@@ -3019,7 +3039,7 @@ async function syncFromSheet(){
       if(m)return`${m[3]}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`;
       const d=new Date(s);return isNaN(d)?t:`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
     };
-    data.reports.forEach(r=>{r.report_date=normDate(r.report_date);});
+    data.reports.forEach(r=>{r.report_date=normDate(r.report_date);r.report_time=normTime(r.report_time);});
     const toImport=data.reports.filter(r=>r.id&&r.report_date&&!localIds.has(String(r.id)));
 
     // ── Prune: remove local records that were deleted from sheet
