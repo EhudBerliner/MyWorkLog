@@ -492,7 +492,7 @@ details summary::-webkit-details-marker{display:none}
     <div class="menu-hdr">
       <img src="logo.png" alt="" class="menu-logo"/>
       <span class="menu-appname">MyWorkLog</span>
-      <button class="ibtn" id="btn-close-menu" data-i18n="menuClose" data-i18n-attr="aria-label" aria-label="סגור">✕</button>
+      <button class="ibtn" id="btn-close-menu" aria-label="סגור">✕</button>
     </div>
     <nav class="menu-nav">
       <button class="menu-item" data-tab="report"  data-i18n="menuReport">דיווח</button>
@@ -504,15 +504,15 @@ details summary::-webkit-details-marker{display:none}
       <button class="menu-item" id="menu-settings-btn" data-i18n="menuSettings">⚙️ הגדרות</button>
       <button class="menu-item" id="menu-help-btn"data-i18n="menuHelp2">📄 עזרה — Apps Script</button>
       <button class="menu-item" id="menu-gs-btn"data-i18n="menuGS">🔗 קוד google-apps-script.gs</button>
-      <button class="menu-item" id="menu-import-btn" data-i18n="menuImport">📥 טעינת נתונים</button>
+      <button class="menu-item" id="menu-import-btn">📥 טעינת נתונים (CSV)</button>
       <hr class="menu-div"/>
       <button class="menu-item" id="menu-wstandard-btn"data-i18n="menuWorkstandard">📊 תקן שעות — WorkStandard</button>
     </nav>
     <div class="menu-foot" style="display:flex;flex-direction:column;gap:8px">
       <a id="menu-sheet-link" href="#" target="_blank" rel="noopener" style="display:none;align-items:center;gap:7px;font-size:.8rem;color:var(--blue);text-decoration:none;padding:3px 2px">
-        <span data-i18n="menuOpenSheet">📊 פתח גיליון הדיווחים</span>
+        📊 פתח גיליון הדיווחים
       </a>
-      <span id="menu-vbadge" class="vbadge" data-i18n-attr="title" data-i18n="menuVersionTooltip" title="לחץ לאיפוס">v3.0.1</span>
+      <span id="menu-vbadge" class="vbadge" title="לחץ לאיפוס">v3.0.0</span>
     </div>
   </aside>
 
@@ -524,7 +524,7 @@ details summary::-webkit-details-marker{display:none}
         <span class="hdr-name">MyWorkLog</span>
       </div>
       <div class="hdr-acts">
-        <span id="version-badge" class="vbadge" data-i18n="menuVersionTooltip" data-i18n-attr="title" title="לחץ לאיפוס">v3.0.1</span>
+        <span id="version-badge" class="vbadge" title="לחץ לאיפוס">v3.0.0</span>
       </div>
     </div>
   </header>
@@ -582,7 +582,7 @@ details summary::-webkit-details-marker{display:none}
           <label class="flbl" data-i18n="labelDescription">תיאור <span style="color:var(--text3);font-weight:400">(אופציונלי)</span></label>
           <textarea id="task-desc" class="fi" rows="3"
             data-i18n="placeholderDesc" data-i18n-attr="placeholder"
-            data-i18n="placeholderDesc" data-i18n-attr="placeholder" placeholder="מה בוצע..."></textarea>
+            placeholder="מה בוצע..."></textarea>
         </div>
         <div class="fg">
           <label class="flbl" data-i18n="labelDuration">משך / טווח</label>
@@ -605,15 +605,15 @@ details summary::-webkit-details-marker{display:none}
                 <div class="clock-val" id="dur-m-val">00</div>
                 <div class="clock-arrows"><button class="clock-arr" id="dur-m-dn">▼</button></div>
               </div>
-              <span style="font-size:1rem;color:var(--text2);margin-right:6px" data-i18n="hourMinLabel">שע׳:דק׳</span>
+              <span style="font-size:1rem;color:var(--text2);margin-right:6px">שע׳:דק׳</span>
             </div>
             <div class="clock-presets">
-              <button class="clock-preset" data-dur="0:15" data-i18n="preset15">15 דק׳</button>
-              <button class="clock-preset" data-dur="0:30" data-i18n="preset30">30 דק׳</button>
-              <button class="clock-preset" data-dur="1:00" data-i18n="preset1h">1 שעה</button>
-              <button class="clock-preset" data-dur="1:30" data-i18n="preset15h">1.5 שעה</button>
-              <button class="clock-preset" data-dur="2:00" data-i18n="preset2h">2 שעות</button>
-              <button class="clock-preset" data-dur="4:00" data-i18n="preset4h">4 שעות</button>
+              <button class="clock-preset" data-dur="0:15">15 דק׳</button>
+              <button class="clock-preset" data-dur="0:30">30 דק׳</button>
+              <button class="clock-preset" data-dur="1:00">1 שעה</button>
+              <button class="clock-preset" data-dur="1:30">1.5 שעה</button>
+              <button class="clock-preset" data-dur="2:00">2 שעות</button>
+              <button class="clock-preset" data-dur="4:00">4 שעות</button>
             </div>
           </div>
           <!-- hidden inputs for compat -->
@@ -645,9 +645,9 @@ details summary::-webkit-details-marker{display:none}
         <div class="pending-pill">
           <span class="pending-pill-dot"></span>
           <span class="pending-pill-text">
-            <b><span id="pending-count">0</span> דיווחים</b> <span data-i18n="pendingWaiting">ממתינים לשליחה</span>
+            <b><span id="pending-count">0</span> דיווחים</b> ממתינים לשליחה
           </span>
-          <button class="btn-g sm" id="btn-sync" data-i18n="btnSync" style="flex-shrink:0;font-size:.75rem;padding:7px 12px" data-i18n="btnSyncPending">↑ שלח</button>
+          <button class="btn-g sm" id="btn-sync" data-i18n="btnSync" style="flex-shrink:0;font-size:.75rem;padding:7px 12px">↑ שלח</button>
         </div>
       </div>
     </section>
@@ -673,15 +673,15 @@ details summary::-webkit-details-marker{display:none}
         </div>
         <div class="date-nav">
           <button class="ibtn" id="sum-prev">&lsaquo;</button>
-          <span id="sum-period-label" class="period-lbl" style="cursor:pointer" onclick="goToday()" data-i18n-attr="title" data-i18n="titleBackToToday" title="חזרה להיום"></span>
+          <span id="sum-period-label" class="period-lbl" style="cursor:pointer" onclick="goToday()" title="חזרה להיום"></span>
           <button class="ibtn" id="sum-next">&rsaquo;</button>
           <button class="btn-g sm" id="btn-today" style="font-size:.68rem;padding:3px 9px;line-height:1.4"data-i18n="btnToday">היום</button>
         </div>
         <!-- Range date inputs (visible only in range mode) -->
         <div id="range-period-inputs" class="range-inputs" style="display:none">
-          <input type="date" id="range-from" class="fi" data-i18n-attr="title" data-i18n="rangeFrom" title="מ-"/>
+          <input type="date" id="range-from" class="fi" title="מ-"/>
           <span style="color:var(--text3);font-size:.8rem" data-i18n="labelRangeSep">עד</span>
-          <input type="date" id="range-to" class="fi" data-i18n-attr="title" data-i18n="rangeTo" title="עד-"/>
+          <input type="date" id="range-to" class="fi" title="עד-"/>
           <button class="btn-p sm" id="btn-range-go" style="font-size:.75rem"data-i18n="btnRangeGo">הצג</button>
         </div>
       </div>
@@ -764,9 +764,9 @@ details summary::-webkit-details-marker{display:none}
         <div class="sset-label" data-i18n="settingsLangLabel">שפה</div>
         <div class="sset-block">
           <div class="sset-row-inline">
-            <span class="sset-row-label" data-i18n="settingsLangInterface">🌐 שפת ממשק</span>
+            <span class="sset-row-label">🌐 שפת ממשק</span>
             <div class="seg" style="width:140px">
-              <button class="seg-btn active" data-lang="he" data-i18n="settingsLang">עברית</button>
+              <button class="seg-btn active" data-lang="he">עברית</button>
               <button class="seg-btn"        data-lang="en">English</button>
             </div>
           </div>
@@ -775,7 +775,7 @@ details summary::-webkit-details-marker{display:none}
 
       <!-- CONNECTION -->
       <div class="sset-group">
-        <div class="sset-label" data-i18n="settingsConnectionLabel">חיבור ל-Google</div>
+        <div class="sset-label">חיבור ל-Google</div>
         <div class="sset-block">
           <div class="sset-row">
             <label class="sset-row-label" for="settings-endpoint">🔗 Google Apps Script URL</label>
@@ -793,7 +793,7 @@ details summary::-webkit-details-marker{display:none}
               border:1px solid var(--border);border-radius:var(--rs);color:var(--blue);font-size:.82rem;
               text-decoration:none;margin-top:8px;transition:border-color .2s"
               onmouseover="this.style.borderColor='var(--blue)'" onmouseout="this.style.borderColor='var(--border)'">
-              ↗ <span data-i18n="settingsOpenSheet">פתח גיליון הדיווחים</span>
+              ↗ <span>פתח גיליון הדיווחים</span>
             </a>
           </div>
         </div>
@@ -801,7 +801,7 @@ details summary::-webkit-details-marker{display:none}
 
       <!-- SYNC -->
       <div class="sset-group">
-        <div class="sset-label" data-i18n="settingsSyncLabel">סנכרון</div>
+        <div class="sset-label">סנכרון</div>
         <div class="sset-block">
           <div class="sset-row">
             <div class="sync-btn-row">
@@ -820,7 +820,7 @@ details summary::-webkit-details-marker{display:none}
             <div class="proj-row">
               <input type="text" id="new-project" class="fi"
                 data-i18n="placeholderNewProject" data-i18n-attr="placeholder"
-                data-i18n="placeholderNewProject" data-i18n-attr="placeholder" placeholder="הוסף פרויקט..."/>
+                placeholder="הוסף פרויקט..."/>
               <button class="btn-g" id="btn-add-project" style="padding:10px 16px">+</button>
             </div>
             <div id="projects-chips" class="chips" style="margin-top:6px"></div>
@@ -836,7 +836,7 @@ details summary::-webkit-details-marker{display:none}
             <span class="pref-row-icon">📳</span>
             <span class="pref-row-body">
               <span class="pref-row-label" data-i18n="prefVibration">רטט</span>
-              <span class="pref-row-desc" data-i18n="prefVibrationDesc">פידבק הפטי בכפתורים ופעולות</span>
+              <span class="pref-row-desc">פידבק הפטי בכפתורים ופעולות</span>
             </span>
             <input type="checkbox" id="pref-vibration" class="ptog" checked/>
           </label>
@@ -844,7 +844,7 @@ details summary::-webkit-details-marker{display:none}
             <span class="pref-row-icon">✨</span>
             <span class="pref-row-body">
               <span class="pref-row-label" data-i18n="prefAnimations">אנימציות</span>
-              <span class="pref-row-desc" data-i18n="prefAnimationsDesc">מעברים ואנימציות ממשק</span>
+              <span class="pref-row-desc">מעברים ואנימציות ממשק</span>
             </span>
             <input type="checkbox" id="pref-animations" class="ptog" checked/>
           </label>
@@ -852,7 +852,7 @@ details summary::-webkit-details-marker{display:none}
             <span class="pref-row-icon">↓</span>
             <span class="pref-row-body">
               <span class="pref-row-label" data-i18n="prefPullRefresh">משיכה לרענון</span>
-              <span class="pref-row-desc" data-i18n="prefPullRefreshDesc">משוך למטה לרענון הדף</span>
+              <span class="pref-row-desc">משוך למטה לרענון הדף</span>
             </span>
             <input type="checkbox" id="pref-pull-refresh" class="ptog"/>
           </label>
@@ -886,7 +886,7 @@ details summary::-webkit-details-marker{display:none}
     <div class="mbody">
       <div style="background:var(--redDim);border:1px solid rgba(255,90,90,.25);border-radius:var(--rs);
         padding:11px 13px;font-size:.82rem;color:var(--text2);line-height:1.6">
-        <span data-i18n="resetWarning">⚠️ פעולה זו אינה ניתנת לביטול. בחר אילו נתונים לשמור:</span>
+        ⚠️ פעולה זו אינה ניתנת לביטול. בחר אילו נתונים לשמור:
       </div>
       <div class="sset-block pref-list">
         <label class="pref-row">
@@ -953,19 +953,19 @@ details summary::-webkit-details-marker{display:none}
 <div id="modal-workcal" class="moverlay hidden" role="dialog" aria-modal="true">
   <div class="mbox sm">
     <div class="mhdr">
-      <h2 data-i18n="workcalTitle">📊 תקן שעות — WorkStandard</h2>
+      <h2>📊 תקן שעות — WorkStandard</h2>
       <button class="ibtn" id="btn-close-workcal">✕</button>
     </div>
     <div class="mbody">
       <div class="sset-block">
         <div class="sset-row">
-          <div class="sset-row-label" data-i18n="workcalStructureLabel">📋 מבנה גיליון WorkStandard</div>
+          <div class="sset-row-label">📋 מבנה גיליון WorkStandard</div>
           <div style="background:var(--bg0);border-radius:6px;padding:8px 11px;margin-top:6px;
             font-size:.72rem;font-family:monospace;color:var(--text3);line-height:1.8">
             Date | WeekDay | Day_Standard_Hours | Notes
           </div>
           <div class="sset-row-sub" style="margin-top:6px">
-            <span data-i18n="workcalHint">הוסף/ערוך שורות ישירות בגיליון, או לחץ על יום בלוח לעריכה דרך האפליקציה.</span>
+            הוסף/ערוך שורות ישירות בגיליון, או לחץ על יום בלוח לעריכה דרך האפליקציה.
           </div>
         </div>
       </div>
@@ -973,8 +973,8 @@ details summary::-webkit-details-marker{display:none}
         text-align:center;min-height:20px;padding:2px 0"></div>
     </div>
     <div class="mfoot mfoot2">
-      <button class="btn-g" id="btn-close-workcal2" data-i18n="menuClose">סגור</button>
-      <button class="btn-p sm" id="btn-sync-wstandard" data-i18n="btnSyncWstandard">↻ משוך נתונים מהגיליון</button>
+      <button class="btn-g" id="btn-close-workcal2">סגור</button>
+      <button class="btn-p sm" id="btn-sync-wstandard">↻ משוך נתונים מהגיליון</button>
     </div>
   </div>
 </div>
@@ -1017,7 +1017,7 @@ details summary::-webkit-details-marker{display:none}
 
 <div id="toast" class="hidden" role="status" aria-live="polite"></div>
 <!-- HELP MODAL -->
-<div id="modal-help" class="moverlay hidden" role="dialog" aria-modal="true" style="z-index:650" lang="he">
+<div id="modal-help" class="moverlay hidden" role="dialog" aria-modal="true" style="z-index:650">
   <div class="mbox" style="max-height:92dvh;display:flex;flex-direction:column">
 
     <div class="mhdr" style="position:sticky;top:0;z-index:2;background:var(--bg1)">
@@ -1271,8 +1271,8 @@ const I18N={
   toastSyncReportsError:{he:'❌ שגיאה בסנכרון דיווחים',en:'❌ Error syncing reports'},
   statWorkday:{he:'משך יום',en:'Workday'},
   statDays:{he:'ימים',en:'Days'},
-  themeDark:{he:t('themeDark').replace(/^[^ ]+ /,''),en:'Dark mode'},
-  themeLight:{he:t('themeLight').replace(/^[^ ]+ /,''),en:'Light mode'},
+  themeDark:{he:'מצב כהה',en:'Dark mode'},
+  themeLight:{he:'מצב בהיר',en:'Light mode'},
   menuHelp:{he:'עזרה',en:'Help'},
   menuDownloadGS:{he:'הורד קוד GAS',en:'Download GAS code'},
   sheetLinkLabel:{he:'פתח גיליון',en:'Open Sheet'},
@@ -1408,65 +1408,6 @@ const I18N={
 
   /* ── History ── */
   historyRecent:{he:'דיווחים - 30 ימים אחרונים',en:'Reports — last 30 days'},
-  /* ── Settings sections ── */
-  settingsLangInterface:{he:'🌐 שפת ממשק',en:'🌐 Interface Language'},
-  settingsConnectionLabel:{he:'חיבור ל-Google',en:'Google Connection'},
-  settingsSyncLabel:{he:'סנכרון',en:'Sync'},
-  settingsOpenSheet:{he:'↗ פתח גיליון הדיווחים',en:'↗ Open Reports Sheet'},
-
-  /* ── Pref descriptions ── */
-  prefVibrationDesc:{he:'פידבק הפטי בכפתורים ופעולות',en:'Haptic feedback on buttons and actions'},
-  prefAnimationsDesc:{he:'מעברים ואנימציות ממשק',en:'UI transitions and animations'},
-  prefPullRefreshDesc:{he:'משוך למטה לרענון הדף',en:'Pull down to refresh the page'},
-
-  /* ── Reset modal ── */
-  resetWarning:{he:'⚠️ פעולה זו אינה ניתנת לביטול. בחר אילו נתונים לשמור:',en:'⚠️ This action cannot be undone. Choose what to keep:'},
-
-  /* ── WorkCal modal ── */
-  workcalTitle:{he:'📊 תקן שעות — WorkStandard',en:'📊 Hour Standard — WorkStandard'},
-  workcalStructureLabel:{he:'📋 מבנה גיליון WorkStandard',en:'📋 WorkStandard Sheet Structure'},
-  workcalHint:{he:'הוסף/ערוך שורות ישירות בגיליון, או לחץ על יום בלוח לעריכה דרך האפליקציה.',en:'Add/edit rows directly in the sheet, or tap a day in the calendar to edit via the app.'},
-  btnSyncWstandard:{he:'↻ משוך נתונים מהגיליון',en:'↻ Pull Data from Sheet'},
-
-  /* ── Import modal ── */
-  menuImport:{he:'📥 טעינת נתונים',en:'📥 Import Data'},
-  importTitle:{he:'📥 טעינת דיווחים',en:'📥 Import Reports'},
-  importSubtitle:{he:'Excel (.xlsx) או CSV',en:'Excel (.xlsx) or CSV'},
-  importStep1Title:{he:'הורד טמפלט',en:'Download Template'},
-  importStep1Desc:{he:'הורד קובץ Excel מוכן עם העמודות הנדרשות. מלא את הנתונים ושמור — ניתן לטעון גם CSV.',en:'Download a ready-made Excel file with the required columns. Fill in the data and save — CSV is also supported.'},
-  btnDlTemplate:{he:'⬇️ הורד טמפלט Excel',en:'⬇️ Download Excel Template'},
-  importFormatTitle:{he:'מבנה הקובץ',en:'File Structure'},
-  importStep2Title:{he:'בחר קובץ לטעינה',en:'Select File to Import'},
-  btnPickFile:{he:'📂 בחר קובץ',en:'📂 Choose File'},
-  importPreviewTitle:{he:'תצוגה מקדימה',en:'Preview'},
-  importRows:{he:'שורות',en:'rows'},
-  btnImportConfirm:{he:'✅ ייבא דיווחים',en:'✅ Import Reports'},
-  importLegendEntry:{he:'entry — כניסה',en:'entry — check-in'},
-  importLegendExit:{he:'exit — יציאה',en:'exit — check-out'},
-  importLegendTask:{he:'task — משימה',en:'task — task'},
-
-  /* ── Pending pill ── */
-  pendingWaiting:{he:'ממתינים לשליחה',en:'waiting to send'},
-  btnSyncPending:{he:'↑ שלח',en:'↑ Send'},
-
-  /* ── Toast / JS messages ── */
-  toastTemplateDownloaded:{he:'⬇️ טמפלט Excel הורד','en':'⬇️ Excel template downloaded'},
-  toastXlsxError:{he:'❌ שגיאה בקריאת קובץ Excel',en:'❌ Error reading Excel file'},
-  toastGasNotFound:{he:'⚠️ לא נמצא קובץ google-apps-script.gs',en:'⚠️ google-apps-script.gs not found'},
-  xlsxSheetName:{he:'דיווחים',en:'Reports'},
-  importLoading:{he:'טוען...',en:'Loading...'},
-  importMissingCols:{he:'חסרות עמודות',en:'Missing columns'},
-  importBadDate:{he:'תאריך לא תקין',en:'Invalid date'},
-  importMissingTime:{he:'שעה חסרה',en:'Missing time'},
-  importBadCategory:{he:'קטגוריה לא תקינה',en:'Invalid category'},
-  importErrorsLabel:{he:'שגיאות',en:'errors'},
-  rowLabel:{he:'שורה',en:'Row'},
-  importSuccess:{he:(n)=>`✅ יובאו ${n} דיווחים`,en:(n)=>`✅ Imported ${n} reports`},
-  importSkipped:{he:(n)=>` · ${n} כפולים דולגו`,en:(n)=>` · ${n} duplicates skipped`},
-
-  /* ── Navigation ── */
-  titleBackToToday:{he:'חזרה להיום',en:'Back to today'},
-
 };
 function t(key,...args){
   const lang=window._lang||'he',entry=I18N[key];
@@ -1491,7 +1432,7 @@ function applyLang(lang){
 /* ─────────────────────────────────────────────────────
    App
 ───────────────────────────────────────────────────── */
-const VER='3.0.1';
+const VER='3.0.0';
 // SW cache buster: if a stale SW is detected, unregister it so fresh content loads
 if('serviceWorker'in navigator){
   navigator.serviceWorker.getRegistration().then(reg=>{
@@ -1782,7 +1723,7 @@ function applyTheme(th){
   store(K.theme,th);
   // sync menu button label
   const btn=$('menu-theme-btn');
-  if(btn){btn.textContent=dark?t('menuThemeLight'):t('menuThemeDark');btn.classList.toggle('theme-active',dark);}
+  if(btn){btn.textContent=(dark?'☀️':'🌙')+' '+(dark?'מצב בהיר':'מצב כהה');btn.classList.toggle('theme-active',dark);}
 }
 
 /* LANG */
@@ -1878,13 +1819,13 @@ async function downloadXLSXTemplate(){
   // Column widths
   ws['!cols']=[{wch:14},{wch:16},{wch:10},{wch:28},{wch:20}];
   const wb=XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb,ws,t('xlsxSheetName'));
+  XLSX.utils.book_append_sheet(wb,ws,'דיווחים');
   const buf=XLSX.write(wb,{type:'array',bookType:'xlsx'});
   const b=new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
   const a=document.createElement('a');a.href=URL.createObjectURL(b);
   a.download='worklog-template.xlsx';document.body.appendChild(a);a.click();
   setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1000);
-  toast(t('toastTemplateDownloaded'),'success');
+  toast('⬇️ טמפלט Excel הורד','success');
 }
 
 let _importRows=[];
@@ -1921,7 +1862,7 @@ function parseRowsArray(hdrRow, dataRows){
   const hdr=hdrRow.map(h=>String(h||'').trim().toLowerCase());
   const reqCols=['report_date','report_time','category'];
   const missing=reqCols.filter(col=>!hdr.includes(col));
-  if(missing.length) return{rows:[],errors:[`${t('importMissingCols')}: ${missing.join(', ')}`]};
+  if(missing.length) return{rows:[],errors:[`חסרות עמודות: ${missing.join(', ')}`]};
   const rows=[];const errors=[];
   const get=(vals,col)=>{const idx=hdr.indexOf(col);return idx>=0?String(vals[idx]??'').trim():'';};
 
@@ -1954,11 +1895,11 @@ function parseRowsArray(hdrRow, dataRows){
 
     // Validate date
     if(!/^\d{4}-\d{2}-\d{2}$/.test(report_date)){
-      errors.push(`${t('rowLabel')||'שורה'} ${i+2}: ${t('importBadDate')} "${report_date}"`);return;
+      errors.push(`שורה ${i+2}: תאריך לא תקין "${report_date}"`);return;
     }
-    if(!report_time){errors.push(`${t('rowLabel')||'שורה'} ${i+2}: ${t('importMissingTime')}`);return;}
+    if(!report_time){errors.push(`שורה ${i+2}: שעה חסרה`);return;}
     if(!['entry','exit','task'].includes(category)){
-      errors.push(`${t('rowLabel')||'שורה'} ${i+2}: ${t('importBadCategory')} "${category}"`);return;
+      errors.push(`שורה ${i+2}: קטגוריה לא תקינה "${category}"`);return;
     }
     rows.push({id:Date.now()+Math.random().toString(36).slice(2)+'_imp',
       timestamp:new Date(report_date+'T12:00:00').toISOString(),
@@ -2020,7 +1961,7 @@ function showImportPreview(rows,errors){
   const warn=$('import-warn');
   if(errors.length){
     warn.style.display='';
-    warn.innerHTML='⚠️ '+errors.length+' '+t('importErrorsLabel')+':<br>'+errors.map(e=>`<span style="display:block">${e}</span>`).join('');
+    warn.innerHTML='⚠️ '+errors.length+' שגיאות:<br>'+errors.map(e=>`<span style="display:block">${e}</span>`).join('');
   }else{
     warn.style.display='none';
   }
@@ -2039,7 +1980,7 @@ async function handleImportFile(file){
   const isXLS=file.name.toLowerCase().endsWith('.xls');
 
   if(isXLSX||isXLS){
-    $('import-file-name').textContent=file.name+' ('+t('importLoading')+')';
+    $('import-file-name').textContent=file.name+' (טוען...)';
     try{
       const buf=await file.arrayBuffer();
       const{rows,errors}=await parseXLSX(new Uint8Array(buf));
@@ -2047,7 +1988,7 @@ async function handleImportFile(file){
       showImportPreview(rows,errors);
     }catch(e){
       $('import-file-name').textContent=file.name;
-      toast(t('toastXlsxError')+': '+e.message,'warn',5000);
+      toast('❌ שגיאה בקריאת קובץ Excel: '+e.message,'warn',5000);
     }
     return;
   }
@@ -2082,8 +2023,8 @@ function importConfirm(){
   if(fi){fi.value='';fi.replaceWith(fi.cloneNode(true));} // clone removes event; re-bind below
   // (re-binding not needed — modal delegation in importInit handles new clone)
   closeM('modal-import');
-  let msg=t('importSuccess',fresh.length);
-  if(skipped)msg+=t('importSkipped',skipped);
+  let msg=`✅ יובאו ${fresh.length} דיווחים`;
+  if(skipped)msg+=` · ${skipped} כפולים דולגו`;
   toast(msg,'success',4000);buzz([20,20,60]);
 }
 
@@ -3395,7 +3336,7 @@ async function downloadGS(){
     setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1000);
     toast('⬇️ '+(t('helpBtnDownloadGS')||'Downloading...'),'success');
   }catch(e){
-    toast(t('toastGasNotFound'),'warn',4000);
+    toast('⚠️ לא נמצא קובץ google-apps-script.gs','warn',4000);
   }
 }
 /* SCROLL */
@@ -3412,8 +3353,8 @@ function scrollInit(){
   <div class="mbox">
     <div class="mhdr">
       <div>
-        <h2 data-i18n="importTitle">📥 טעינת דיווחים</h2>
-        <div class="mhdr-sub" data-i18n="importSubtitle">Excel (.xlsx) או CSV</div>
+        <h2>📥 טעינת דיווחים</h2>
+        <div class="mhdr-sub">Excel (.xlsx) או CSV</div>
       </div>
       <button class="ibtn" id="btn-close-import">✕</button>
     </div>
@@ -3423,19 +3364,19 @@ function scrollInit(){
       <div class="import-step">
         <div class="import-step-hdr">
           <span class="import-step-num">1</span>
-          <span class="import-step-title" data-i18n="importStep1Title">הורד טמפלט</span>
+          <span class="import-step-title">הורד טמפלט</span>
         </div>
         <p class="import-step-desc">
           הורד קובץ Excel מוכן עם העמודות הנדרשות. מלא את הנתונים ושמור — ניתן לטעון גם CSV.
         </p>
-        <button class="btn-g sm" id="btn-dl-template" style="align-self:flex-start;padding:8px 16px" data-i18n="btnDlTemplate">⬇️ הורד טמפלט Excel</button>
+        <button class="btn-g sm" id="btn-dl-template" style="align-self:flex-start;padding:8px 16px">⬇️ הורד טמפלט Excel</button>
       </div>
 
       <!-- Format ref -->
       <div class="import-step">
         <div class="import-step-hdr">
           <span class="import-step-num" style="background:var(--border2);font-size:.85rem">📋</span>
-          <span class="import-step-title" data-i18n="importFormatTitle">מבנה הקובץ</span>
+          <span class="import-step-title">מבנה הקובץ</span>
         </div>
         <div class="import-fmt-box">
           report_date · report_time · category · description · project<br>
@@ -3444,9 +3385,9 @@ function scrollInit(){
           2024-03-15 · 10:00-11:30 · task · ישיבה · פרויקט-א
         </div>
         <div class="import-legend">
-          <span class="import-legend-item"><span style="color:var(--lime)">●</span> <span data-i18n="importLegendEntry">entry — כניסה</span></span>
-          <span class="import-legend-item"><span style="color:var(--red)">●</span> <span data-i18n="importLegendExit">exit — יציאה</span></span>
-          <span class="import-legend-item"><span style="color:var(--blue)">●</span> <span data-i18n="importLegendTask">task — משימה</span></span>
+          <span class="import-legend-item"><span style="color:var(--lime)">●</span> entry — כניסה</span>
+          <span class="import-legend-item"><span style="color:var(--red)">●</span> exit — יציאה</span>
+          <span class="import-legend-item"><span style="color:var(--blue)">●</span> task — משימה</span>
         </div>
       </div>
 
@@ -3454,23 +3395,23 @@ function scrollInit(){
       <div class="import-step">
         <div class="import-step-hdr">
           <span class="import-step-num">2</span>
-          <span class="import-step-title" data-i18n="importStep2Title">בחר קובץ לטעינה</span>
+          <span class="import-step-title">בחר קובץ לטעינה</span>
         </div>
         <input type="file" id="import-file-input" accept=".csv,.xlsx,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" style="display:none"/>
-        <button class="btn-g sm" id="btn-pick-csv" style="width:100%;padding:10px" data-i18n="btnPickFile">📂 בחר קובץ</button>
+        <button class="btn-g sm" id="btn-pick-csv" style="width:100%;padding:10px">📂 בחר קובץ</button>
         <div id="import-file-name" style="font-size:.74rem;color:var(--text3);text-align:center;min-height:18px"></div>
 
         <div id="import-preview" style="display:none">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-            <span style="font-size:.8rem;font-weight:700;color:var(--text)" data-i18n="importPreviewTitle">תצוגה מקדימה</span>
-            <span style="font-size:.75rem;color:var(--lime);font-weight:700"><span id="import-row-count">0</span> <span data-i18n="importRows">שורות</span></span>
+            <span style="font-size:.8rem;font-weight:700;color:var(--text)">תצוגה מקדימה</span>
+            <span style="font-size:.75rem;color:var(--lime);font-weight:700"><span id="import-row-count">0</span> שורות</span>
           </div>
           <div id="import-preview-list" class="import-preview-wrap"></div>
           <div id="import-warn" class="import-warn-box" style="display:none;margin-top:8px"></div>
         </div>
 
         <button class="btn-p" id="btn-import-confirm" disabled style="width:100%;margin-top:4px">
-          <span class="btn-text" data-i18n="btnImportConfirm">✅ ייבא דיווחים</span>
+          <span class="btn-text">✅ ייבא דיווחים</span>
         </button>
       </div>
 
@@ -3479,4 +3420,4 @@ function scrollInit(){
 </div>
 
 </body>
-</html>
+                                                                           </html>
