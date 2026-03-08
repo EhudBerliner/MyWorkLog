@@ -439,6 +439,7 @@ details summary::-webkit-details-marker{display:none}
       <button class="menu-item" id="menu-settings-btn" data-i18n="menuSettings">⚙️ הגדרות</button>
       <button class="menu-item" id="menu-help-btn"data-i18n="menuHelp2">📄 עזרה — Apps Script</button>
       <button class="menu-item" id="menu-gs-btn"data-i18n="menuGS">🔗 קוד google-apps-script.gs</button>
+      <button class="menu-item" id="menu-import-btn">📥 טעינת נתונים (CSV)</button>
       <hr class="menu-div"/>
       <button class="menu-item" id="menu-wstandard-btn"data-i18n="menuWorkstandard">📊 תקן שעות — WorkStandard</button>
     </nav>
@@ -446,7 +447,7 @@ details summary::-webkit-details-marker{display:none}
       <a id="menu-sheet-link" href="#" target="_blank" rel="noopener" style="display:none;align-items:center;gap:7px;font-size:.8rem;color:var(--blue);text-decoration:none;padding:3px 2px">
         📊 פתח גיליון הדיווחים
       </a>
-      <span id="menu-vbadge" class="vbadge" title="לחץ לאיפוס">v2.9.6</span>
+      <span id="menu-vbadge" class="vbadge" title="לחץ לאיפוס">v2.9.0</span>
     </div>
   </aside>
 
@@ -458,7 +459,7 @@ details summary::-webkit-details-marker{display:none}
         <span class="hdr-name">MyWorkLog</span>
       </div>
       <div class="hdr-acts">
-        <span id="version-badge" class="vbadge" title="לחץ לאיפוס">v2.9.6</span>
+        <span id="version-badge" class="vbadge" title="לחץ לאיפוס">v2.9.0</span>
       </div>
     </div>
   </header>
@@ -1027,303 +1028,6 @@ details summary::-webkit-details-marker{display:none}
     </div><!-- /mbody -->
   </div>
 </div>
-<!-- GS CODE BLOB (embedded for download) -->
-<pre id="gs-code-blob" style="display:none">// ============================================================
-//  MyWorkLog – Google Apps Script  v2.4
-//  הדבק קוד זה ב-Apps Script של הגיליון שלך
-//  לאחר מכן: Deploy &gt; New deployment &gt; Web App
-//  ✅ הרשאות: Anyone (אנונימי) / Execute as: Me
-// ============================================================
-
-const SHEET_NAME        = &#x27;WorkLog&#x27;;
-const SHEET_ATTENDANCE  = &#x27;Attendance&#x27;;
-const SHEET_TASKS       = &#x27;Tasks&#x27;;
-const SHEET_PROJECTS    = &#x27;Projects&#x27;;
-const SHEET_WSTANDARD   = &#x27;WorkStandard&#x27;;
-
-const HEADERS            = [&#x27;Timestamp&#x27;,&#x27;Report_Date&#x27;,&#x27;Report_Time&#x27;,&#x27;Category&#x27;,&#x27;Description&#x27;,&#x27;Project&#x27;,&#x27;Record_ID&#x27;];
-const ATTENDANCE_HEADERS = [&#x27;Report_Date&#x27;,&#x27;Report_Time – כניסה&#x27;,&#x27;Report_Time – יציאה&#x27;,&#x27;משך יום עבודה&#x27;];
-const TASK_HEADERS       = [&#x27;Report_Date&#x27;,&#x27;משך משימה&#x27;,&#x27;Project&#x27;,&#x27;Description&#x27;];
-const PROJECT_HEADERS    = [&#x27;Project_Name&#x27;,&#x27;Created_At&#x27;];
-const WSTANDARD_HEADERS  = [&#x27;Date&#x27;,&#x27;WeekDay&#x27;,&#x27;Day_Standard_Hours&#x27;,&#x27;Notes&#x27;];
-
-// ─── Router ──────────────────────────────────────────────────
-function doPost(e) {
-  try {
-    const data = JSON.parse(e.postData.contents);
-    if (data.action === &#x27;setDayStandard&#x27;) return ok(updateWorkStandard(data.date, data.weekDay, data.stdHours, data.notes||&#x27;&#x27;));
-    if (data.action === &#x27;addProject&#x27;)     return ok(addProject(data.project));
-    if (data.action === &#x27;deleteProject&#x27;)  return ok(deleteProject(data.project));
-    if (data.action === &#x27;delete&#x27;)         { deleteById(data.id, data.category, data.report_date); return ok(&#x27;נמחק&#x27;); }
-    const ss   = SpreadsheetApp.getActiveSpreadsheet();
-    const main = getOrCreateSheet(ss, SHEET_NAME, HEADERS);
-    const ts   = new Date().toLocaleString(&#x27;he-IL&#x27;, { timeZone: &#x27;Asia/Jerusalem&#x27; });
-    main.appendRow([ts, data.report_date||&#x27;&#x27;, data.report_time||&#x27;&#x27;,
-      translateCategory(data.category)||&#x27;&#x27;, data.description||&#x27;&#x27;, data.project||&#x27;&#x27;, data.id||&#x27;&#x27;]);
-    autoFormatLastRow(main, HEADERS.length);
-    if (data.category === &#x27;entry&#x27; || data.category === &#x27;exit&#x27;) updateAttendance(ss, data);
-    if (data.category === &#x27;task&#x27;) updateTasks(ss, data);
-    return ok(&#x27;נשמר&#x27;);
-  } catch (err) {
-    return errResp(err.toString());
-  }
-}
-
-function doGet(e) {
-  const action = (e &amp;&amp; e.parameter &amp;&amp; e.parameter.action) || &#x27;&#x27;;
-
-  if (action === &#x27;getWorkStandard&#x27;) {
-    const ss    = SpreadsheetApp.getActiveSpreadsheet();
-    const sheet = getOrCreateSheet(ss, SHEET_WSTANDARD, WSTANDARD_HEADERS);
-    const lastRow = sheet.getLastRow();
-    if (lastRow &lt;= 1) return jsonResp({ workStandard: [] });
-    const rows = sheet.getRange(2, 1, lastRow - 1, 4).getValues();
-    const workStandard = rows
-      .map(r =&gt; ({
-        date:     fmtDateCell(r[0]),
-        weekDay:  String(r[1]||&#x27;&#x27;).trim(),
-        stdHours: parseFloat(r[2]) || 0,
-        notes:    String(r[3]||&#x27;&#x27;).trim(),
-      }))
-      .filter(r =&gt; r.date);
-    return jsonResp({ workStandard });
-  }
-
-  if (action === &#x27;getProjects&#x27;) {
-    const ss    = SpreadsheetApp.getActiveSpreadsheet();
-    const sheet = ss.getSheetByName(SHEET_PROJECTS);
-    if (!sheet) return jsonResp({ projects: [] });
-    const rows  = sheet.getDataRange().getValues().slice(1);
-    return jsonResp({ projects: rows.map(r =&gt; String(r[0]).trim()).filter(Boolean) });
-  }
-
-  if (action === &#x27;getReports&#x27;) {
-    const ss    = SpreadsheetApp.getActiveSpreadsheet();
-    const sheet = ss.getSheetByName(SHEET_NAME);
-    if (!sheet) return jsonResp({ reports: [], projects: [] });
-    const rows    = sheet.getDataRange().getValues().slice(1);
-    const reports = rows.map(r =&gt; ({
-      timestamp:   fmtDateCell(r[0])||String(r[0]||&#x27;&#x27;),
-      report_date: fmtDateCell(r[1]),
-      report_time: (function(v){if(!v)return&#x27;&#x27;;if(v instanceof Date)return String(v.getHours()).padStart(2,&#x27;0&#x27;)+&#x27;:&#x27;+String(v.getMinutes()).padStart(2,&#x27;0&#x27;);var s=String(v).trim();var hms=s.match(/^(\d{1,2}):(\d{2})(?::\d{2})?$/);if(hms)return hms[1].padStart(2,&#x27;0&#x27;)+&#x27;:&#x27;+hms[2];var n=parseFloat(s);if(!isNaN(n)&&n>=0&&n<1){var tot=Math.round(n*1440);return String(Math.floor(tot/60)).padStart(2,&#x27;0&#x27;)+&#x27;:&#x27;+String(tot%60).padStart(2,&#x27;0&#x27;);}var dm=s.match(/(\d{1,2}):(\d{2})/);if(dm)return dm[1].padStart(2,&#x27;0&#x27;)+&#x27;:&#x27;+dm[2];return s;})(r[2]),
-      category:    reverseCategory(String(r[3]||&#x27;&#x27;)),
-      description: String(r[4]||&#x27;&#x27;),
-      project:     String(r[5]||&#x27;&#x27;),
-      id:          String(r[6]||&#x27;&#x27;),
-      sent:        true,
-    })).filter(r =&gt; r.id);
-    const pSheet   = ss.getSheetByName(SHEET_PROJECTS);
-    const projects = pSheet
-      ? pSheet.getDataRange().getValues().slice(1).map(r =&gt; String(r[0]).trim()).filter(Boolean)
-      : [];
-    return jsonResp({ reports, projects });
-  }
-
-  return jsonResp({ status: &#x27;ok&#x27;, app: &#x27;MyWorkLog&#x27;, version: &#x27;2.4&#x27; });
-}
-
-// ─── WorkStandard ─────────────────────────────────────────────
-function updateWorkStandard(date, weekDay, stdHours, notes) {
-  if (!date) return &#x27;no date&#x27;;
-  const dateStr = String(date).trim();
-  const ss    = SpreadsheetApp.getActiveSpreadsheet();
-  const sheet = getOrCreateSheet(ss, SHEET_WSTANDARD, WSTANDARD_HEADERS);
-  const lastRow = sheet.getLastRow();
-  if (lastRow &gt; 1) {
-    const col = sheet.getRange(2, 1, lastRow - 1, 1).getValues();
-    for (let i = 0; i &lt; col.length; i++) {
-      if (fmtDateCell(col[i][0]) === dateStr) {
-        sheet.getRange(i + 2, 1, 1, 4).setValues([[dateStr, weekDay||&#x27;&#x27;, Number(stdHours)||0, notes||&#x27;&#x27;]]);
-        return &#x27;updated&#x27;;
-      }
-    }
-  }
-  sheet.appendRow([dateStr, weekDay||&#x27;&#x27;, Number(stdHours)||0, notes||&#x27;&#x27;]);
-  autoFormatLastRow(sheet, WSTANDARD_HEADERS.length);
-  return &#x27;added&#x27;;
-}
-
-// ── הפעל פעם אחת מה-editor כדי להקים את גיליון WorkStandard ──
-function setupWorkStandard() {
-  const ss    = SpreadsheetApp.getActiveSpreadsheet();
-  const sheet = getOrCreateSheet(ss, SHEET_WSTANDARD, WSTANDARD_HEADERS);
-  sheet.getRange(&#x27;A2:A1000&#x27;).setNumberFormat(&#x27;@STRING@&#x27;);
-  sheet.setColumnWidth(1, 120);
-  sheet.setColumnWidth(2, 100);
-  sheet.setColumnWidth(3, 170);
-  sheet.setColumnWidth(4, 260);
-  if (sheet.getLastRow() &lt;= 1) {
-    const today = Utilities.formatDate(new Date(), &#x27;Asia/Jerusalem&#x27;, &#x27;yyyy-MM-dd&#x27;);
-    const dow   = [&#x27;ראשון&#x27;,&#x27;שני&#x27;,&#x27;שלישי&#x27;,&#x27;רביעי&#x27;,&#x27;חמישי&#x27;,&#x27;שישי&#x27;,&#x27;שבת&#x27;][new Date().getDay()];
-    sheet.appendRow([today, dow, 8, &#x27;דוגמה — ניתן למחוק&#x27;]);
-  }
-  SpreadsheetApp.getUi().alert(
-    &#x27;גיליון WorkStandard מוכן!\n\n&#x27; +
-    &#x27;עמודות:\n&#x27; +
-    &#x27;  A  Date               — YYYY-MM-DD\n&#x27; +
-    &#x27;  B  WeekDay            — יום בשבוע\n&#x27; +
-    &#x27;  C  Day_Standard_Hours — תקן שעות (מספר)\n&#x27; +
-    &#x27;  D  Notes              — הערות (חופש, חג...)\n\n&#x27; +
-    &#x27;ימים עם תקן 0 נחשבים ללא דרישה.&#x27;
-  );
-}
-
-// ─── Attendance ───────────────────────────────────────────────
-function updateAttendance(ss, data) {
-  const sheet  = getOrCreateSheet(ss, SHEET_ATTENDANCE, ATTENDANCE_HEADERS);
-  const date   = data.report_date, time = data.report_time;
-  const all    = sheet.getDataRange().getValues();
-  let rowIdx   = -1;
-  for (let i = 1; i &lt; all.length; i++) {
-    if (all[i][0] === date) { rowIdx = i + 1; break; }
-  }
-  if (rowIdx === -1) {
-    const newRow = [date, &#x27;&#x27;, &#x27;&#x27;, &#x27;&#x27;];
-    if (data.category === &#x27;entry&#x27;) newRow[1] = time; else newRow[2] = time;
-    sheet.appendRow(newRow);
-    autoFormatLastRow(sheet, ATTENDANCE_HEADERS.length);
-  } else {
-    if (data.category === &#x27;entry&#x27;) {
-      if (!sheet.getRange(rowIdx, 2).getValue()) sheet.getRange(rowIdx, 2).setValue(time);
-    } else {
-      sheet.getRange(rowIdx, 3).setValue(time);
-    }
-    sheet.getRange(rowIdx, 4).setValue(
-      calcDuration(sheet.getRange(rowIdx, 2).getValue(), sheet.getRange(rowIdx, 3).getValue())
-    );
-  }
-}
-
-// ─── Tasks ───────────────────────────────────────────────────
-function updateTasks(ss, data) {
-  const sheet = getOrCreateSheet(ss, SHEET_TASKS, TASK_HEADERS);
-  sheet.appendRow([data.report_date||&#x27;&#x27;, data.report_time||&#x27;&#x27;, data.project||&#x27;&#x27;, data.description||&#x27;&#x27;]);
-  autoFormatLastRow(sheet, TASK_HEADERS.length);
-}
-
-// ─── Delete ───────────────────────────────────────────────────
-function deleteById(id, category, report_date) {
-  const ss   = SpreadsheetApp.getActiveSpreadsheet();
-  const main = ss.getSheetByName(SHEET_NAME);
-  if (main) {
-    const data = main.getDataRange().getValues();
-    for (let i = data.length - 1; i &gt;= 1; i--) {
-      if (String(data[i][6]) === String(id)) main.deleteRow(i + 1);
-    }
-  }
-  if ((category === &#x27;entry&#x27; || category === &#x27;exit&#x27;) &amp;&amp; report_date) {
-    const att = ss.getSheetByName(SHEET_ATTENDANCE);
-    if (att) {
-      const rows = att.getDataRange().getValues();
-      for (let i = 1; i &lt; rows.length; i++) {
-        if (rows[i][0] === report_date) {
-          const r = i + 1;
-          if (category === &#x27;entry&#x27;) { att.getRange(r,2).setValue(&#x27;&#x27;); att.getRange(r,4).setValue(&#x27;&#x27;); }
-          else                      { att.getRange(r,3).setValue(&#x27;&#x27;); att.getRange(r,4).setValue(&#x27;&#x27;); }
-          if (!att.getRange(r,2).getValue() &amp;&amp; !att.getRange(r,3).getValue()) att.deleteRow(r);
-          break;
-        }
-      }
-    }
-  }
-}
-
-// ─── Projects ────────────────────────────────────────────────
-function addProject(name) {
-  if (!name||!name.trim()) return &#x27;empty&#x27;;
-  const ss    = SpreadsheetApp.getActiveSpreadsheet();
-  const sheet = getOrCreateSheet(ss, SHEET_PROJECTS, PROJECT_HEADERS);
-  const rows  = sheet.getDataRange().getValues().slice(1);
-  if (rows.some(r =&gt; String(r[0]).trim().toLowerCase() === name.trim().toLowerCase())) return &#x27;exists&#x27;;
-  sheet.appendRow([name.trim(), new Date().toLocaleString(&#x27;he-IL&#x27;,{timeZone:&#x27;Asia/Jerusalem&#x27;})]);
-  autoFormatLastRow(sheet, PROJECT_HEADERS.length);
-  return &#x27;added&#x27;;
-}
-function deleteProject(name) {
-  if (!name) return &#x27;no name&#x27;;
-  const ss    = SpreadsheetApp.getActiveSpreadsheet();
-  const sheet = ss.getSheetByName(SHEET_PROJECTS);
-  if (!sheet) return &#x27;no sheet&#x27;;
-  const rows = sheet.getDataRange().getValues();
-  for (let i = rows.length - 1; i &gt;= 1; i--) {
-    if (String(rows[i][0]).trim().toLowerCase() === name.trim().toLowerCase()) sheet.deleteRow(i+1);
-  }
-  return &#x27;deleted&#x27;;
-}
-
-// ─── Helpers ─────────────────────────────────────────────────
-function calcDuration(entry, exit) {
-  if (!entry||!exit) return &#x27;&#x27;;
-  const m = t =&gt; { const p=String(t).split(&#x27;:&#x27;); return parseInt(p[0])*60+parseInt(p[1]||0); };
-  const d = m(exit)-m(entry);
-  return d&gt;0 ? pad(Math.floor(d/60))+&#x27;:&#x27;+pad(d%60) : &#x27;&#x27;;
-}
-
-// Handles Date objects and common string formats → YYYY-MM-DD
-function fmtDateCell(v) {
-  if (!v) return &#x27;&#x27;;
-  if (v instanceof Date) {
-    return v.getFullYear()+&#x27;-&#x27;+String(v.getMonth()+1).padStart(2,&#x27;0&#x27;)+&#x27;-&#x27;+String(v.getDate()).padStart(2,&#x27;0&#x27;);
-  }
-  const s = String(v).trim();
-  if (/^\d{4}-\d{2}-\d{2}/.test(s)) return s.substring(0,10);
-  const m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
-  if (m) return `${m[3]}-${m[2].padStart(2,&#x27;0&#x27;)}-${m[1].padStart(2,&#x27;0&#x27;)}`;
-  return s;
-}
-
-function pad(n) { return String(n).padStart(2,&#x27;0&#x27;); }
-
-function ok(msg)      { return ContentService.createTextOutput(JSON.stringify({status:&#x27;ok&#x27;,message:msg})).setMimeType(ContentService.MimeType.JSON); }
-function errResp(msg) { return ContentService.createTextOutput(JSON.stringify({status:&#x27;error&#x27;,message:msg})).setMimeType(ContentService.MimeType.JSON); }
-function jsonResp(o)  { return ContentService.createTextOutput(JSON.stringify(o)).setMimeType(ContentService.MimeType.JSON); }
-
-function getOrCreateSheet(ss, name, headers) {
-  let sheet = ss.getSheetByName(name);
-  if (!sheet) {
-    sheet = ss.insertSheet(name);
-    const hRow = sheet.getRange(1, 1, 1, headers.length);
-    hRow.setValues([headers]);
-    hRow.setFontWeight(&#x27;bold&#x27;);
-    hRow.setBackground(&#x27;#1a1d27&#x27;);
-    hRow.setFontColor(&#x27;#4ade80&#x27;);
-    sheet.setFrozenRows(1);
-    headers.forEach((_,i) =&gt; sheet.setColumnWidth(i+1, i&gt;=2?200:130));
-  }
-  return sheet;
-}
-function autoFormatLastRow(sheet, colCount) {
-  const r = sheet.getLastRow();
-  if (r%2===0) sheet.getRange(r,1,1,colCount).setBackground(&#x27;#f8f9fa&#x27;);
-}
-function translateCategory(c) { return {entry:&#x27;כניסה&#x27;,exit:&#x27;יציאה&#x27;,task:&#x27;משימה&#x27;}[c]||c; }
-function reverseCategory(h)   { return {&#x27;כניסה&#x27;:&#x27;entry&#x27;,&#x27;יציאה&#x27;:&#x27;exit&#x27;,&#x27;משימה&#x27;:&#x27;task&#x27;}[h]||h; }
-
-/*
-  ═══════════════════════════════════════════════════════
-  SETUP (v2.4)
-  ═══════════════════════════════════════════════════════
-  1. פתח את גיליון Google Sheets שלך
-  2. Extensions → Apps Script → הדבק קוד זה → שמור
-  3. בחר הפונקציה setupWorkStandard → לחץ Run
-     (יוצר/מעצב את גיליון WorkStandard)
-  4. Deploy → New deployment → Web App
-     Execute as: Me | Who has access: Anyone
-  5. העתק Web App URL → הגדרות האפליקציה → שמור
-
-  ═══════════════════════════════════════════════════════
-  גיליון WorkStandard
-  ═══════════════════════════════════════════════════════
-  A: Date               YYYY-MM-DD
-  B: WeekDay            ראשון / שני / ... / שישי
-  C: Day_Standard_Hours תקן שעות (8 / 8.5 / 0 לשבת-חג)
-  D: Notes              הערה חופשית
-
-  עריכה: ישירות בגיליון -או- דרך כפתור &quot;ערוך תקן&quot;
-  בדוח היומי באפליקציה.
-  ═══════════════════════════════════════════════════════
-*/
-</pre>
 
 
 <script>
@@ -1567,7 +1271,7 @@ function applyLang(lang){
 /* ─────────────────────────────────────────────────────
    App
 ───────────────────────────────────────────────────── */
-const VER='2.9.6';
+const VER='2.9.0';
 // SW cache buster: if a stale SW is detected, unregister it so fresh content loads
 if('serviceWorker'in navigator){
   navigator.serviceWorker.getRegistration().then(reg=>{
@@ -1626,6 +1330,7 @@ document.addEventListener('DOMContentLoaded',()=>{
     });
     fixStoredDates();
   netInit();netQInit();projLoad();histRender();
+  importInit();
     updateSessionBanner();
     flushDeleteQueue();
     menuInit();vBadgeInit();swipeInit();ptrInit();swInit();installInit();scrollInit();
@@ -1895,6 +1600,7 @@ function menuInit(){
   $('menu-settings-btn').addEventListener('click',()=>{menuClose();openM('modal-settings')});
   $('menu-help-btn').addEventListener('click',()=>{menuClose();openM('modal-help')});
   $('menu-gs-btn').addEventListener('click',()=>{menuClose();downloadGS();});
+  $('menu-import-btn').addEventListener('click',()=>{menuClose();openImportModal();});
   $('menu-theme-btn').addEventListener('click',()=>{
     applyTheme(document.body.classList.contains('light')?'dark':'light');buzz([20]);
   });
@@ -1921,6 +1627,127 @@ function menuClose(){
 }
 
 /* CATEGORY */
+
+
+/* ═══════════════════════════════════════════════════════
+   CSV IMPORT
+═══════════════════════════════════════════════════════ */
+
+const CSV_TEMPLATE = `report_date,report_time,category,description,project
+2024-03-15,09:00,entry,,
+2024-03-15,17:30,exit,,
+2024-03-15,10:00-11:30,task,ישיבת צוות,פרויקט-א
+2024-03-16,08:45,entry,,
+2024-03-16,16:00,exit,,
+2024-03-16,2:00,task,פיתוח פיצ\'ר,backend
+`;
+
+function downloadCSVTemplate(){
+  const b=new Blob([CSV_TEMPLATE],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(b);
+  a.download='worklog-template.csv';document.body.appendChild(a);a.click();
+  setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1000);
+  toast('⬇️ טמפלט הורד','success');
+}
+
+let _importRows=[];
+
+function openImportModal(){
+  _importRows=[];
+  const fi=$('import-file-input');if(fi)fi.value='';
+  $('import-file-name').textContent='';
+  $('import-preview').style.display='none';
+  $('import-preview-list').innerHTML='';
+  $('import-warn').style.display='none';
+  $('btn-import-confirm').disabled=true;
+  openM('modal-import');
+}
+
+function parseCSV(text){
+  const lines=text.replace(/\r\n/g,'\n').replace(/\r/g,'\n').split('\n').filter(l=>l.trim());
+  if(!lines.length)return{rows:[],errors:[]};
+  const hdr=lines[0].split(',').map(h=>h.trim().toLowerCase());
+  const reqCols=['report_date','report_time','category'];
+  const missing=reqCols.filter(col=>!hdr.includes(col));
+  if(missing.length) return{rows:[],errors:[`חסרות עמודות: ${missing.join(', ')}`]};
+  const rows=[];const errors=[];
+  for(let i=1;i<lines.length;i++){
+    const line=lines[i];
+    if(!line.trim())continue;
+    // CSV-aware split (handle quoted fields)
+    const vals=[];let cur='',inQ=false;
+    for(const ch of line+','){
+      if(ch==='"'){inQ=!inQ;}
+      else if(ch===','&&!inQ){vals.push(cur.trim());cur='';}
+      else cur+=ch;
+    }
+    const get=col=>{const idx=hdr.indexOf(col);return idx>=0?(vals[idx]||'').trim():''};
+    const report_date=get('report_date');
+    const report_time=get('report_time');
+    const category=get('category').toLowerCase();
+    const description=get('description');
+    const project=get('project');
+    // Validate
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(report_date)){errors.push(`שורה ${i+1}: תאריך לא תקין "${report_date}"`);continue;}
+    if(!report_time){errors.push(`שורה ${i+1}: שעה חסרה`);continue;}
+    if(!['entry','exit','task'].includes(category)){errors.push(`שורה ${i+1}: קטגוריה לא תקינה "${category}"`);continue;}
+    rows.push({id:Date.now()+Math.random().toString(36).slice(2)+'_imp',
+      timestamp:new Date(report_date).toISOString(),
+      report_date,report_time,category,description,project,imported:true});
+  }
+  return{rows,errors};
+}
+
+function handleCSVFile(file){
+  if(!file)return;
+  $('import-file-name').textContent=file.name;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    const{rows,errors}=parseCSV(e.target.result);
+    _importRows=rows;
+    const preview=$('import-preview');
+    const list=$('import-preview-list');
+    const warn=$('import-warn');
+    const cnt=$('import-row-count');
+    preview.style.display='';
+    cnt.textContent=rows.length;
+    const catIcon={entry:'🟢',exit:'🔴',task:'📋'};
+    list.innerHTML=rows.map(r=>`<div>${catIcon[r.category]||'⬜'} ${r.report_date} ${r.report_time} <b>${r.category}</b>${r.project?' '+r.project:''}${r.description?' — '+r.description:''}</div>`).join('');
+    if(errors.length){
+      warn.style.display='';
+      warn.innerHTML='⚠️ שגיאות בייבוא:<br>'+errors.join('<br>');
+    }else{
+      warn.style.display='none';
+    }
+    $('btn-import-confirm').disabled=rows.length===0;
+  };
+  reader.readAsText(file,'utf-8');
+}
+
+function importConfirm(){
+  if(!_importRows.length)return;
+  const existing=store(K.reps)||[];
+  // Deduplicate by date+time+category
+  const keys=new Set(existing.map(r=>`${r.report_date}|${r.report_time}|${r.category}`));
+  const fresh=_importRows.filter(r=>!keys.has(`${r.report_date}|${r.report_time}|${r.category}`));
+  const skipped=_importRows.length-fresh.length;
+  const merged=[...fresh,...existing].sort((a,b)=>b.report_date.localeCompare(a.report_date)).slice(0,500);
+  store(K.reps,merged);
+  histRender();summaryRender();updateSessionBanner();
+  closeM('modal-import');
+  let msg=`✅ יובאו ${fresh.length} דיווחים`;
+  if(skipped)msg+=` · ${skipped} כפולים דולגו`;
+  toast(msg,'success',4000);buzz([20,20,60]);
+}
+
+function importInit(){
+  $('btn-dl-template')?.addEventListener('click',downloadCSVTemplate);
+  $('btn-pick-csv')?.addEventListener('click',()=>$('import-file-input').click());
+  $('import-file-input')?.addEventListener('change',e=>handleCSVFile(e.target.files[0]));
+  $('btn-import-confirm')?.addEventListener('click',importConfirm);
+  $('btn-close-import')?.addEventListener('click',()=>closeM('modal-import'));
+  $('modal-import')?.addEventListener('click',e=>{if(e.target===$('modal-import'))closeM('modal-import')});
+}
 
 /* ═══════════════════════════════════════════════════════
    SESSION MANAGEMENT — entry/exit open-session logic
@@ -3205,15 +3032,20 @@ function hTab(btn){
   const panel=document.getElementById('htab-'+id);
   if(panel){panel.style.display='flex';}
 }
-/* DOWNLOAD GS */
-function downloadGS(){
-  const code=document.getElementById('gs-code-blob')?.textContent||'';
-  if(!code)return;
-  const b=new Blob([code],{type:'text/plain'});
-  const a=document.createElement('a');a.href=URL.createObjectURL(b);
-  a.download='google-apps-script.gs';document.body.appendChild(a);a.click();
-  setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1000);
-  toast('⬇️ '+(t('helpBtnDownloadGS')||'Downloading...'),'success');
+/* DOWNLOAD GS — fetches from companion google-apps-script.gs file */
+async function downloadGS(){
+  try{
+    const res=await fetch('./google-apps-script.gs');
+    if(!res.ok)throw new Error(res.status);
+    const code=await res.text();
+    const b=new Blob([code],{type:'text/plain'});
+    const a=document.createElement('a');a.href=URL.createObjectURL(b);
+    a.download='google-apps-script.gs';document.body.appendChild(a);a.click();
+    setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1000);
+    toast('⬇️ '+(t('helpBtnDownloadGS')||'Downloading...'),'success');
+  }catch(e){
+    toast('⚠️ לא נמצא קובץ google-apps-script.gs','warn',4000);
+  }
 }
 /* SCROLL */
 function scrollSave(){const s=$('main-scroll');if(s)store('mwl_scroll',s.scrollTop)}
@@ -3223,5 +3055,60 @@ function scrollInit(){
   s?.addEventListener('scroll',scrollSave,{passive:true});
 }
 </script>
+
+<!-- IMPORT MODAL -->
+<div id="modal-import" class="moverlay hidden" role="dialog" aria-modal="true">
+  <div class="mbox">
+    <div class="mhdr">
+      <h2>📥 טעינת דיווחים מ-CSV</h2>
+      <button class="ibtn" id="btn-close-import">✕</button>
+    </div>
+    <div class="mbody" style="display:flex;flex-direction:column;gap:18px;padding:16px">
+
+      <!-- Download template -->
+      <div style="background:var(--glass);border:1px solid var(--border);border-radius:var(--rs);padding:14px">
+        <div style="font-weight:700;font-size:.9rem;margin-bottom:6px">1️⃣ הורד טמפלט</div>
+        <div style="font-size:.78rem;color:var(--text2);margin-bottom:10px;line-height:1.6">
+          הורד קובץ CSV לדוגמה עם העמודות הנדרשות. מלא את הנתונים בכל שורה.
+        </div>
+        <button class="btn-g sm" id="btn-dl-template" style="width:100%">⬇️ הורד טמפלט CSV</button>
+      </div>
+
+      <!-- Format reference -->
+      <div style="background:var(--glass);border:1px solid var(--border);border-radius:var(--rs);padding:14px">
+        <div style="font-weight:700;font-size:.9rem;margin-bottom:8px">📋 מבנה הקובץ</div>
+        <div style="font-size:.72rem;color:var(--text3);font-family:monospace;line-height:1.8;overflow-x:auto;white-space:nowrap">
+          report_date,report_time,category,description,project<br>
+          2024-03-15,09:00,entry,,<br>
+          2024-03-15,17:30,exit,,<br>
+          2024-03-15,10:00-11:30,task,ישיבת צוות,פרויקט-א
+        </div>
+        <div style="margin-top:10px;font-size:.74rem;color:var(--text2);line-height:1.7">
+          <b>category:</b> <code style="color:var(--lime)">entry</code> / <code style="color:var(--red)">exit</code> / <code style="color:var(--blue)">task</code><br>
+          <b>report_time:</b> שעה בפורמט <code>HH:MM</code> — או טווח <code>HH:MM-HH:MM</code> למשימות<br>
+          <b>description / project:</b> אופציונלי למשימות
+        </div>
+      </div>
+
+      <!-- Upload -->
+      <div style="background:var(--glass);border:1px solid var(--border);border-radius:var(--rs);padding:14px">
+        <div style="font-weight:700;font-size:.9rem;margin-bottom:6px">2️⃣ טען קובץ</div>
+        <input type="file" id="import-file-input" accept=".csv,text/csv" style="display:none"/>
+        <button class="btn-g sm" id="btn-pick-csv" style="width:100%;margin-bottom:10px">📂 בחר קובץ CSV</button>
+        <div id="import-file-name" style="font-size:.74rem;color:var(--text3);text-align:center;margin-bottom:10px;min-height:16px"></div>
+        <div id="import-preview" style="display:none;margin-bottom:12px">
+          <div style="font-weight:600;font-size:.8rem;margin-bottom:6px">תצוגה מקדימה — <span id="import-row-count">0</span> שורות</div>
+          <div id="import-preview-list" style="max-height:160px;overflow-y:auto;font-size:.72rem;font-family:monospace;background:var(--bg0);border-radius:6px;padding:8px;color:var(--text2)"></div>
+          <div id="import-warn" style="font-size:.72rem;color:var(--amber);margin-top:6px;display:none"></div>
+        </div>
+        <button class="btn-p" id="btn-import-confirm" disabled style="width:100%;padding:11px">
+          <span class="btn-text">✅ ייבא דיווחים</span>
+        </button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
 </body>
 </html>

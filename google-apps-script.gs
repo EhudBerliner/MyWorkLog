@@ -1,4 +1,3 @@
-// ============================================================
 //  MyWorkLog – Google Apps Script  v2.4
 //  הדבק קוד זה ב-Apps Script של הגיליון שלך
 //  לאחר מכן: Deploy > New deployment > Web App
@@ -73,9 +72,9 @@ function doGet(e) {
     if (!sheet) return jsonResp({ reports: [], projects: [] });
     const rows    = sheet.getDataRange().getValues().slice(1);
     const reports = rows.map(r => ({
-      timestamp:   String(r[0]||''),
-      report_date: String(r[1]||''),
-      report_time: String(r[2]||''),
+      timestamp:   fmtDateCell(r[0])||String(r[0]||''),
+      report_date: fmtDateCell(r[1]),
+      report_time: (function(v){if(!v)return'';if(v instanceof Date)return String(v.getHours()).padStart(2,'0')+':'+String(v.getMinutes()).padStart(2,'0');var s=String(v).trim();var hms=s.match(/^(\d{1,2}):(\d{2})(?::\d{2})?$/);if(hms)return hms[1].padStart(2,'0')+':'+hms[2];var n=parseFloat(s);if(!isNaN(n)&&n>=0&&n<1){var tot=Math.round(n*1440);return String(Math.floor(tot/60)).padStart(2,'0')+':'+String(tot%60).padStart(2,'0');}var dm=s.match(/(\d{1,2}):(\d{2})/);if(dm)return dm[1].padStart(2,'0')+':'+dm[2];return s;})(r[2]),
       category:    reverseCategory(String(r[3]||'')),
       description: String(r[4]||''),
       project:     String(r[5]||''),
