@@ -447,7 +447,7 @@ details summary::-webkit-details-marker{display:none}
       <a id="menu-sheet-link" href="#" target="_blank" rel="noopener" style="display:none;align-items:center;gap:7px;font-size:.8rem;color:var(--blue);text-decoration:none;padding:3px 2px">
         📊 פתח גיליון הדיווחים
       </a>
-      <span id="menu-vbadge" class="vbadge" title="לחץ לאיפוס">v2.9.0</span>
+      <span id="menu-vbadge" class="vbadge" title="לחץ לאיפוס">v2.9.1</span>
     </div>
   </aside>
 
@@ -459,7 +459,7 @@ details summary::-webkit-details-marker{display:none}
         <span class="hdr-name">MyWorkLog</span>
       </div>
       <div class="hdr-acts">
-        <span id="version-badge" class="vbadge" title="לחץ לאיפוס">v2.9.0</span>
+        <span id="version-badge" class="vbadge" title="לחץ לאיפוס">v2.9.1</span>
       </div>
     </div>
   </header>
@@ -1271,7 +1271,7 @@ function applyLang(lang){
 /* ─────────────────────────────────────────────────────
    App
 ───────────────────────────────────────────────────── */
-const VER='2.9.0';
+const VER='2.9.1';
 // SW cache buster: if a stale SW is detected, unregister it so fresh content loads
 if('serviceWorker'in navigator){
   navigator.serviceWorker.getRegistration().then(reg=>{
@@ -1630,20 +1630,13 @@ function menuClose(){
 
 
 /* ═══════════════════════════════════════════════════════
-   CSV IMPORT
+   DATA IMPORT  (CSV + Excel .xlsx)
 ═══════════════════════════════════════════════════════ */
 
-const CSV_TEMPLATE = `report_date,report_time,category,description,project
-2024-03-15,09:00,entry,,
-2024-03-15,17:30,exit,,
-2024-03-15,10:00-11:30,task,ישיבת צוות,פרויקט-א
-2024-03-16,08:45,entry,,
-2024-03-16,16:00,exit,,
-2024-03-16,2:00,task,פיתוח פיצ\'ר,backend
-`;
+const CSV_TEMPLATE = `report_date,report_time,category,description,project\r\n2024-03-15,09:00,entry,,\r\n2024-03-15,17:30,exit,,\r\n2024-03-15,10:00-11:30,task,ישיבת צוות,פרויקט-א\r\n2024-03-16,08:45,entry,,\r\n2024-03-16,16:00,exit,,\r\n2024-03-16,02:00,task,פיתוח פיצ'ר,backend\r\n`;
 
 function downloadCSVTemplate(){
-  const b=new Blob([CSV_TEMPLATE],{type:'text/csv;charset=utf-8'});
+  const b=new Blob(['\uFEFF'+CSV_TEMPLATE],{type:'text/csv;charset=utf-8'});
   const a=document.createElement('a');a.href=URL.createObjectURL(b);
   a.download='worklog-template.csv';document.body.appendChild(a);a.click();
   setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1000);
@@ -1663,63 +1656,163 @@ function openImportModal(){
   openM('modal-import');
 }
 
-function parseCSV(text){
-  const lines=text.replace(/\r\n/g,'\n').replace(/\r/g,'\n').split('\n').filter(l=>l.trim());
-  if(!lines.length)return{rows:[],errors:[]};
-  const hdr=lines[0].split(',').map(h=>h.trim().toLowerCase());
+/* ── Excel helpers ── */
+function xlDateToISO(serial){
+  // Excel serial date → YYYY-MM-DD (handles 1900 leap-year bug)
+  const d=new Date(Math.round((serial-25569)*86400*1000));
+  const y=d.getUTCFullYear(),mo=String(d.getUTCMonth()+1).padStart(2,'0'),dy=String(d.getUTCDate()).padStart(2,'0');
+  return`${y}-${mo}-${dy}`;
+}
+function xlTimeToClock(frac){
+  // Excel time fraction → HH:MM
+  const totalMin=Math.round(frac*1440);
+  return`${String(Math.floor(totalMin/60)).padStart(2,'0')}:${String(totalMin%60).padStart(2,'0')}`;
+}
+function looksLikeXLDate(v){return typeof v==='number'&&v>40000&&v<100000&&Number.isInteger(v);}
+function looksLikeXLTime(v){return typeof v==='number'&&v>0&&v<1;}
+function looksLikeXLDateTime(v){return typeof v==='number'&&v>40000&&v<100000&&!Number.isInteger(v);}
+
+/* ── Parse rows array (shared by CSV + XLSX paths) ── */
+function parseRowsArray(hdrRow, dataRows){
+  const hdr=hdrRow.map(h=>String(h||'').trim().toLowerCase());
   const reqCols=['report_date','report_time','category'];
   const missing=reqCols.filter(col=>!hdr.includes(col));
   if(missing.length) return{rows:[],errors:[`חסרות עמודות: ${missing.join(', ')}`]};
   const rows=[];const errors=[];
-  for(let i=1;i<lines.length;i++){
-    const line=lines[i];
-    if(!line.trim())continue;
-    // CSV-aware split (handle quoted fields)
+  const get=(vals,col)=>{const idx=hdr.indexOf(col);return idx>=0?String(vals[idx]??'').trim():'';};
+
+  dataRows.forEach((vals,i)=>{
+    if(vals.every(v=>v===''||v===null||v===undefined))return; // skip empty
+
+    let report_date=get(vals,'report_date');
+    let report_time=get(vals,'report_time');
+    const category=get(vals,'category').toLowerCase();
+    const description=get(vals,'description');
+    const project=get(vals,'project');
+
+    // Convert Excel serial date
+    const rawDate=vals[hdr.indexOf('report_date')];
+    if(looksLikeXLDate(rawDate)){
+      report_date=xlDateToISO(rawDate);
+    } else if(looksLikeXLDateTime(rawDate)){
+      // date+time combined in one cell
+      const intPart=Math.floor(rawDate);
+      report_date=xlDateToISO(intPart);
+      if(!report_time) report_time=xlTimeToClock(rawDate-intPart);
+    }
+
+    // Convert Excel time fraction
+    const rawTime=vals[hdr.indexOf('report_time')];
+    if(typeof rawTime==='number'){
+      if(looksLikeXLTime(rawTime)) report_time=xlTimeToClock(rawTime);
+      else if(rawTime===0) report_time='00:00';
+    }
+
+    // Validate date
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(report_date)){
+      errors.push(`שורה ${i+2}: תאריך לא תקין "${report_date}"`);return;
+    }
+    if(!report_time){errors.push(`שורה ${i+2}: שעה חסרה`);return;}
+    if(!['entry','exit','task'].includes(category)){
+      errors.push(`שורה ${i+2}: קטגוריה לא תקינה "${category}"`);return;
+    }
+    rows.push({id:Date.now()+Math.random().toString(36).slice(2)+'_imp',
+      timestamp:new Date(report_date+'T12:00:00').toISOString(),
+      report_date,report_time,category,description,project,imported:true});
+  });
+  return{rows,errors};
+}
+
+/* ── CSV parser ── */
+function parseCSV(text){
+  const lines=text.replace(/\r\n/g,'\n').replace(/\r/g,'\n').split('\n').filter(l=>l.trim());
+  if(!lines.length)return{rows:[],errors:[]};
+  const parseRow=line=>{
     const vals=[];let cur='',inQ=false;
     for(const ch of line+','){
       if(ch==='"'){inQ=!inQ;}
       else if(ch===','&&!inQ){vals.push(cur.trim());cur='';}
       else cur+=ch;
     }
-    const get=col=>{const idx=hdr.indexOf(col);return idx>=0?(vals[idx]||'').trim():''};
-    const report_date=get('report_date');
-    const report_time=get('report_time');
-    const category=get('category').toLowerCase();
-    const description=get('description');
-    const project=get('project');
-    // Validate
-    if(!/^\d{4}-\d{2}-\d{2}$/.test(report_date)){errors.push(`שורה ${i+1}: תאריך לא תקין "${report_date}"`);continue;}
-    if(!report_time){errors.push(`שורה ${i+1}: שעה חסרה`);continue;}
-    if(!['entry','exit','task'].includes(category)){errors.push(`שורה ${i+1}: קטגוריה לא תקינה "${category}"`);continue;}
-    rows.push({id:Date.now()+Math.random().toString(36).slice(2)+'_imp',
-      timestamp:new Date(report_date).toISOString(),
-      report_date,report_time,category,description,project,imported:true});
-  }
-  return{rows,errors};
+    return vals;
+  };
+  const hdrRow=parseRow(lines[0]);
+  const dataRows=lines.slice(1).map(parseRow);
+  return parseRowsArray(hdrRow,dataRows);
 }
 
-function handleCSVFile(file){
+/* ── XLSX parser (lazy-loads SheetJS from CDN) ── */
+function loadSheetJS(){
+  return new Promise((res,rej)=>{
+    if(window.XLSX){res();return;}
+    const s=document.createElement('script');
+    s.src='https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+    s.onload=res;s.onerror=()=>rej(new Error('SheetJS load failed'));
+    document.head.appendChild(s);
+  });
+}
+
+async function parseXLSX(buffer){
+  await loadSheetJS();
+  const wb=XLSX.read(buffer,{type:'array',cellDates:false,raw:true});
+  const ws=wb.Sheets[wb.SheetNames[0]];
+  const raw=XLSX.utils.sheet_to_json(ws,{header:1,raw:true,defval:''});
+  if(!raw.length)return{rows:[],errors:[]};
+  const hdrRow=raw[0].map(h=>String(h||'').trim().toLowerCase());
+  const dataRows=raw.slice(1);
+  return parseRowsArray(hdrRow,dataRows);
+}
+
+/* ── Show preview ── */
+function showImportPreview(rows,errors){
+  _importRows=rows;
+  $('import-preview').style.display='';
+  $('import-row-count').textContent=rows.length;
+  const catIcon={entry:'🟢',exit:'🔴',task:'📋'};
+  $('import-preview-list').innerHTML=rows.map(r=>{
+    const proj=r.project||r.description||'';
+    return`<div style="padding:1px 0">${catIcon[r.category]||'⬜'} <b>${r.report_date}</b> ${r.report_time} ${r.category}${proj?' · '+proj:''}</div>`;
+  }).join('');
+  const warn=$('import-warn');
+  if(errors.length){
+    warn.style.display='';
+    warn.innerHTML='⚠️ '+errors.length+' שגיאות:<br>'+errors.map(e=>`<span style="display:block">${e}</span>`).join('');
+  }else{
+    warn.style.display='none';
+  }
+  $('btn-import-confirm').disabled=rows.length===0;
+}
+
+/* ── Handle file selection ── */
+async function handleImportFile(file){
   if(!file)return;
   $('import-file-name').textContent=file.name;
+  $('btn-import-confirm').disabled=true;
+  $('import-preview').style.display='none';
+
+  const isXLSX=file.name.toLowerCase().endsWith('.xlsx')||
+    file.type==='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+  const isXLS=file.name.toLowerCase().endsWith('.xls');
+
+  if(isXLSX||isXLS){
+    $('import-file-name').textContent=file.name+' (טוען...)';
+    try{
+      const buf=await file.arrayBuffer();
+      const{rows,errors}=await parseXLSX(new Uint8Array(buf));
+      $('import-file-name').textContent=file.name;
+      showImportPreview(rows,errors);
+    }catch(e){
+      $('import-file-name').textContent=file.name;
+      toast('❌ שגיאה בקריאת קובץ Excel: '+e.message,'warn',5000);
+    }
+    return;
+  }
+
+  // CSV / text path
   const reader=new FileReader();
   reader.onload=e=>{
     const{rows,errors}=parseCSV(e.target.result);
-    _importRows=rows;
-    const preview=$('import-preview');
-    const list=$('import-preview-list');
-    const warn=$('import-warn');
-    const cnt=$('import-row-count');
-    preview.style.display='';
-    cnt.textContent=rows.length;
-    const catIcon={entry:'🟢',exit:'🔴',task:'📋'};
-    list.innerHTML=rows.map(r=>`<div>${catIcon[r.category]||'⬜'} ${r.report_date} ${r.report_time} <b>${r.category}</b>${r.project?' '+r.project:''}${r.description?' — '+r.description:''}</div>`).join('');
-    if(errors.length){
-      warn.style.display='';
-      warn.innerHTML='⚠️ שגיאות בייבוא:<br>'+errors.join('<br>');
-    }else{
-      warn.style.display='none';
-    }
-    $('btn-import-confirm').disabled=rows.length===0;
+    showImportPreview(rows,errors);
   };
   reader.readAsText(file,'utf-8');
 }
@@ -1727,11 +1820,10 @@ function handleCSVFile(file){
 function importConfirm(){
   if(!_importRows.length)return;
   const existing=store(K.reps)||[];
-  // Deduplicate by date+time+category
   const keys=new Set(existing.map(r=>`${r.report_date}|${r.report_time}|${r.category}`));
   const fresh=_importRows.filter(r=>!keys.has(`${r.report_date}|${r.report_time}|${r.category}`));
   const skipped=_importRows.length-fresh.length;
-  const merged=[...fresh,...existing].sort((a,b)=>b.report_date.localeCompare(a.report_date)).slice(0,500);
+  const merged=[...fresh,...existing].sort((a,b)=>b.report_date.localeCompare(a.report_date)).slice(0,1000);
   store(K.reps,merged);
   histRender();summaryRender();updateSessionBanner();
   closeM('modal-import');
@@ -1743,11 +1835,12 @@ function importConfirm(){
 function importInit(){
   $('btn-dl-template')?.addEventListener('click',downloadCSVTemplate);
   $('btn-pick-csv')?.addEventListener('click',()=>$('import-file-input').click());
-  $('import-file-input')?.addEventListener('change',e=>handleCSVFile(e.target.files[0]));
+  $('import-file-input')?.addEventListener('change',e=>handleImportFile(e.target.files[0]));
   $('btn-import-confirm')?.addEventListener('click',importConfirm);
   $('btn-close-import')?.addEventListener('click',()=>closeM('modal-import'));
   $('modal-import')?.addEventListener('click',e=>{if(e.target===$('modal-import'))closeM('modal-import')});
 }
+
 
 /* ═══════════════════════════════════════════════════════
    SESSION MANAGEMENT — entry/exit open-session logic
@@ -3069,14 +3162,14 @@ function scrollInit(){
       <div style="background:var(--glass);border:1px solid var(--border);border-radius:var(--rs);padding:14px">
         <div style="font-weight:700;font-size:.9rem;margin-bottom:6px">1️⃣ הורד טמפלט</div>
         <div style="font-size:.78rem;color:var(--text2);margin-bottom:10px;line-height:1.6">
-          הורד קובץ CSV לדוגמה עם העמודות הנדרשות. מלא את הנתונים בכל שורה.
+          הורד קובץ CSV לדוגמה עם העמודות הנדרשות. מלא את הנתונים בכל שורה — ניתן גם לשמור כ-Excel.
         </div>
         <button class="btn-g sm" id="btn-dl-template" style="width:100%">⬇️ הורד טמפלט CSV</button>
       </div>
 
       <!-- Format reference -->
       <div style="background:var(--glass);border:1px solid var(--border);border-radius:var(--rs);padding:14px">
-        <div style="font-weight:700;font-size:.9rem;margin-bottom:8px">📋 מבנה הקובץ</div>
+        <div style="font-weight:700;font-size:.9rem;margin-bottom:8px">📋 מבנה הקובץ <span style="font-size:.7rem;color:var(--text3);font-weight:400">(CSV ו-Excel .xlsx)</span></div>
         <div style="font-size:.72rem;color:var(--text3);font-family:monospace;line-height:1.8;overflow-x:auto;white-space:nowrap">
           report_date,report_time,category,description,project<br>
           2024-03-15,09:00,entry,,<br>
@@ -3093,8 +3186,8 @@ function scrollInit(){
       <!-- Upload -->
       <div style="background:var(--glass);border:1px solid var(--border);border-radius:var(--rs);padding:14px">
         <div style="font-weight:700;font-size:.9rem;margin-bottom:6px">2️⃣ טען קובץ</div>
-        <input type="file" id="import-file-input" accept=".csv,text/csv" style="display:none"/>
-        <button class="btn-g sm" id="btn-pick-csv" style="width:100%;margin-bottom:10px">📂 בחר קובץ CSV</button>
+        <input type="file" id="import-file-input" accept=".csv,.xlsx,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" style="display:none"/>
+        <button class="btn-g sm" id="btn-pick-csv" style="width:100%;margin-bottom:10px">📂 בחר קובץ CSV / Excel</button>
         <div id="import-file-name" style="font-size:.74rem;color:var(--text3);text-align:center;margin-bottom:10px;min-height:16px"></div>
         <div id="import-preview" style="display:none;margin-bottom:12px">
           <div style="font-weight:600;font-size:.8rem;margin-bottom:6px">תצוגה מקדימה — <span id="import-row-count">0</span> שורות</div>
