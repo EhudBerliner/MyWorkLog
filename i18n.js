@@ -25,7 +25,7 @@ const I18N = {
   labelDescription:   { he: 'תיאור',          en: 'Description' },
   placeholderDesc:    { he: 'מה בוצע...',      en: 'What was done...' },
   labelProject:       { he: 'פרויקט',         en: 'Project' },
-  placeholderProj:    { he: 'שם הפרויקט (אופציונלי)', en: 'Project name (optional)' },
+  placeholderProj:    { he: 'שם הפרויקט ', en: 'Project name ' },
   labelDuration:      { he: 'משך / טווח',     en: 'Duration / Range' },
   modeDuration:       { he: 'משך זמן',        en: 'Duration' },
   modeRange:          { he: 'טווח שעות',      en: 'Time Range' },
