@@ -492,7 +492,7 @@ details summary::-webkit-details-marker{display:none}
     <div class="menu-hdr">
       <img src="logo.png" alt="" class="menu-logo"/>
       <span class="menu-appname">MyWorkLog</span>
-      <button class="ibtn" id="btn-close-menu" aria-label="סגור">✕</button>
+      <button class="ibtn" id="btn-close-menu" data-i18n="menuClose" data-i18n-attr="aria-label" aria-label="סגור">✕</button>
     </div>
     <nav class="menu-nav">
       <button class="menu-item" data-tab="report"  data-i18n="menuReport">דיווח</button>
@@ -504,15 +504,15 @@ details summary::-webkit-details-marker{display:none}
       <button class="menu-item" id="menu-settings-btn" data-i18n="menuSettings">⚙️ הגדרות</button>
       <button class="menu-item" id="menu-help-btn"data-i18n="menuHelp2">📄 עזרה — Apps Script</button>
       <button class="menu-item" id="menu-gs-btn"data-i18n="menuGS">🔗 קוד google-apps-script.gs</button>
-      <button class="menu-item" id="menu-import-btn">📥 טעינת נתונים (CSV)</button>
+      <button class="menu-item" id="menu-import-btn" data-i18n="menuImport">📥 טעינת נתונים</button>
       <hr class="menu-div"/>
       <button class="menu-item" id="menu-wstandard-btn"data-i18n="menuWorkstandard">📊 תקן שעות — WorkStandard</button>
     </nav>
     <div class="menu-foot" style="display:flex;flex-direction:column;gap:8px">
       <a id="menu-sheet-link" href="#" target="_blank" rel="noopener" style="display:none;align-items:center;gap:7px;font-size:.8rem;color:var(--blue);text-decoration:none;padding:3px 2px">
-        📊 פתח גיליון הדיווחים
+        <span data-i18n="menuOpenSheet">📊 פתח גיליון הדיווחים</span>
       </a>
-      <span id="menu-vbadge" class="vbadge" title="לחץ לאיפוס">v3.0.0</span>
+      <span id="menu-vbadge" class="vbadge" data-i18n-attr="title" data-i18n="menuVersionTooltip" title="לחץ לאיפוס">v3.0.1</span>
     </div>
   </aside>
 
@@ -524,7 +524,7 @@ details summary::-webkit-details-marker{display:none}
         <span class="hdr-name">MyWorkLog</span>
       </div>
       <div class="hdr-acts">
-        <span id="version-badge" class="vbadge" title="לחץ לאיפוס">v3.0.0</span>
+        <span id="version-badge" class="vbadge" data-i18n="menuVersionTooltip" data-i18n-attr="title" title="לחץ לאיפוס">v3.0.1</span>
       </div>
     </div>
   </header>
@@ -582,7 +582,7 @@ details summary::-webkit-details-marker{display:none}
           <label class="flbl" data-i18n="labelDescription">תיאור <span style="color:var(--text3);font-weight:400">(אופציונלי)</span></label>
           <textarea id="task-desc" class="fi" rows="3"
             data-i18n="placeholderDesc" data-i18n-attr="placeholder"
-            placeholder="מה בוצע..."></textarea>
+            data-i18n="placeholderDesc" data-i18n-attr="placeholder" placeholder="מה בוצע..."></textarea>
         </div>
         <div class="fg">
           <label class="flbl" data-i18n="labelDuration">משך / טווח</label>
@@ -605,15 +605,15 @@ details summary::-webkit-details-marker{display:none}
                 <div class="clock-val" id="dur-m-val">00</div>
                 <div class="clock-arrows"><button class="clock-arr" id="dur-m-dn">▼</button></div>
               </div>
-              <span style="font-size:1rem;color:var(--text2);margin-right:6px">שע׳:דק׳</span>
+              <span style="font-size:1rem;color:var(--text2);margin-right:6px" data-i18n="hourMinLabel">שע׳:דק׳</span>
             </div>
             <div class="clock-presets">
-              <button class="clock-preset" data-dur="0:15">15 דק׳</button>
-              <button class="clock-preset" data-dur="0:30">30 דק׳</button>
-              <button class="clock-preset" data-dur="1:00">1 שעה</button>
-              <button class="clock-preset" data-dur="1:30">1.5 שעה</button>
-              <button class="clock-preset" data-dur="2:00">2 שעות</button>
-              <button class="clock-preset" data-dur="4:00">4 שעות</button>
+              <button class="clock-preset" data-dur="0:15" data-i18n="preset15">15 דק׳</button>
+              <button class="clock-preset" data-dur="0:30" data-i18n="preset30">30 דק׳</button>
+              <button class="clock-preset" data-dur="1:00" data-i18n="preset1h">1 שעה</button>
+              <button class="clock-preset" data-dur="1:30" data-i18n="preset15h">1.5 שעה</button>
+              <button class="clock-preset" data-dur="2:00" data-i18n="preset2h">2 שעות</button>
+              <button class="clock-preset" data-dur="4:00" data-i18n="preset4h">4 שעות</button>
             </div>
           </div>
           <!-- hidden inputs for compat -->
@@ -645,9 +645,9 @@ details summary::-webkit-details-marker{display:none}
         <div class="pending-pill">
           <span class="pending-pill-dot"></span>
           <span class="pending-pill-text">
-            <b><span id="pending-count">0</span> דיווחים</b> ממתינים לשליחה
+            <b><span id="pending-count">0</span> דיווחים</b> <span data-i18n="pendingWaiting">ממתינים לשליחה</span>
           </span>
-          <button class="btn-g sm" id="btn-sync" data-i18n="btnSync" style="flex-shrink:0;font-size:.75rem;padding:7px 12px">↑ שלח</button>
+          <button class="btn-g sm" id="btn-sync" data-i18n="btnSync" style="flex-shrink:0;font-size:.75rem;padding:7px 12px" data-i18n="btnSyncPending">↑ שלח</button>
         </div>
       </div>
     </section>
@@ -673,15 +673,15 @@ details summary::-webkit-details-marker{display:none}
         </div>
         <div class="date-nav">
           <button class="ibtn" id="sum-prev">&lsaquo;</button>
-          <span id="sum-period-label" class="period-lbl" style="cursor:pointer" onclick="goToday()" title="חזרה להיום"></span>
+          <span id="sum-period-label" class="period-lbl" style="cursor:pointer" onclick="goToday()" data-i18n-attr="title" data-i18n="titleBackToToday" title="חזרה להיום"></span>
           <button class="ibtn" id="sum-next">&rsaquo;</button>
           <button class="btn-g sm" id="btn-today" style="font-size:.68rem;padding:3px 9px;line-height:1.4"data-i18n="btnToday">היום</button>
         </div>
         <!-- Range date inputs (visible only in range mode) -->
         <div id="range-period-inputs" class="range-inputs" style="display:none">
-          <input type="date" id="range-from" class="fi" title="מ-"/>
+          <input type="date" id="range-from" class="fi" data-i18n-attr="title" data-i18n="rangeFrom" title="מ-"/>
           <span style="color:var(--text3);font-size:.8rem" data-i18n="labelRangeSep">עד</span>
-          <input type="date" id="range-to" class="fi" title="עד-"/>
+          <input type="date" id="range-to" class="fi" data-i18n-attr="title" data-i18n="rangeTo" title="עד-"/>
           <button class="btn-p sm" id="btn-range-go" style="font-size:.75rem"data-i18n="btnRangeGo">הצג</button>
         </div>
       </div>
@@ -764,9 +764,9 @@ details summary::-webkit-details-marker{display:none}
         <div class="sset-label" data-i18n="settingsLangLabel">שפה</div>
         <div class="sset-block">
           <div class="sset-row-inline">
-            <span class="sset-row-label">🌐 שפת ממשק</span>
+            <span class="sset-row-label" data-i18n="settingsLangInterface">🌐 שפת ממשק</span>
             <div class="seg" style="width:140px">
-              <button class="seg-btn active" data-lang="he">עברית</button>
+              <button class="seg-btn active" data-lang="he" data-i18n="settingsLang">עברית</button>
               <button class="seg-btn"        data-lang="en">English</button>
             </div>
           </div>
@@ -775,7 +775,7 @@ details summary::-webkit-details-marker{display:none}
 
       <!-- CONNECTION -->
       <div class="sset-group">
-        <div class="sset-label">חיבור ל-Google</div>
+        <div class="sset-label" data-i18n="settingsConnectionLabel">חיבור ל-Google</div>
         <div class="sset-block">
           <div class="sset-row">
             <label class="sset-row-label" for="settings-endpoint">🔗 Google Apps Script URL</label>
@@ -793,7 +793,7 @@ details summary::-webkit-details-marker{display:none}
               border:1px solid var(--border);border-radius:var(--rs);color:var(--blue);font-size:.82rem;
               text-decoration:none;margin-top:8px;transition:border-color .2s"
               onmouseover="this.style.borderColor='var(--blue)'" onmouseout="this.style.borderColor='var(--border)'">
-              ↗ <span>פתח גיליון הדיווחים</span>
+              ↗ <span data-i18n="settingsOpenSheet">פתח גיליון הדיווחים</span>
             </a>
           </div>
         </div>
@@ -801,7 +801,7 @@ details summary::-webkit-details-marker{display:none}
 
       <!-- SYNC -->
       <div class="sset-group">
-        <div class="sset-label">סנכרון</div>
+        <div class="sset-label" data-i18n="settingsSyncLabel">סנכרון</div>
         <div class="sset-block">
           <div class="sset-row">
             <div class="sync-btn-row">
@@ -820,7 +820,7 @@ details summary::-webkit-details-marker{display:none}
             <div class="proj-row">
               <input type="text" id="new-project" class="fi"
                 data-i18n="placeholderNewProject" data-i18n-attr="placeholder"
-                placeholder="הוסף פרויקט..."/>
+                data-i18n="placeholderNewProject" data-i18n-attr="placeholder" placeholder="הוסף פרויקט..."/>
               <button class="btn-g" id="btn-add-project" style="padding:10px 16px">+</button>
             </div>
             <div id="projects-chips" class="chips" style="margin-top:6px"></div>
@@ -836,7 +836,7 @@ details summary::-webkit-details-marker{display:none}
             <span class="pref-row-icon">📳</span>
             <span class="pref-row-body">
               <span class="pref-row-label" data-i18n="prefVibration">רטט</span>
-              <span class="pref-row-desc">פידבק הפטי בכפתורים ופעולות</span>
+              <span class="pref-row-desc" data-i18n="prefVibrationDesc">פידבק הפטי בכפתורים ופעולות</span>
             </span>
             <input type="checkbox" id="pref-vibration" class="ptog" checked/>
           </label>
@@ -844,7 +844,7 @@ details summary::-webkit-details-marker{display:none}
             <span class="pref-row-icon">✨</span>
             <span class="pref-row-body">
               <span class="pref-row-label" data-i18n="prefAnimations">אנימציות</span>
-              <span class="pref-row-desc">מעברים ואנימציות ממשק</span>
+              <span class="pref-row-desc" data-i18n="prefAnimationsDesc">מעברים ואנימציות ממשק</span>
             </span>
             <input type="checkbox" id="pref-animations" class="ptog" checked/>
           </label>
@@ -852,7 +852,7 @@ details summary::-webkit-details-marker{display:none}
             <span class="pref-row-icon">↓</span>
             <span class="pref-row-body">
               <span class="pref-row-label" data-i18n="prefPullRefresh">משיכה לרענון</span>
-              <span class="pref-row-desc">משוך למטה לרענון הדף</span>
+              <span class="pref-row-desc" data-i18n="prefPullRefreshDesc">משוך למטה לרענון הדף</span>
             </span>
             <input type="checkbox" id="pref-pull-refresh" class="ptog"/>
           </label>
@@ -886,7 +886,7 @@ details summary::-webkit-details-marker{display:none}
     <div class="mbody">
       <div style="background:var(--redDim);border:1px solid rgba(255,90,90,.25);border-radius:var(--rs);
         padding:11px 13px;font-size:.82rem;color:var(--text2);line-height:1.6">
-        ⚠️ פעולה זו אינה ניתנת לביטול. בחר אילו נתונים לשמור:
+        <span data-i18n="resetWarning">⚠️ פעולה זו אינה ניתנת לביטול. בחר אילו נתונים לשמור:</span>
       </div>
       <div class="sset-block pref-list">
         <label class="pref-row">
@@ -953,19 +953,19 @@ details summary::-webkit-details-marker{display:none}
 <div id="modal-workcal" class="moverlay hidden" role="dialog" aria-modal="true">
   <div class="mbox sm">
     <div class="mhdr">
-      <h2>📊 תקן שעות — WorkStandard</h2>
+      <h2 data-i18n="workcalTitle">📊 תקן שעות — WorkStandard</h2>
       <button class="ibtn" id="btn-close-workcal">✕</button>
     </div>
     <div class="mbody">
       <div class="sset-block">
         <div class="sset-row">
-          <div class="sset-row-label">📋 מבנה גיליון WorkStandard</div>
+          <div class="sset-row-label" data-i18n="workcalStructureLabel">📋 מבנה גיליון WorkStandard</div>
           <div style="background:var(--bg0);border-radius:6px;padding:8px 11px;margin-top:6px;
             font-size:.72rem;font-family:monospace;color:var(--text3);line-height:1.8">
             Date | WeekDay | Day_Standard_Hours | Notes
           </div>
           <div class="sset-row-sub" style="margin-top:6px">
-            הוסף/ערוך שורות ישירות בגיליון, או לחץ על יום בלוח לעריכה דרך האפליקציה.
+            <span data-i18n="workcalHint">הוסף/ערוך שורות ישירות בגיליון, או לחץ על יום בלוח לעריכה דרך האפליקציה.</span>
           </div>
         </div>
       </div>
@@ -973,8 +973,8 @@ details summary::-webkit-details-marker{display:none}
         text-align:center;min-height:20px;padding:2px 0"></div>
     </div>
     <div class="mfoot mfoot2">
-      <button class="btn-g" id="btn-close-workcal2">סגור</button>
-      <button class="btn-p sm" id="btn-sync-wstandard">↻ משוך נתונים מהגיליון</button>
+      <button class="btn-g" id="btn-close-workcal2" data-i18n="menuClose">סגור</button>
+      <button class="btn-p sm" id="btn-sync-wstandard" data-i18n="btnSyncWstandard">↻ משוך נתונים מהגיליון</button>
     </div>
   </div>
 </div>
@@ -1017,7 +1017,7 @@ details summary::-webkit-details-marker{display:none}
 
 <div id="toast" class="hidden" role="status" aria-live="polite"></div>
 <!-- HELP MODAL -->
-<div id="modal-help" class="moverlay hidden" role="dialog" aria-modal="true" style="z-index:650">
+<div id="modal-help" class="moverlay hidden" role="dialog" aria-modal="true" style="z-index:650" lang="he">
   <div class="mbox" style="max-height:92dvh;display:flex;flex-direction:column">
 
     <div class="mhdr" style="position:sticky;top:0;z-index:2;background:var(--bg1)">
@@ -1191,287 +1191,11 @@ details summary::-webkit-details-marker{display:none}
 </div>
 
 
+<script src="i18n.js"></script>
 <script>
 /* ─────────────────────────────────────────────────────
    i18n
 ───────────────────────────────────────────────────── */
-const I18N={
-  appTagline:{he:'ניהול נוכחות ומשימות',en:'Attendance & Task Tracker'},
-  tabReport:{he:'דיווח',en:'Report'},tabHistory:{he:'היסטוריה',en:'History'},tabSummary:{he:'סיכום',en:'Summary'},
-  catEntry:{he:'🟢 כניסה',en:'🟢 Entry'},catExit:{he:'🔴 יציאה',en:'🔴 Exit'},catTask:{he:'📋 משימה',en:'📋 Task'},
-  labelReportType:{he:'סוג דיווח',en:'Report Type'},labelDatetime:{he:'תאריך ושעה',en:'Date & Time'},
-  labelDate:{he:'תאריך',en:'Date'},labelTime:{he:'שעה',en:'Time'},btnNow:{he:'🕐 עכשיו',en:'🕐 Now'},
-  labelTaskDetails:{he:'פרטי משימה',en:'Task Details'},labelDescription:{he:'תיאור',en:'Description'},
-  placeholderDesc:{he:'מה בוצע...',en:'What was done...'},labelProject:{he:'פרויקט',en:'Project'},
-  placeholderProj:{he:'שם הפרויקט (אופציונלי)',en:'Project name (optional)'},
-  labelDuration:{he:'משך / טווח',en:'Duration / Range'},modeDuration:{he:'משך זמן',en:'Duration'},
-  modeRange:{he:'טווח שעות',en:'Time Range'},labelHours:{he:'שעות',en:'Hours'},labelMinutes:{he:'דקות',en:'Minutes'},
-  labelStart:{he:'התחלה',en:'Start'},labelEnd:{he:'סיום',en:'End'},
-  btnSubmit:{he:'שלח דיווח',en:'Submit Report'},btnSubmitting:{he:'שולח...',en:'Sending...'},
-  pendingTitle:{he:'ממתינים',en:'Pending'},btnSync:{he:'🔄 סנכרן',en:'🔄 Sync'},
-  historyTitle:{he:'5 הדיווחים האחרונים',en:'Last 5 Reports'},historyEmpty:{he:'אין דיווחים עדיין',en:'No reports yet'},
-  sumPeriodDay:{he:'יום',en:'Day'},sumPeriodMonth:{he:'חודש',en:'Month'},
-  statEntries:{he:'כניסות',en:'Entries'},statExits:{he:'יציאות',en:'Exits'},
-  statTasks:{he:'משימות',en:'Tasks'},statHours:{he:'שעות',en:'Hours'},
-  summaryDetail:{he:'פירוט דיווחים',en:'Breakdown'},summaryEmpty:{he:'אין דיווחים בתקופה זו',en:'No reports for this period'},
-  settingsTitle:{he:'⚙️ הגדרות',en:'⚙️ Settings'},settingsLangLabel:{he:'שפה',en:'Language'},
-  settingsEndpointLabel:{he:'כתובת Google Apps Script',en:'Google Apps Script URL'},
-  settingsEndpointHint:{he:'הדבק את ה-URL של ה-Web App',en:'Paste your Web App URL'},
-  settingsProjectsLabel:{he:'פרויקטים שמורים',en:'Saved Projects'},
-  placeholderNewProject:{he:'הוסף פרויקט...',en:'Add project...'},
-  settingsDataLabel:{he:'ניהול נתונים',en:'Data Management'},
-  btnClearData:{he:'🗑 מחק כל הנתונים המקומיים',en:'🗑 Clear All Local Data'},
-  btnSaveSettings:{he:'שמור הגדרות',en:'Save Settings'},
-  settingsPrefTitle:{he:'העדפות',en:'Preferences'},prefVibration:{he:'רטט',en:'Vibration'},
-  prefAnimations:{he:'אנימציות',en:'Animations'},prefPullRefresh:{he:'משיכה לרענון',en:'Pull to Refresh'},
-  installTitle:{he:'התקן את האפליקציה',en:'Install the App'},installBody:{he:'גישה מהירה וללא אינטרנט',en:'Quick access, works offline'},
-  btnInstall:{he:'התקן',en:'Install'},btnInstallDismiss:{he:'אחר כך',en:'Later'},
-  toastSent:{he:'✅ הדיווח נשלח בהצלחה',en:'✅ Report sent'},
-  toastSavedOffline:{he:'📴 אין חיבור — נשמר לסנכרון',en:'📴 Offline — saved for sync'},
-  toastNoEndpoint:{he:'⚠️ לא הוגדר Endpoint',en:'⚠️ No Endpoint set'},
-  toastSendError:{he:'❌ שגיאה בשליחה',en:'❌ Send error — queued'},
-  toastNowUpdated:{he:'עודכן לשעה הנוכחית',en:'Updated to current time'},
-  toastSettingsSaved:{he:'✅ הגדרות נשמרו',en:'✅ Settings saved'},
-  toastDataCleared:{he:'נמחק',en:'Cleared'},
-  toastSynced:{he:(n)=>`✅ נשלחו ${n} דיווחים`,en:(n)=>`✅ Synced ${n} reports`},
-  toastNoDesc:{he:'⚠️ יש להזין תיאור משימה',en:'⚠️ Enter task description'},
-  toastNoTime:{he:'⚠️ יש לבחור תאריך ושעה',en:'⚠️ Select date and time'},
-  toastNoDuration:{he:'⚠️ יש להזין משך זמן',en:'⚠️ Enter a duration'},
-  toastNoRange:{he:'⚠️ יש לבחור שעת התחלה וסיום',en:'⚠️ Select start and end'},
-  toastNoQueuePending:{he:'אין דיווחים ממתינים',en:'No pending reports'},
-  toastNoEndpointSync:{he:'⚠️ הגדר Endpoint קודם',en:'⚠️ Set Endpoint first'},
-  toastOnlineBack:{he:'✅ חיבור לאינטרנט שוחזר',en:'✅ Connection restored'},
-  toastSlowData:{he:'⚠️ חיבור איטי',en:'⚠️ Slow connection'},
-  toastProjectAdded:{he:'✅ פרויקט נוסף',en:'✅ Project added'},
-  versionLabel:{he:(v)=>`גרסה ${v}`,en:(v)=>`v${v}`},
-  updateAvailable:{he:'גרסה חדשה זמינה! עדכן עכשיו',en:'New version available! Update now'},
-  btnUpdate:{he:'עדכן',en:'Update'},btnUpdateDismiss:{he:'לא עכשיו',en:'Not now'},
-  resetTitle:{he:'⚠️ איפוס אפליקציה',en:'⚠️ Reset App'},
-  resetBody:{he:'בחר מה לשמור לפני האיפוס:',en:'Choose what to keep:'},
-  resetKeepReports:{he:'שמור היסטוריית דיווחים',en:'Keep report history'},
-  resetKeepSettings:{he:'שמור הגדרות',en:'Keep settings'},
-  resetKeepQueue:{he:'שמור תור ממתין',en:'Keep pending queue'},
-  btnResetConfirm:{he:'🗑 אפס הכל',en:'🗑 Reset Everything'},
-  btnResetCancel:{he:'ביטול',en:'Cancel'},
-  offlineBanner:{he:'אין חיבור לאינטרנט',en:'No internet connection'},
-  menuReport:{he:'דיווח',en:'Report'},menuHistory:{he:'היסטוריה',en:'History'},
-  menuSummary:{he:'סיכום',en:'Summary'},menuSettings:{he:'הגדרות',en:'Settings'},
-  confirmClearData:{he:'למחוק את כל הנתונים המקומיים?',en:'Delete all local data?'},
-  toastDeleted:{he:'🗑 דיווח נמחק',en:'🗑 Report deleted'},
-  confirmDelReport:{he:'למחוק דיווח זה?',en:'Delete this report?'},
-  toastProjectExists:{he:'⚠️ פרויקט כבר קיים',en:'⚠️ Project already exists'},
-  toastProjectSynced:{he:'✅ פרויקטים סונכרנו',en:'✅ Projects synced'},
-  toastSyncStart:{he:'מסנכרן...',en:'Syncing...'},
-  btnSyncProjects:{he:'🔄 סנכרן פרויקטים',en:'🔄 Sync Projects'},
-  btnSyncReports:{he:'🔄 סנכרן דיווחים מגיליון',en:'🔄 Sync Reports from Sheet'},
-  toastSyncReports:{he:(n)=>`✅ סונכרנו ${n} דיווחים מהגיליון`,en:(n)=>`✅ Synced ${n} reports from sheet`},
-  toastSyncReportsNoEp:{he:'⚠️ יש להגדיר Endpoint תחילה',en:'⚠️ Set Endpoint first'},
-  toastSyncReportsOffline:{he:'📴 אין חיבור לאינטרנט',en:'📴 No internet connection'},
-  toastSyncReportsUpToDate:{he:'✅ הדיווחים מעודכנים',en:'✅ Reports are up to date'},
-  toastSyncReportsError:{he:'❌ שגיאה בסנכרון דיווחים',en:'❌ Error syncing reports'},
-  statWorkday:{he:'משך יום',en:'Workday'},
-  statDays:{he:'ימים',en:'Days'},
-  themeDark:{he:'מצב כהה',en:'Dark mode'},
-  themeLight:{he:'מצב בהיר',en:'Light mode'},
-  menuHelp:{he:'עזרה',en:'Help'},
-  menuDownloadGS:{he:'הורד קוד GAS',en:'Download GAS code'},
-  sheetLinkLabel:{he:'פתח גיליון',en:'Open Sheet'},
-  sheetUrlLabel:{he:'כתובת גיליון Google Sheets',en:'Google Sheets URL'},
-  sheetUrlHint:{he:'הדבק את ה-URL של הגיליון (לקישור ישיר)',en:'Paste the Sheets URL (for direct link)'},
-  labelSavedProjects:{he:'פרויקטים שמורים',en:'Saved Projects'},
-
-  /* ── Menu items ── */
-  menuClose:{he:'סגור',en:'Close'},
-  menuThemeDark:{he:'🌙 מצב כהה',en:'🌙 Dark Mode'},
-  menuThemeLight:{he:'☀️ מצב בהיר',en:'☀️ Light Mode'},
-  menuHelp2:{he:'📄 עזרה — Apps Script',en:'📄 Help — Apps Script'},
-  menuGS:{he:'🔗 קוד google-apps-script.gs',en:'🔗 Download GAS code'},
-  menuWorkstandard:{he:'📊 תקן שעות — WorkStandard',en:'📊 Hour Standard — WorkStandard'},
-  menuOpenSheet:{he:'📊 פתח גיליון הדיווחים',en:'📊 Open Reports Sheet'},
-  menuVersionTooltip:{he:'לחץ לאיפוס',en:'Click to reset'},
-  menuHamburgerLabel:{he:'תפריט',en:'Menu'},
-
-  /* ── Session banner ── */
-  sessionLoading:{he:'טוען...',en:'Loading...'},
-  sessionOpen:{he:'בפנים מ-',en:'Active since '},
-  sessionClosed:{he:'לא דווחה כניסה להיום',en:'No check-in today'},
-  sessionClosedWithHours:{he:'לא נמצאת',en:'Checked out'},
-  sessionBlockEntry:{he:'הנך כבר רשום כנמצא — עליך לדווח יציאה לפני כניסה חדשה',en:'Already checked in — please check out before a new entry'},
-  sessionBlockExit:{he:'לא נמצאה כניסה פעילה להיום — עליך לדווח כניסה תחילה',en:'No active check-in today — please check in first'},
-  sessionOpenLabel:{he:'סשן פתוח — טרם דווחה יציאה',en:'Open session — no exit recorded'},
-  sessionPairs:{he:'פירוט',en:'Breakdown'},
-  sessionCycles:{he:'מחזורים',en:'cycles'},
-
-  /* ── Report form ── */
-  placeholderProjRequired:{he:'שם הפרויקט (חובה)',en:'Project name (required)'},
-  placeholderTaskDesc:{he:'מה בוצע...',en:'What was done...'},
-  hourMinLabel:{he:"שע׳:דק׳",en:'h:m'},
-  preset15:{he:"15 דק׳",en:'15 min'},
-  preset30:{he:"30 דק׳",en:'30 min'},
-  preset1h:{he:'1 שעה',en:'1 hour'},
-  preset15h:{he:'1.5 שעה',en:'1.5 hrs'},
-  preset2h:{he:'2 שעות',en:'2 hrs'},
-  preset4h:{he:'4 שעות',en:'4 hrs'},
-
-  /* ── Summary periods / navigation ── */
-  sumPeriodYear:{he:'שנה',en:'Year'},
-  sumPeriodRange:{he:'טווח',en:'Range'},
-  btnToday:{he:'היום',en:'Today'},
-  rangeFrom:{he:'מ-',en:'From'},
-  rangeTo:{he:'עד',en:'To'},
-  btnRangeGo:{he:'הצג',en:'Show'},
-  labelRangeSep:{he:'עד',en:'to'},
-
-  /* ── Work calendar legend ── */
-  legendOk:{he:'עמד בדרישה',en:'Met standard'},
-  legendDeficit:{he:'חוסר שעות',en:'Hour deficit'},
-  legendVacation:{he:'חופש',en:'Vacation'},
-  legendSick:{he:'מחלה',en:'Sick'},
-
-  /* ── Day edit modal — quick status ── */
-  labelQuickStatus:{he:'סטאטוס מהיר',en:'Quick Status'},
-  labelNotes:{he:'הערות',en:'Notes'},
-  statusVacation:{he:'🏖 חופש',en:'🏖 Vacation'},
-  statusSick:{he:'🤒 מחלה',en:'🤒 Sick'},
-  statusHoliday:{he:'✡ חג',en:'✡ Holiday'},
-  statusClear:{he:'✕ נקה',en:'✕ Clear'},
-  placeholderNotes:{he:'לדוגמה: יום חופש, ראש השנה...',en:'e.g. vacation, holiday...'},
-
-  /* ── WC stats labels ── */
-  wcStatWorkdays:{he:'ימי עבודה',en:'Work Days'},
-  wcStatRequired:{he:'נדרש עד היום',en:'Required to date'},
-  wcStatActual:{he:'בפועל',en:'Actual'},
-  wcStatSurplus:{he:'עודף',en:'Surplus'},
-  wcStatDeficit:{he:'חוסר',en:'Deficit'},
-  wcStatBalance:{he:'מאזן',en:'Balance'},
-  wcStatOkDays:{he:'ימים בתקן ✓',en:'Days met ✓'},
-  wcStatDefDays:{he:'ימי חוסר ✗',en:'Deficit days ✗'},
-  wcStatAchieve:{he:'עמידה ביעד',en:'Goal rate'},
-  wcStatVacDays:{he:'🏖 ימי חופש',en:'🏖 Vacation days'},
-  wcStatSickDays:{he:'🤒 ימי מחלה',en:'🤒 Sick days'},
-  wcStatAnnualBal:{he:'מאזן שנתי',en:'Annual balance'},
-  wcStatHours:{he:'שעות בפועל',en:'Actual hours'},
-  wcStatNeeded:{he:'נדרש',en:'Required'},
-  wcDayNotCount:{he:'יום זה אינו נספר כחוסר',en:'This day is not counted as deficit'},
-  wcNoStandard:{he:'אין תקן ליום זה',en:'No standard for this day'},
-  wcEditHint:{he:'לחץ "ערוך תקן" להגדרה',en:'Tap "Edit Standard" to configure'},
-  wcFromTasks:{he:'⚠️ חושב ממשימות — חסרים נתוני כניסה/יציאה',en:'⚠️ Calculated from tasks — no entry/exit data'},
-  wcOpenSession:{he:'סשן פתוח — טרם דווחה יציאה',en:'Open session — no exit recorded'},
-  wcActualLabel:{he:'בפועל:',en:'Actual:'},
-  wcStandardLabel:{he:'תקן:',en:'Standard:'},
-  wcDeficitLabel:{he:'חסר:',en:'Deficit:'},
-  wcSurplusLabel:{he:'עודף:',en:'Surplus:'},
-
-  /* ── Annual / range view ── */
-  annualYear:{he:(y)=>`שנת ${y}`,en:(y)=>`Year ${y}`},
-  rangePeriod:{he:'טווח תאריכים',en:'Date Range'},
-  rangeSelectDates:{he:'בחר תאריך התחלה וסיום',en:'Select start and end dates'},
-  rangeTotalDays:{he:(r,w)=>`סה"כ ${r} ימים בטווח · ${w} ימי עבודה`,en:(r,w)=>`${r} days in range · ${w} work days`},
-  annualMonthCol:{he:'חודש',en:'Month'},
-  annualDaysCol:{he:'ימים',en:'Days'},
-  annualHoursCol:{he:'שעות',en:'Hours'},
-  annualBalCol:{he:'מאזן',en:'Balance'},
-  annualPctCol:{he:'%',en:'%'},
-  annualVacCol:{he:'חופש',en:'Vac'},
-  annualSickCol:{he:'מחלה',en:'Sick'},
-
-  /* ── Toast / status messages ── */
-  toastSavedLocal:{he:'💾 נשמר מקומית...',en:'💾 Saved locally...'},
-  toastOpenSessionEntry:{he:'הנך כבר רשום כנמצא',en:'Already checked in'},
-  toastNoActiveEntry:{he:'לא נמצאה כניסה פעילה',en:'No active check-in found'},
-  toastOfflineSave:{he:'📴 מצב אופליין — כל הנתונים נשמרים מקומית',en:'📴 Offline — all data saved locally'},
-  toastSyncStart2:{he:'⏳ מסנכרן...',en:'⏳ Syncing...'},
-  syncStatusEp:{he:'Endpoint לא הוגדר',en:'Endpoint not configured'},
-  syncStatusNoEp:{he:'⚠️ Endpoint לא הוגדר — פתח הגדרות',en:'⚠️ Endpoint not set — open Settings'},
-  syncStatusOld:{he:'⚠️ ה-GAS אינו כולל WorkStandard — יש לפרוס מחדש',en:'⚠️ GAS lacks WorkStandard — redeploy required'},
-  toastWStdSent:{he:'✅ כל עדכוני WorkStandard נשלחו',en:'✅ All WorkStandard updates sent'},
-  toastWStdSaved:{he:'✅ נשמר בגיליון WorkStandard',en:'✅ Saved to WorkStandard sheet'},
-  toastSyncError:{he:'❌ שגיאת סנכרון',en:'❌ Sync error'},
-  toastSentLabel:{he:(l)=>`✅ ${l} נשלח לגיליון`,en:(l)=>`✅ ${l} sent to sheet`},
-  toastQueuedLabel:{he:(l)=>`⚠️ ${l} בתור — יישלח בחיבור הבא`,en:(l)=>`⚠️ ${l} queued — will send on reconnect`},
-  pendingQueue:{he:(q)=>`⏳ ${q} ממתינים לשליחה`,en:(q)=>`⏳ ${q} pending`},
-  wstdQueue:{he:(q)=>`· ⏳ ${q} עדכונים בתור`,en:(q)=>`· ⏳ ${q} updates queued`},
-  syncedStatus:{he:(last,cnt)=>`✅ סנכרן: ${last} · ${cnt} ימים`,en:(last,cnt)=>`✅ Synced: ${last} · ${cnt} days`},
-  notSyncedYet:{he:'לא סונכרן עדיין — לחץ',en:'Not yet synced — tap'},
-  btnSyncFromSheet:{he:'🔄 סנכרן מגיליון',en:'🔄 Sync from Sheet'},
-  btnEditStd:{he:'ערוך תקן',en:'Edit Standard'},
-  btnSaveSync:{he:'⚡ שמור וסנכרן',en:'⚡ Save & Sync'},
-  labelCurrentStd:{he:'תקן נוכחי',en:'Current standard'},
-  labelActualHours:{he:'שעות בפועל',en:'Actual hours'},
-  labelGoalPct:{he:'עמידה',en:'Goal'},
-  labelDeficitAmt:{he:'⚠️ חסר',en:'⚠️ Deficit'},
-  wcPairsDetail:{he:'פירוט',en:'Breakdown'},
-
-  /* ── Settings ── */
-  settingsLang:{he:'עברית',en:'English'},
-  settingsLangEn:{he:'English',en:'English'},
-
-  /* ── History ── */
-  historyRecent:{he:'דיווחים - 30 ימים אחרונים',en:'Reports — last 30 days'},
-};
-function t(key,...args){
-  const lang=window._lang||'he',entry=I18N[key];
-  if(!entry)return key;
-  const raw=entry[lang]??entry.en??key;
-  return typeof raw==='function'?raw(...args):raw;
-}
-function applyLang(lang){
-  window._lang=lang;
-  const rtl=lang==='he';
-  document.documentElement.lang=lang;
-  document.documentElement.dir=rtl?'rtl':'ltr';
-  document.querySelectorAll('[data-i18n]').forEach(el=>{
-    const key=el.dataset.i18n,attr=el.dataset.i18nAttr||'textContent',val=t(key);
-    if(attr==='textContent')el.textContent=val;
-    else if(attr==='placeholder')el.placeholder=val;
-    else el.setAttribute(attr,val);
-  });
-  localStorage.setItem('mwl_lang',lang);
-}
-
-/* ─────────────────────────────────────────────────────
-   App
-───────────────────────────────────────────────────── */
-const VER='3.0.0';
-// SW cache buster: if a stale SW is detected, unregister it so fresh content loads
-if('serviceWorker'in navigator){
-  navigator.serviceWorker.getRegistration().then(reg=>{
-    if(reg&&reg.active){
-      const swUrl=reg.active.scriptURL||'';
-      // If the SW version doesn't match app version, force update
-      if(!swUrl.includes(VER)&&!sessionStorage.getItem('sw_busted')){
-        sessionStorage.setItem('sw_busted','1');
-        reg.update();
-      }
-    }
-  }).catch(()=>{});
-}
-const K={ep:'mwl_endpoint',reps:'mwl_reports',q:'mwl_queue',delQ:'mwl_delete_queue',proj:'mwl_projects',
-  lang:'mwl_lang',theme:'mwl_theme',prefs:'mwl_prefs',ver:'mwl_version',inst:'mwl_install_dismissed',sheetUrl:'mwl_sheet_url',
-  wstandard:'mwl_wstandard'};
-const ST={cat:'entry',dur:'duration',sumPer:'day',sumOff:0,
-  swReg:null,install:null,swX:0,swY:0,pullY:0,pulling:false};
-
-const $=id=>document.getElementById(id);
-const pad=n=>String(n).padStart(2,'0');
-const isoD=(d=new Date())=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
-const timeS=(d=new Date())=>`${pad(d.getHours())}:${pad(d.getMinutes())}`;
-function store(key,val){
-  if(val===undefined){try{return JSON.parse(localStorage.getItem(key))}catch{return null}}
-  localStorage.setItem(key,JSON.stringify(val));
-}
-const getP=()=>store(K.prefs)||{vibration:true,animations:true,pullRefresh:false};
-const buzz=(p=[30])=>{if(getP().vibration&&navigator.vibrate)navigator.vibrate(p)};
-const fmtD=d=>{const[y,m,day]=d.split('-');return`${day}/${m}/${y}`};
-const fmtT=t=>{if(!t)return'';if(t.includes('-'))return t;const[h,m]=t.split(':');return`${pad(parseInt(h))}:${pad(parseInt(m||0))}`};
-const catLbl=cat=>t({entry:'catEntry',exit:'catExit',task:'catTask'}[cat])||cat;
-
-function toast(msg,type='success',ms=2800){
-  const el=$('toast');
-  el.textContent=msg;el.className=`toast ${type}`;
-  clearTimeout(el._t);
-  el._t=setTimeout(()=>el.classList.add('hidden'),ms);
-}
 
 /* BOOT */
 document.addEventListener('DOMContentLoaded',()=>{
@@ -1723,7 +1447,7 @@ function applyTheme(th){
   store(K.theme,th);
   // sync menu button label
   const btn=$('menu-theme-btn');
-  if(btn){btn.textContent=(dark?'☀️':'🌙')+' '+(dark?'מצב בהיר':'מצב כהה');btn.classList.toggle('theme-active',dark);}
+  if(btn){btn.textContent=dark?t('menuThemeLight'):t('menuThemeDark');btn.classList.toggle('theme-active',dark);}
 }
 
 /* LANG */
@@ -1819,13 +1543,13 @@ async function downloadXLSXTemplate(){
   // Column widths
   ws['!cols']=[{wch:14},{wch:16},{wch:10},{wch:28},{wch:20}];
   const wb=XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb,ws,'דיווחים');
+  XLSX.utils.book_append_sheet(wb,ws,t('xlsxSheetName'));
   const buf=XLSX.write(wb,{type:'array',bookType:'xlsx'});
   const b=new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
   const a=document.createElement('a');a.href=URL.createObjectURL(b);
   a.download='worklog-template.xlsx';document.body.appendChild(a);a.click();
   setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1000);
-  toast('⬇️ טמפלט Excel הורד','success');
+  toast(t('toastTemplateDownloaded'),'success');
 }
 
 let _importRows=[];
@@ -1862,7 +1586,7 @@ function parseRowsArray(hdrRow, dataRows){
   const hdr=hdrRow.map(h=>String(h||'').trim().toLowerCase());
   const reqCols=['report_date','report_time','category'];
   const missing=reqCols.filter(col=>!hdr.includes(col));
-  if(missing.length) return{rows:[],errors:[`חסרות עמודות: ${missing.join(', ')}`]};
+  if(missing.length) return{rows:[],errors:[`${t('importMissingCols')}: ${missing.join(', ')}`]};
   const rows=[];const errors=[];
   const get=(vals,col)=>{const idx=hdr.indexOf(col);return idx>=0?String(vals[idx]??'').trim():'';};
 
@@ -1895,11 +1619,11 @@ function parseRowsArray(hdrRow, dataRows){
 
     // Validate date
     if(!/^\d{4}-\d{2}-\d{2}$/.test(report_date)){
-      errors.push(`שורה ${i+2}: תאריך לא תקין "${report_date}"`);return;
+      errors.push(`${t('rowLabel')||'שורה'} ${i+2}: ${t('importBadDate')} "${report_date}"`);return;
     }
-    if(!report_time){errors.push(`שורה ${i+2}: שעה חסרה`);return;}
+    if(!report_time){errors.push(`${t('rowLabel')||'שורה'} ${i+2}: ${t('importMissingTime')}`);return;}
     if(!['entry','exit','task'].includes(category)){
-      errors.push(`שורה ${i+2}: קטגוריה לא תקינה "${category}"`);return;
+      errors.push(`${t('rowLabel')||'שורה'} ${i+2}: ${t('importBadCategory')} "${category}"`);return;
     }
     rows.push({id:Date.now()+Math.random().toString(36).slice(2)+'_imp',
       timestamp:new Date(report_date+'T12:00:00').toISOString(),
@@ -1961,7 +1685,7 @@ function showImportPreview(rows,errors){
   const warn=$('import-warn');
   if(errors.length){
     warn.style.display='';
-    warn.innerHTML='⚠️ '+errors.length+' שגיאות:<br>'+errors.map(e=>`<span style="display:block">${e}</span>`).join('');
+    warn.innerHTML='⚠️ '+errors.length+' '+t('importErrorsLabel')+':<br>'+errors.map(e=>`<span style="display:block">${e}</span>`).join('');
   }else{
     warn.style.display='none';
   }
@@ -1980,7 +1704,7 @@ async function handleImportFile(file){
   const isXLS=file.name.toLowerCase().endsWith('.xls');
 
   if(isXLSX||isXLS){
-    $('import-file-name').textContent=file.name+' (טוען...)';
+    $('import-file-name').textContent=file.name+' ('+t('importLoading')+')';
     try{
       const buf=await file.arrayBuffer();
       const{rows,errors}=await parseXLSX(new Uint8Array(buf));
@@ -1988,7 +1712,7 @@ async function handleImportFile(file){
       showImportPreview(rows,errors);
     }catch(e){
       $('import-file-name').textContent=file.name;
-      toast('❌ שגיאה בקריאת קובץ Excel: '+e.message,'warn',5000);
+      toast(t('toastXlsxError')+': '+e.message,'warn',5000);
     }
     return;
   }
@@ -2023,8 +1747,8 @@ function importConfirm(){
   if(fi){fi.value='';fi.replaceWith(fi.cloneNode(true));} // clone removes event; re-bind below
   // (re-binding not needed — modal delegation in importInit handles new clone)
   closeM('modal-import');
-  let msg=`✅ יובאו ${fresh.length} דיווחים`;
-  if(skipped)msg+=` · ${skipped} כפולים דולגו`;
+  let msg=t('importSuccess',fresh.length);
+  if(skipped)msg+=t('importSkipped',skipped);
   toast(msg,'success',4000);buzz([20,20,60]);
 }
 
@@ -3336,7 +3060,7 @@ async function downloadGS(){
     setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1000);
     toast('⬇️ '+(t('helpBtnDownloadGS')||'Downloading...'),'success');
   }catch(e){
-    toast('⚠️ לא נמצא קובץ google-apps-script.gs','warn',4000);
+    toast(t('toastGasNotFound'),'warn',4000);
   }
 }
 /* SCROLL */
@@ -3353,8 +3077,8 @@ function scrollInit(){
   <div class="mbox">
     <div class="mhdr">
       <div>
-        <h2>📥 טעינת דיווחים</h2>
-        <div class="mhdr-sub">Excel (.xlsx) או CSV</div>
+        <h2 data-i18n="importTitle">📥 טעינת דיווחים</h2>
+        <div class="mhdr-sub" data-i18n="importSubtitle">Excel (.xlsx) או CSV</div>
       </div>
       <button class="ibtn" id="btn-close-import">✕</button>
     </div>
@@ -3364,19 +3088,19 @@ function scrollInit(){
       <div class="import-step">
         <div class="import-step-hdr">
           <span class="import-step-num">1</span>
-          <span class="import-step-title">הורד טמפלט</span>
+          <span class="import-step-title" data-i18n="importStep1Title">הורד טמפלט</span>
         </div>
         <p class="import-step-desc">
           הורד קובץ Excel מוכן עם העמודות הנדרשות. מלא את הנתונים ושמור — ניתן לטעון גם CSV.
         </p>
-        <button class="btn-g sm" id="btn-dl-template" style="align-self:flex-start;padding:8px 16px">⬇️ הורד טמפלט Excel</button>
+        <button class="btn-g sm" id="btn-dl-template" style="align-self:flex-start;padding:8px 16px" data-i18n="btnDlTemplate">⬇️ הורד טמפלט Excel</button>
       </div>
 
       <!-- Format ref -->
       <div class="import-step">
         <div class="import-step-hdr">
           <span class="import-step-num" style="background:var(--border2);font-size:.85rem">📋</span>
-          <span class="import-step-title">מבנה הקובץ</span>
+          <span class="import-step-title" data-i18n="importFormatTitle">מבנה הקובץ</span>
         </div>
         <div class="import-fmt-box">
           report_date · report_time · category · description · project<br>
@@ -3385,9 +3109,9 @@ function scrollInit(){
           2024-03-15 · 10:00-11:30 · task · ישיבה · פרויקט-א
         </div>
         <div class="import-legend">
-          <span class="import-legend-item"><span style="color:var(--lime)">●</span> entry — כניסה</span>
-          <span class="import-legend-item"><span style="color:var(--red)">●</span> exit — יציאה</span>
-          <span class="import-legend-item"><span style="color:var(--blue)">●</span> task — משימה</span>
+          <span class="import-legend-item"><span style="color:var(--lime)">●</span> <span data-i18n="importLegendEntry">entry — כניסה</span></span>
+          <span class="import-legend-item"><span style="color:var(--red)">●</span> <span data-i18n="importLegendExit">exit — יציאה</span></span>
+          <span class="import-legend-item"><span style="color:var(--blue)">●</span> <span data-i18n="importLegendTask">task — משימה</span></span>
         </div>
       </div>
 
@@ -3395,23 +3119,23 @@ function scrollInit(){
       <div class="import-step">
         <div class="import-step-hdr">
           <span class="import-step-num">2</span>
-          <span class="import-step-title">בחר קובץ לטעינה</span>
+          <span class="import-step-title" data-i18n="importStep2Title">בחר קובץ לטעינה</span>
         </div>
         <input type="file" id="import-file-input" accept=".csv,.xlsx,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" style="display:none"/>
-        <button class="btn-g sm" id="btn-pick-csv" style="width:100%;padding:10px">📂 בחר קובץ</button>
+        <button class="btn-g sm" id="btn-pick-csv" style="width:100%;padding:10px" data-i18n="btnPickFile">📂 בחר קובץ</button>
         <div id="import-file-name" style="font-size:.74rem;color:var(--text3);text-align:center;min-height:18px"></div>
 
         <div id="import-preview" style="display:none">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-            <span style="font-size:.8rem;font-weight:700;color:var(--text)">תצוגה מקדימה</span>
-            <span style="font-size:.75rem;color:var(--lime);font-weight:700"><span id="import-row-count">0</span> שורות</span>
+            <span style="font-size:.8rem;font-weight:700;color:var(--text)" data-i18n="importPreviewTitle">תצוגה מקדימה</span>
+            <span style="font-size:.75rem;color:var(--lime);font-weight:700"><span id="import-row-count">0</span> <span data-i18n="importRows">שורות</span></span>
           </div>
           <div id="import-preview-list" class="import-preview-wrap"></div>
           <div id="import-warn" class="import-warn-box" style="display:none;margin-top:8px"></div>
         </div>
 
         <button class="btn-p" id="btn-import-confirm" disabled style="width:100%;margin-top:4px">
-          <span class="btn-text">✅ ייבא דיווחים</span>
+          <span class="btn-text" data-i18n="btnImportConfirm">✅ ייבא דיווחים</span>
         </button>
       </div>
 
@@ -3420,4 +3144,4 @@ function scrollInit(){
 </div>
 
 </body>
-                                                                           </html>
+</html>
