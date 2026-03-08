@@ -447,7 +447,7 @@ details summary::-webkit-details-marker{display:none}
       <a id="menu-sheet-link" href="#" target="_blank" rel="noopener" style="display:none;align-items:center;gap:7px;font-size:.8rem;color:var(--blue);text-decoration:none;padding:3px 2px">
         📊 פתח גיליון הדיווחים
       </a>
-      <span id="menu-vbadge" class="vbadge" title="לחץ לאיפוס">v2.9.2</span>
+      <span id="menu-vbadge" class="vbadge" title="לחץ לאיפוס">v2.9.3</span>
     </div>
   </aside>
 
@@ -459,7 +459,7 @@ details summary::-webkit-details-marker{display:none}
         <span class="hdr-name">MyWorkLog</span>
       </div>
       <div class="hdr-acts">
-        <span id="version-badge" class="vbadge" title="לחץ לאיפוס">v2.9.2</span>
+        <span id="version-badge" class="vbadge" title="לחץ לאיפוס">v2.9.3</span>
       </div>
     </div>
   </header>
@@ -1271,7 +1271,7 @@ function applyLang(lang){
 /* ─────────────────────────────────────────────────────
    App
 ───────────────────────────────────────────────────── */
-const VER='2.9.2';
+const VER='2.9.3';
 // SW cache buster: if a stale SW is detected, unregister it so fresh content loads
 if('serviceWorker'in navigator){
   navigator.serviceWorker.getRegistration().then(reg=>{
@@ -1844,12 +1844,23 @@ async function handleImportFile(file){
 function importConfirm(){
   if(!_importRows.length)return;
   const existing=store(K.reps)||[];
-  const keys=new Set(existing.map(r=>`${r.report_date}|${r.report_time}|${r.category}`));
-  const fresh=_importRows.filter(r=>!keys.has(`${r.report_date}|${r.report_time}|${r.category}`));
+  // Dedup: against both existing storage AND within the imported batch itself
+  const existingKeys=new Set(existing.map(r=>`${r.report_date}|${r.report_time}|${r.category}`));
+  const batchKeys=new Set();
+  const fresh=_importRows.filter(r=>{
+    const k=`${r.report_date}|${r.report_time}|${r.category}`;
+    if(existingKeys.has(k)||batchKeys.has(k))return false;
+    batchKeys.add(k);return true;
+  });
   const skipped=_importRows.length-fresh.length;
   const merged=[...fresh,...existing].sort((a,b)=>b.report_date.localeCompare(a.report_date)).slice(0,1000);
   store(K.reps,merged);
   histRender();summaryRender();updateSessionBanner();
+  // ── Disconnect file so re-opening modal starts clean ──
+  _importRows=[];
+  const fi=$('import-file-input');
+  if(fi){fi.value='';fi.replaceWith(fi.cloneNode(true));} // clone removes event; re-bind below
+  // (re-binding not needed — modal delegation in importInit handles new clone)
   closeM('modal-import');
   let msg=`✅ יובאו ${fresh.length} דיווחים`;
   if(skipped)msg+=` · ${skipped} כפולים דולגו`;
@@ -1859,7 +1870,10 @@ function importConfirm(){
 function importInit(){
   $('btn-dl-template')?.addEventListener('click',downloadXLSXTemplate);
   $('btn-pick-csv')?.addEventListener('click',()=>$('import-file-input').click());
-  $('import-file-input')?.addEventListener('change',e=>handleImportFile(e.target.files[0]));
+  // Use event delegation on modal so re-cloned input is always caught
+  $('modal-import')?.addEventListener('change',e=>{
+    if(e.target&&e.target.id==='import-file-input') handleImportFile(e.target.files[0]);
+  });
   $('btn-import-confirm')?.addEventListener('click',importConfirm);
   $('btn-close-import')?.addEventListener('click',()=>closeM('modal-import'));
   $('modal-import')?.addEventListener('click',e=>{if(e.target===$('modal-import'))closeM('modal-import')});
