@@ -447,7 +447,7 @@ details summary::-webkit-details-marker{display:none}
       <a id="menu-sheet-link" href="#" target="_blank" rel="noopener" style="display:none;align-items:center;gap:7px;font-size:.8rem;color:var(--blue);text-decoration:none;padding:3px 2px">
         📊 פתח גיליון הדיווחים
       </a>
-      <span id="menu-vbadge" class="vbadge" title="לחץ לאיפוס">v2.9.1</span>
+      <span id="menu-vbadge" class="vbadge" title="לחץ לאיפוס">v2.9.2</span>
     </div>
   </aside>
 
@@ -459,7 +459,7 @@ details summary::-webkit-details-marker{display:none}
         <span class="hdr-name">MyWorkLog</span>
       </div>
       <div class="hdr-acts">
-        <span id="version-badge" class="vbadge" title="לחץ לאיפוס">v2.9.1</span>
+        <span id="version-badge" class="vbadge" title="לחץ לאיפוס">v2.9.2</span>
       </div>
     </div>
   </header>
@@ -1271,7 +1271,7 @@ function applyLang(lang){
 /* ─────────────────────────────────────────────────────
    App
 ───────────────────────────────────────────────────── */
-const VER='2.9.1';
+const VER='2.9.2';
 // SW cache buster: if a stale SW is detected, unregister it so fresh content loads
 if('serviceWorker'in navigator){
   navigator.serviceWorker.getRegistration().then(reg=>{
@@ -1633,14 +1633,38 @@ function menuClose(){
    DATA IMPORT  (CSV + Excel .xlsx)
 ═══════════════════════════════════════════════════════ */
 
-const CSV_TEMPLATE = `report_date,report_time,category,description,project\r\n2024-03-15,09:00,entry,,\r\n2024-03-15,17:30,exit,,\r\n2024-03-15,10:00-11:30,task,ישיבת צוות,פרויקט-א\r\n2024-03-16,08:45,entry,,\r\n2024-03-16,16:00,exit,,\r\n2024-03-16,02:00,task,פיתוח פיצ'ר,backend\r\n`;
-
-function downloadCSVTemplate(){
-  const b=new Blob(['\uFEFF'+CSV_TEMPLATE],{type:'text/csv;charset=utf-8'});
+async function downloadXLSXTemplate(){
+  await loadSheetJS();
+  // Sample rows — dates and times as real Excel types so they display correctly
+  const rows=[
+    {report_date:new Date('2024-03-15'),report_time:'09:00',category:'entry',description:'',project:''},
+    {report_date:new Date('2024-03-15'),report_time:'17:30',category:'exit', description:'',project:''},
+    {report_date:new Date('2024-03-15'),report_time:'10:00-11:30',category:'task',description:'ישיבת צוות',project:'פרויקט-א'},
+    {report_date:new Date('2024-03-16'),report_time:'08:45',category:'entry',description:'',project:''},
+    {report_date:new Date('2024-03-16'),report_time:'16:00',category:'exit', description:'',project:''},
+    {report_date:new Date('2024-03-16'),report_time:'02:00',category:'task', description:"פיתוח פיצ'ר",project:'backend'},
+  ];
+  const ws=XLSX.utils.json_to_sheet(rows,{header:['report_date','report_time','category','description','project']});
+  // Format date column as date string (keep as text to avoid serial issues)
+  const range=XLSX.utils.decode_range(ws['!ref']);
+  for(let r=range.s.r+1;r<=range.e.r;r++){
+    const cell=ws[XLSX.utils.encode_cell({r,c:0})];
+    if(cell&&cell.t==='d'){
+      const d=cell.v;
+      cell.t='s';
+      cell.v=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    }
+  }
+  // Column widths
+  ws['!cols']=[{wch:14},{wch:16},{wch:10},{wch:28},{wch:20}];
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,'דיווחים');
+  const buf=XLSX.write(wb,{type:'array',bookType:'xlsx'});
+  const b=new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
   const a=document.createElement('a');a.href=URL.createObjectURL(b);
-  a.download='worklog-template.csv';document.body.appendChild(a);a.click();
+  a.download='worklog-template.xlsx';document.body.appendChild(a);a.click();
   setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1000);
-  toast('⬇️ טמפלט הורד','success');
+  toast('⬇️ טמפלט Excel הורד','success');
 }
 
 let _importRows=[];
@@ -1833,7 +1857,7 @@ function importConfirm(){
 }
 
 function importInit(){
-  $('btn-dl-template')?.addEventListener('click',downloadCSVTemplate);
+  $('btn-dl-template')?.addEventListener('click',downloadXLSXTemplate);
   $('btn-pick-csv')?.addEventListener('click',()=>$('import-file-input').click());
   $('import-file-input')?.addEventListener('change',e=>handleImportFile(e.target.files[0]));
   $('btn-import-confirm')?.addEventListener('click',importConfirm);
@@ -3162,9 +3186,9 @@ function scrollInit(){
       <div style="background:var(--glass);border:1px solid var(--border);border-radius:var(--rs);padding:14px">
         <div style="font-weight:700;font-size:.9rem;margin-bottom:6px">1️⃣ הורד טמפלט</div>
         <div style="font-size:.78rem;color:var(--text2);margin-bottom:10px;line-height:1.6">
-          הורד קובץ CSV לדוגמה עם העמודות הנדרשות. מלא את הנתונים בכל שורה — ניתן גם לשמור כ-Excel.
+          הורד קובץ Excel (.xlsx) עם העמודות הנדרשות ושורות לדוגמה. מלא את הנתונים ושמור — ניתן לטעון גם CSV.
         </div>
-        <button class="btn-g sm" id="btn-dl-template" style="width:100%">⬇️ הורד טמפלט CSV</button>
+        <button class="btn-g sm" id="btn-dl-template" style="width:100%">⬇️ הורד טמפלט Excel</button>
       </div>
 
       <!-- Format reference -->
