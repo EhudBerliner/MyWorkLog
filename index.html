@@ -250,72 +250,137 @@ textarea.fi{resize:vertical;min-height:72px}
 .stat-val{font-family:'Syne',monospace;font-size:2.2rem;font-weight:800;color:var(--lime);line-height:1}
 
 /* ─ PREFERENCES ─ */
-.pref-list{display:flex;flex-direction:column;gap:2px;border-radius:var(--rs);overflow:hidden}
+.pref-list{display:flex;flex-direction:column;gap:1px;border-radius:var(--rs);overflow:hidden}
 .pref-row{display:flex;align-items:center;justify-content:space-between;
-  padding:11px 13px;background:var(--bg3);cursor:pointer;font-size:.87rem;transition:background .15s}
+  padding:13px 14px;background:var(--bg3);cursor:pointer;font-size:.87rem;
+  transition:background .15s;gap:12px}
+.pref-row:first-child{border-radius:var(--rs) var(--rs) 0 0}
+.pref-row:last-child{border-radius:0 0 var(--rs) var(--rs)}
 .pref-row:hover{background:var(--glass2)}
-.ptog{position:relative;width:38px;height:21px;appearance:none;
-  background:var(--border2);border-radius:11px;cursor:pointer;transition:background .2s;flex-shrink:0}
-.ptog::after{content:'';position:absolute;top:3px;left:3px;width:15px;height:15px;
-  border-radius:50%;background:var(--text3);transition:transform .2s,background .2s}
+.pref-row-icon{font-size:1rem;width:20px;text-align:center;flex-shrink:0}
+.pref-row-body{display:flex;flex-direction:column;gap:2px;flex:1}
+.pref-row-label{font-size:.85rem;font-weight:600;color:var(--text)}
+.pref-row-desc{font-size:.71rem;color:var(--text3);line-height:1.4}
+.ptog{position:relative;width:42px;height:24px;appearance:none;
+  background:var(--border2);border-radius:12px;cursor:pointer;
+  transition:background .2s;flex-shrink:0}
+.ptog::after{content:'';position:absolute;top:4px;left:4px;width:16px;height:16px;
+  border-radius:50%;background:var(--text3);transition:transform .2s,background .2s,box-shadow .2s}
 .ptog:checked{background:var(--blue)}
-.ptog:checked::after{transform:translateX(17px);background:#fff}
+.ptog:checked::after{transform:translateX(18px);background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.3)}
+
+/* ─ SETTINGS SECTION GROUP ─ */
+.sset-group{display:flex;flex-direction:column;gap:0}
+.sset-label{font-size:.66rem;font-weight:800;letter-spacing:.8px;text-transform:uppercase;
+  color:var(--text3);padding:0 2px 6px;margin-top:4px}
+.sset-block{background:var(--bg3);border:1px solid var(--border);border-radius:var(--rs);
+  overflow:hidden}
+.sset-row{display:flex;flex-direction:column;gap:5px;padding:13px 14px;
+  border-bottom:1px solid var(--border)}
+.sset-row:last-child{border-bottom:none}
+.sset-row-inline{display:flex;align-items:center;justify-content:space-between;
+  padding:12px 14px;border-bottom:1px solid var(--border);gap:12px}
+.sset-row-inline:last-child{border-bottom:none}
+.sset-row-label{font-size:.83rem;font-weight:600;color:var(--text);display:flex;align-items:center;gap:7px}
+.sset-row-sub{font-size:.7rem;color:var(--text3);margin-top:1px}
+
+/* ─ SYNC BUTTONS ROW ─ */
+.sync-btn-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.sync-btn-row .btn-g,.sync-btn-row .btn-d{font-size:.75rem;padding:9px 6px;display:flex;
+  align-items:center;justify-content:center;gap:5px}
 
 /* ─ MODAL ─ */
-.moverlay{position:fixed;inset:0;background:rgba(0,0,0,.7);
+.moverlay{position:fixed;inset:0;background:rgba(0,0,0,.75);
   display:flex;align-items:flex-end;justify-content:center;
-  z-index:600;backdrop-filter:blur(8px)}
+  z-index:600;backdrop-filter:blur(10px)}
 .moverlay.hidden{display:none}
 .htab-btn{flex:1;padding:9px 2px;background:none;border:none;border-bottom:2px solid transparent;
-  color:var(--text2);font-family:var(--fhe);font-size:.75rem;font-weight:600;cursor:pointer;transition:color .15s,border-color .15s}
+  color:var(--text2);font-family:var(--fhe);font-size:.75rem;font-weight:600;cursor:pointer;
+  transition:color .15s,border-color .15s}
 .htab-btn.active{color:var(--lime);border-bottom-color:var(--lime);font-weight:700}
 .htab-pnl{display:flex;flex-direction:column;gap:8px}
 .mbox{background:var(--bg1);border:1px solid var(--border);
   border-radius:var(--r) var(--r) 0 0;width:100%;max-width:480px;max-height:92vh;
   overflow-y:auto;animation:slideUp .28s cubic-bezier(.4,0,.2,1);
   padding-bottom:calc(var(--safeB)+4px)}
-.mbox.sm{max-height:70vh}
+.mbox.sm{max-height:72vh}
 @keyframes slideUp{from{transform:translateY(60px);opacity:0}to{transform:none;opacity:1}}
 .mhdr{display:flex;justify-content:space-between;align-items:center;
-  padding:18px 20px;border-bottom:1px solid var(--border)}
-.mhdr h2{font-family:var(--fui);font-size:.97rem;font-weight:700}
-.mbody{padding:18px 20px;display:flex;flex-direction:column;gap:14px}
-.mfoot{padding:14px 20px;border-top:1px solid var(--border)}
+  padding:16px 18px;border-bottom:1px solid var(--border);gap:10px}
+.mhdr h2{font-family:var(--fui);font-size:.97rem;font-weight:700;display:flex;align-items:center;gap:8px}
+.mhdr-sub{font-size:.7rem;font-weight:400;color:var(--text3)}
+.mbody{padding:16px 18px;display:flex;flex-direction:column;gap:16px}
+.mfoot{padding:13px 18px;border-top:1px solid var(--border)}
 .mfoot2{display:flex;gap:10px}
 .mfoot2 .btn-g,.mfoot2 .btn-d{flex:1;text-align:center}
 
 /* ─ CHIPS ─ */
-.chips{display:flex;flex-wrap:wrap;gap:6px}
-.chip{display:flex;align-items:center;gap:5px;padding:4px 10px 4px 12px;
-  background:var(--bg3);border:1px solid var(--border2);border-radius:20px;font-size:.78rem;font-weight:500}
-.chip-x{background:none;border:none;color:var(--text2);cursor:pointer;font-size:.85rem;padding:0 2px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;min-height:20px}
+.chip{display:flex;align-items:center;gap:5px;padding:5px 10px 5px 13px;
+  background:var(--bg0);border:1px solid var(--border2);border-radius:20px;
+  font-size:.78rem;font-weight:500;transition:border-color .15s}
+.chip:hover{border-color:var(--blue)}
+.chip-x{background:none;border:none;color:var(--text3);cursor:pointer;font-size:.8rem;
+  padding:0 2px;transition:color .15s;line-height:1}
 .chip-x:hover{color:var(--red)}
 .proj-row{display:flex;gap:8px}
 .proj-row .fi{flex:1}
 .proj-row .btn-g{padding:10px 14px;font-size:1rem}
 
+/* ─ IMPORT STEPS ─ */
+.import-step{display:flex;flex-direction:column;gap:10px;
+  background:var(--bg3);border:1px solid var(--border);border-radius:var(--rs);padding:14px 15px}
+.import-step-hdr{display:flex;align-items:center;gap:10px}
+.import-step-num{width:22px;height:22px;border-radius:50%;background:var(--blue);
+  color:#fff;font-size:.7rem;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.import-step-title{font-size:.86rem;font-weight:700;color:var(--text)}
+.import-step-desc{font-size:.76rem;color:var(--text2);line-height:1.6;padding-right:32px}
+.import-fmt-box{background:var(--bg0);border-radius:6px;padding:9px 11px;
+  font-size:.7rem;font-family:monospace;color:var(--text3);line-height:1.9;overflow-x:auto;white-space:nowrap}
+.import-legend{display:flex;flex-wrap:wrap;gap:8px;margin-top:2px}
+.import-legend-item{font-size:.72rem;color:var(--text2);display:flex;align-items:center;gap:4px}
+.import-preview-wrap{background:var(--bg0);border-radius:6px;
+  max-height:160px;overflow-y:auto;font-size:.7rem;font-family:monospace;
+  color:var(--text2);padding:8px 10px;line-height:1.8}
+.import-warn-box{background:var(--amberDim,rgba(251,191,36,.1));border:1px solid var(--amber);
+  border-radius:6px;padding:8px 10px;font-size:.72rem;color:var(--amber);line-height:1.6}
+
 /* ─ UPDATE PROMPT ─ */
 #update-prompt{position:fixed;bottom:calc(var(--safeB)+16px);left:50%;transform:translateX(-50%);
-  background:var(--bg2);border:1.5px solid var(--blue);border-radius:var(--r);
+  background:var(--bg1);border:1.5px solid var(--blue);border-radius:var(--r);
   width:calc(100% - 28px);max-width:452px;padding:14px 16px;
-  display:flex;flex-direction:column;gap:10px;box-shadow:var(--shadowLg);z-index:700;animation:slideUp .3s ease}
+  display:flex;justify-content:space-between;align-items:center;gap:12px;
+  box-shadow:var(--shadowLg);z-index:700;animation:slideUp .3s ease}
 #update-prompt.hidden{display:none}
-.upd-inner{display:flex;align-items:center;gap:10px;font-size:.88rem;font-weight:600}
-.upd-icon{font-size:1.3rem}
-.upd-acts{display:flex;gap:8px;justify-content:flex-end}
+.upd-body{display:flex;align-items:center;gap:10px;flex:1}
+.upd-icon{font-size:1.4rem;flex-shrink:0}
+.upd-text{display:flex;flex-direction:column;gap:1px}
+.upd-title{font-size:.88rem;font-weight:700;color:var(--text)}
+.upd-ver{font-size:.7rem;color:var(--blue)}
+.upd-acts{display:flex;gap:8px;flex-shrink:0}
 
 /* ─ INSTALL BANNER ─ */
 #install-banner{position:fixed;bottom:0;left:50%;transform:translateX(-50%);
-  background:var(--bg1);border:1px solid var(--border);border-bottom:none;
+  background:var(--bg1);border:1px solid var(--border);border-top:2px solid var(--lime);
   border-radius:var(--r) var(--r) 0 0;width:100%;max-width:480px;
-  padding:16px 20px calc(var(--safeB)+16px);box-shadow:var(--shadowLg);z-index:700;animation:slideUp .4s ease}
+  padding:16px 18px calc(var(--safeB)+16px);box-shadow:var(--shadowLg);z-index:700;animation:slideUp .4s ease}
 #install-banner.hidden{display:none}
-.inst-inner{display:flex;align-items:center;gap:12px}
-.inst-logo{width:42px;height:42px;border-radius:10px}
-.inst-txt{display:flex;flex-direction:column;gap:2px}
-.inst-txt strong{font-size:.92rem;font-weight:700}
-.inst-txt span{font-size:.78rem;color:var(--text2)}
-.inst-acts{display:flex;gap:8px;justify-content:flex-end;margin-top:12px}
+.inst-inner{display:flex;align-items:center;gap:14px}
+.inst-icon{width:44px;height:44px;border-radius:12px;background:var(--limeDim);
+  display:flex;align-items:center;justify-content:center;font-size:1.4rem;flex-shrink:0}
+.inst-txt{display:flex;flex-direction:column;gap:3px;flex:1}
+.inst-txt strong{font-size:.93rem;font-weight:700}
+.inst-txt span{font-size:.76rem;color:var(--text3)}
+.inst-acts{display:flex;gap:8px;justify-content:flex-end;margin-top:14px}
+
+/* ─ PENDING PILL ─ */
+.pending-pill{display:flex;align-items:center;gap:10px;
+  background:var(--amberDim,rgba(251,191,36,.08));border:1px solid rgba(251,191,36,.3);
+  border-radius:var(--rs);padding:10px 13px}
+.pending-pill-dot{width:7px;height:7px;border-radius:50%;background:var(--amber);
+  animation:pulse 1.4s ease infinite;flex-shrink:0}
+.pending-pill-text{font-size:.82rem;color:var(--text2);flex:1}
+.pending-pill-text b{color:var(--amber)}
 
 /* ─ TOAST ─ */
 #toast{position:fixed;bottom:calc(var(--safeB)+24px);left:50%;transform:translateX(-50%);
@@ -447,7 +512,7 @@ details summary::-webkit-details-marker{display:none}
       <a id="menu-sheet-link" href="#" target="_blank" rel="noopener" style="display:none;align-items:center;gap:7px;font-size:.8rem;color:var(--blue);text-decoration:none;padding:3px 2px">
         📊 פתח גיליון הדיווחים
       </a>
-      <span id="menu-vbadge" class="vbadge" title="לחץ לאיפוס">v2.9.3</span>
+      <span id="menu-vbadge" class="vbadge" title="לחץ לאיפוס">v3.0.0</span>
     </div>
   </aside>
 
@@ -459,7 +524,7 @@ details summary::-webkit-details-marker{display:none}
         <span class="hdr-name">MyWorkLog</span>
       </div>
       <div class="hdr-acts">
-        <span id="version-badge" class="vbadge" title="לחץ לאיפוס">v2.9.3</span>
+        <span id="version-badge" class="vbadge" title="לחץ לאיפוס">v3.0.0</span>
       </div>
     </div>
   </header>
@@ -576,10 +641,13 @@ details summary::-webkit-details-marker{display:none}
         </button>
       </div>
 
-      <div id="pending-section" class="card hidden">
-        <div class="pending-row">
-          <span>⏳ <span data-i18n="pendingTitle">ממתינים</span> (<span id="pending-count">0</span>)</span>
-          <button class="btn-g sm" id="btn-sync" data-i18n="btnSync">🔄 סנכרן</button>
+      <div id="pending-section" class="hidden" style="margin-top:0">
+        <div class="pending-pill">
+          <span class="pending-pill-dot"></span>
+          <span class="pending-pill-text">
+            <b><span id="pending-count">0</span> דיווחים</b> ממתינים לשליחה
+          </span>
+          <button class="btn-g sm" id="btn-sync" data-i18n="btnSync" style="flex-shrink:0;font-size:.75rem;padding:7px 12px">↑ שלח</button>
         </div>
       </div>
     </section>
@@ -690,59 +758,117 @@ details summary::-webkit-details-marker{display:none}
       <button class="ibtn" id="btn-close-settings">✕</button>
     </div>
     <div class="mbody">
-      <div class="fg">
-        <label class="flbl" data-i18n="settingsLangLabel">שפה</label>
-        <div class="seg">
-          <button class="seg-btn active" data-lang="he">עברית</button>
-          <button class="seg-btn"        data-lang="en">English</button>
+
+      <!-- LANGUAGE -->
+      <div class="sset-group">
+        <div class="sset-label" data-i18n="settingsLangLabel">שפה</div>
+        <div class="sset-block">
+          <div class="sset-row-inline">
+            <span class="sset-row-label">🌐 שפת ממשק</span>
+            <div class="seg" style="width:140px">
+              <button class="seg-btn active" data-lang="he">עברית</button>
+              <button class="seg-btn"        data-lang="en">English</button>
+            </div>
+          </div>
         </div>
       </div>
-      <div class="fg">
-        <label class="flbl" data-i18n="settingsEndpointLabel">כתובת Google Apps Script</label>
-        <input type="url" id="settings-endpoint" class="fi"
-          placeholder="https://script.google.com/macros/s/.../exec"/>
-        <p class="fhint" data-i18n="settingsEndpointHint">הדבק את ה-URL של ה-Web App</p>
-      </div>
-      <div class="fg">
-        <label class="flbl" data-i18n="sheetUrlLabel">כתובת גיליון Google Sheets</label>
-        <input type="url" id="settings-sheet-url" class="fi"
-          placeholder="https://docs.google.com/spreadsheets/d/.../edit"/>
-        <p class="fhint" data-i18n="sheetUrlHint">הדבק את ה-URL של הגיליון (לקישור ישיר)</p>
-      </div>
-      <div class="fg">
-        <label class="flbl" data-i18n="settingsProjectsLabel">פרויקטים שמורים</label>
-        <div class="proj-row">
-          <input type="text" id="new-project" class="fi"
-            data-i18n="placeholderNewProject" data-i18n-attr="placeholder"
-            placeholder="הוסף פרויקט..."/>
-          <button class="btn-g" id="btn-add-project">+</button>
-        </div>
-        <div id="projects-chips" class="chips"></div>
-      </div>
-      <div class="fg">
-        <div class="card-lbl" data-i18n="settingsPrefTitle">העדפות</div>
-        <div class="pref-list">
-          <label class="pref-row"><span data-i18n="prefVibration">רטט</span><input type="checkbox" id="pref-vibration" class="ptog" checked/></label>
-          <label class="pref-row"><span data-i18n="prefAnimations">אנימציות</span><input type="checkbox" id="pref-animations" class="ptog" checked/></label>
-          <label class="pref-row"><span data-i18n="prefPullRefresh">משיכה לרענון</span><input type="checkbox" id="pref-pull-refresh" class="ptog"/></label>
+
+      <!-- CONNECTION -->
+      <div class="sset-group">
+        <div class="sset-label">חיבור ל-Google</div>
+        <div class="sset-block">
+          <div class="sset-row">
+            <label class="sset-row-label" for="settings-endpoint">🔗 Google Apps Script URL</label>
+            <div class="sset-row-sub" data-i18n="settingsEndpointHint">הדבק את ה-URL של ה-Web App</div>
+            <input type="url" id="settings-endpoint" class="fi" style="margin-top:4px"
+              placeholder="https://script.google.com/macros/s/.../exec"/>
+          </div>
+          <div class="sset-row" id="sheet-link-section" style="display:none">
+            <label class="sset-row-label" for="settings-sheet-url">📊 Google Sheets URL</label>
+            <div class="sset-row-sub" data-i18n="sheetUrlHint">הדבק את ה-URL של הגיליון</div>
+            <input type="url" id="settings-sheet-url" class="fi" style="margin-top:4px"
+              placeholder="https://docs.google.com/spreadsheets/d/.../edit"/>
+            <a id="sheet-link" href="#" target="_blank" rel="noopener"
+              style="display:flex;align-items:center;gap:8px;padding:9px 12px;background:var(--bg0);
+              border:1px solid var(--border);border-radius:var(--rs);color:var(--blue);font-size:.82rem;
+              text-decoration:none;margin-top:8px;transition:border-color .2s"
+              onmouseover="this.style.borderColor='var(--blue)'" onmouseout="this.style.borderColor='var(--border)'">
+              ↗ <span>פתח גיליון הדיווחים</span>
+            </a>
+          </div>
         </div>
       </div>
-      <div class="fg">
-        <label class="flbl" data-i18n="settingsDataLabel">ניהול נתונים</label>
-        <div style="display:flex;gap:8px;flex-wrap:wrap">
-          <button class="btn-g sm" id="btn-sync-reports"  style="flex:1" data-i18n="btnSyncReports">🔄 סנכרן דיווחים מגיליון</button>
-          <button class="btn-g sm" id="btn-sync-projects" style="flex:1" data-i18n="btnSyncProjects">🔄 סנכרן פרויקטים</button>
-          <button class="btn-d sm" id="btn-clear-data"    style="flex:1" data-i18n="btnClearData">🗑 מחק נתונים</button>
+
+      <!-- SYNC -->
+      <div class="sset-group">
+        <div class="sset-label">סנכרון</div>
+        <div class="sset-block">
+          <div class="sset-row">
+            <div class="sync-btn-row">
+              <button class="btn-g sm" id="btn-sync-reports" data-i18n="btnSyncReports">↓ דיווחים מגיליון</button>
+              <button class="btn-g sm" id="btn-sync-projects" data-i18n="btnSyncProjects">↓ פרויקטים</button>
+            </div>
+          </div>
         </div>
       </div>
-      <div class="fg" id="sheet-link-section" style="display:none">
-        <label class="flbl" data-i18n="sheetLinkLabel">פתח גיליון</label>
-        <a id="sheet-link" href="#" target="_blank" rel="noopener"
-          style="display:flex;align-items:center;gap:8px;padding:10px 13px;background:var(--bg3);border:1.5px solid var(--border);border-radius:var(--rs);color:var(--blue);font-size:.85rem;text-decoration:none;transition:border-color .2s"
-          onmouseover="this.style.borderColor='var(--blue)'" onmouseout="this.style.borderColor='var(--border)'">
-          📊 <span>פתח גיליון הדיווחים</span>
-        </a>
+
+      <!-- PROJECTS -->
+      <div class="sset-group">
+        <div class="sset-label" data-i18n="settingsProjectsLabel">פרויקטים שמורים</div>
+        <div class="sset-block">
+          <div class="sset-row">
+            <div class="proj-row">
+              <input type="text" id="new-project" class="fi"
+                data-i18n="placeholderNewProject" data-i18n-attr="placeholder"
+                placeholder="הוסף פרויקט..."/>
+              <button class="btn-g" id="btn-add-project" style="padding:10px 16px">+</button>
+            </div>
+            <div id="projects-chips" class="chips" style="margin-top:6px"></div>
+          </div>
+        </div>
       </div>
+
+      <!-- PREFERENCES -->
+      <div class="sset-group">
+        <div class="sset-label" data-i18n="settingsPrefTitle">העדפות</div>
+        <div class="sset-block pref-list">
+          <label class="pref-row">
+            <span class="pref-row-icon">📳</span>
+            <span class="pref-row-body">
+              <span class="pref-row-label" data-i18n="prefVibration">רטט</span>
+              <span class="pref-row-desc">פידבק הפטי בכפתורים ופעולות</span>
+            </span>
+            <input type="checkbox" id="pref-vibration" class="ptog" checked/>
+          </label>
+          <label class="pref-row">
+            <span class="pref-row-icon">✨</span>
+            <span class="pref-row-body">
+              <span class="pref-row-label" data-i18n="prefAnimations">אנימציות</span>
+              <span class="pref-row-desc">מעברים ואנימציות ממשק</span>
+            </span>
+            <input type="checkbox" id="pref-animations" class="ptog" checked/>
+          </label>
+          <label class="pref-row">
+            <span class="pref-row-icon">↓</span>
+            <span class="pref-row-body">
+              <span class="pref-row-label" data-i18n="prefPullRefresh">משיכה לרענון</span>
+              <span class="pref-row-desc">משוך למטה לרענון הדף</span>
+            </span>
+            <input type="checkbox" id="pref-pull-refresh" class="ptog"/>
+          </label>
+        </div>
+      </div>
+
+      <!-- DATA MANAGEMENT -->
+      <div class="sset-group">
+        <div class="sset-label" data-i18n="settingsDataLabel">ניהול נתונים</div>
+        <div class="sset-block">
+          <div class="sset-row">
+            <button class="btn-d sm" id="btn-clear-data" style="width:100%" data-i18n="btnClearData">🗑 מחק כל הנתונים המקומיים</button>
+          </div>
+        </div>
+      </div>
+
     </div>
     <div class="mfoot">
       <button class="btn-p" id="btn-save-settings" data-i18n="btnSaveSettings">שמור הגדרות</button>
@@ -754,45 +880,72 @@ details summary::-webkit-details-marker{display:none}
 <div id="modal-reset" class="moverlay hidden" role="dialog" aria-modal="true">
   <div class="mbox sm">
     <div class="mhdr">
-      <h2 data-i18n="resetTitle">⚠️ איפוס אפליקציה</h2>
+      <h2 data-i18n="resetTitle" style="color:var(--red)">⚠️ איפוס אפליקציה</h2>
       <button class="ibtn" id="btn-close-reset">✕</button>
     </div>
     <div class="mbody">
-      <p class="reset-desc" data-i18n="resetBody">בחר מה לשמור לפני האיפוס:</p>
-      <div class="pref-list">
-        <label class="pref-row"><span data-i18n="resetKeepReports">שמור היסטוריית דיווחים</span><input type="checkbox" id="reset-keep-reports" class="ptog" checked/></label>
-        <label class="pref-row"><span data-i18n="resetKeepSettings">שמור הגדרות</span><input type="checkbox" id="reset-keep-settings" class="ptog" checked/></label>
-        <label class="pref-row"><span data-i18n="resetKeepQueue">שמור תור ממתין</span><input type="checkbox" id="reset-keep-queue" class="ptog"/></label>
+      <div style="background:var(--redDim);border:1px solid rgba(255,90,90,.25);border-radius:var(--rs);
+        padding:11px 13px;font-size:.82rem;color:var(--text2);line-height:1.6">
+        ⚠️ פעולה זו אינה ניתנת לביטול. בחר אילו נתונים לשמור:
+      </div>
+      <div class="sset-block pref-list">
+        <label class="pref-row">
+          <span class="pref-row-icon">📋</span>
+          <span class="pref-row-body">
+            <span class="pref-row-label" data-i18n="resetKeepReports">היסטוריית דיווחים</span>
+          </span>
+          <input type="checkbox" id="reset-keep-reports" class="ptog" checked/>
+        </label>
+        <label class="pref-row">
+          <span class="pref-row-icon">⚙️</span>
+          <span class="pref-row-body">
+            <span class="pref-row-label" data-i18n="resetKeepSettings">הגדרות (endpoint, פרויקטים)</span>
+          </span>
+          <input type="checkbox" id="reset-keep-settings" class="ptog" checked/>
+        </label>
+        <label class="pref-row">
+          <span class="pref-row-icon">⏳</span>
+          <span class="pref-row-body">
+            <span class="pref-row-label" data-i18n="resetKeepQueue">תור ממתין לשליחה</span>
+          </span>
+          <input type="checkbox" id="reset-keep-queue" class="ptog"/>
+        </label>
       </div>
     </div>
     <div class="mfoot mfoot2">
       <button class="btn-g" id="btn-reset-cancel"  data-i18n="btnResetCancel">ביטול</button>
-      <button class="btn-d" id="btn-reset-confirm" data-i18n="btnResetConfirm">🗑 אפס הכל</button>
+      <button class="btn-d" id="btn-reset-confirm" data-i18n="btnResetConfirm">🗑 אפס</button>
     </div>
   </div>
 </div>
 
 <!-- UPDATE PROMPT -->
 <div id="update-prompt" class="hidden">
-  <div class="upd-inner"><span class="upd-icon">🔄</span><span data-i18n="updateAvailable">גרסה חדשה זמינה!</span></div>
+  <div class="upd-body">
+    <span class="upd-icon">🔄</span>
+    <div class="upd-text">
+      <span class="upd-title" data-i18n="updateAvailable">גרסה חדשה זמינה</span>
+      <span class="upd-ver" id="upd-ver-label"></span>
+    </div>
+  </div>
   <div class="upd-acts">
-    <button class="btn-g sm"  id="btn-update-dismiss" data-i18n="btnUpdateDismiss">לא עכשיו</button>
-    <button class="btn-p sm"  id="btn-update-now"     data-i18n="btnUpdate">עדכן</button>
+    <button class="btn-g sm" id="btn-update-dismiss" data-i18n="btnUpdateDismiss">אחר כך</button>
+    <button class="btn-p sm" id="btn-update-now"     data-i18n="btnUpdate">עדכן עכשיו</button>
   </div>
 </div>
 
 <!-- INSTALL BANNER -->
 <div id="install-banner" class="hidden">
   <div class="inst-inner">
-    <img src="logo.png" alt="" class="inst-logo"/>
+    <div class="inst-icon">📲</div>
     <div class="inst-txt">
       <strong data-i18n="installTitle">התקן את האפליקציה</strong>
-      <span data-i18n="installBody">גישה מהירה וללא אינטרנט</span>
+      <span data-i18n="installBody">גישה מהירה ישירות ממסך הבית, ללא דפדפן</span>
     </div>
   </div>
   <div class="inst-acts">
-    <button class="btn-g sm"  id="btn-install-dismiss" data-i18n="btnInstallDismiss">אחר כך</button>
-    <button class="btn-p sm"  id="btn-install-confirm" data-i18n="btnInstall">התקן</button>
+    <button class="btn-g sm" id="btn-install-dismiss" data-i18n="btnInstallDismiss">אחר כך</button>
+    <button class="btn-p sm" id="btn-install-confirm" data-i18n="btnInstall">✓ התקן</button>
   </div>
 </div>
 
@@ -800,20 +953,28 @@ details summary::-webkit-details-marker{display:none}
 <div id="modal-workcal" class="moverlay hidden" role="dialog" aria-modal="true">
   <div class="mbox sm">
     <div class="mhdr">
-      <h2>&#128197; &#1514;&#1511;&#1503; &#1497;&#1502;&#1497; &#1506;&#1489;&#1493;&#1491;&#1492;</h2>
-      <button class="ibtn" id="btn-close-workcal">&#10005;</button>
+      <h2>📊 תקן שעות — WorkStandard</h2>
+      <button class="ibtn" id="btn-close-workcal">✕</button>
     </div>
     <div class="mbody">
-      <div style="background:var(--blueDim);border:1px solid rgba(77,171,255,.3);border-radius:var(--rs);padding:11px 13px;font-size:.82rem;color:var(--text2);line-height:1.7">
-        <strong style="color:var(--blue)">&#128202; &#1490;&#1497;&#1500;&#1497;&#1493;&#1503; WorkStandard &#1489;-Google Sheets</strong><br/>
-        &#1492;&#1502;&#1489;&#1504;&#1492;: <span style="font-family:monospace;color:var(--text);font-size:.78rem">Date | WeekDay | Day_Standard_Hours | Notes</span><br/>
-        &#1492;&#1493;&#1505;&#1508;/&#1506;&#1512;&#1493;&#1498; &#1513;&#1493;&#1512;&#1493;&#1514; &#1497;&#1513;&#1497;&#1512;&#1493;&#1514; &#1489;&#1490;&#1497;&#1500;&#1497;&#1493;&#1503;, &#1488;&#1493; &#1500;&#1495;&#1509; &#1506;&#1500; &#1497;&#1493;&#1501; &#1489;&#1500;&#1493;&#1495; &#1500;&#1506;&#1512;&#1497;&#1499;&#1492; &#1491;&#1512;&#1498; &#1492;&#1488;&#1508;&#1500;&#1497;&#1511;&#1510;&#1497;&#1492;.
+      <div class="sset-block">
+        <div class="sset-row">
+          <div class="sset-row-label">📋 מבנה גיליון WorkStandard</div>
+          <div style="background:var(--bg0);border-radius:6px;padding:8px 11px;margin-top:6px;
+            font-size:.72rem;font-family:monospace;color:var(--text3);line-height:1.8">
+            Date | WeekDay | Day_Standard_Hours | Notes
+          </div>
+          <div class="sset-row-sub" style="margin-top:6px">
+            הוסף/ערוך שורות ישירות בגיליון, או לחץ על יום בלוח לעריכה דרך האפליקציה.
+          </div>
+        </div>
       </div>
-      <div id="wstandard-sync-status" style="font-size:.78rem;color:var(--text3);text-align:center;min-height:20px"></div>
+      <div id="wstandard-sync-status" style="font-size:.78rem;color:var(--text3);
+        text-align:center;min-height:20px;padding:2px 0"></div>
     </div>
     <div class="mfoot mfoot2">
-      <button class="btn-g" id="btn-close-workcal2">&#1505;&#1490;&#1493;&#1512;</button>
-      <button class="btn-p sm" id="btn-sync-wstandard">&#128260; &#1502;&#1513;&#1493;&#1498; &#1504;&#1514;&#1493;&#1504;&#1497;&#1501; &#1502;&#1492;&#1490;&#1497;&#1500;&#1497;&#1493;&#1503;</button>
+      <button class="btn-g" id="btn-close-workcal2">סגור</button>
+      <button class="btn-p sm" id="btn-sync-wstandard">↻ משוך נתונים מהגיליון</button>
     </div>
   </div>
 </div>
@@ -1271,7 +1432,7 @@ function applyLang(lang){
 /* ─────────────────────────────────────────────────────
    App
 ───────────────────────────────────────────────────── */
-const VER='2.9.3';
+const VER='3.0.0';
 // SW cache buster: if a stale SW is detected, unregister it so fresh content loads
 if('serviceWorker'in navigator){
   navigator.serviceWorker.getRegistration().then(reg=>{
@@ -3099,7 +3260,7 @@ function swInit(){
 function showUpd(newVer){
   const prompt=$('update-prompt');if(!prompt)return;
   if(newVer){
-    const lbl=prompt.querySelector('.upd-ver-lbl');
+    const lbl=$('upd-ver-label');
     if(lbl)lbl.textContent=t('annualYear',newVer)+' '+t('updateAvailable').split('!')[0];
   }
   prompt.classList.remove('hidden');buzz([30,30,60]);
@@ -3191,48 +3352,65 @@ function scrollInit(){
 <div id="modal-import" class="moverlay hidden" role="dialog" aria-modal="true">
   <div class="mbox">
     <div class="mhdr">
-      <h2>📥 טעינת דיווחים מ-CSV</h2>
+      <div>
+        <h2>📥 טעינת דיווחים</h2>
+        <div class="mhdr-sub">Excel (.xlsx) או CSV</div>
+      </div>
       <button class="ibtn" id="btn-close-import">✕</button>
     </div>
-    <div class="mbody" style="display:flex;flex-direction:column;gap:18px;padding:16px">
+    <div class="mbody">
 
-      <!-- Download template -->
-      <div style="background:var(--glass);border:1px solid var(--border);border-radius:var(--rs);padding:14px">
-        <div style="font-weight:700;font-size:.9rem;margin-bottom:6px">1️⃣ הורד טמפלט</div>
-        <div style="font-size:.78rem;color:var(--text2);margin-bottom:10px;line-height:1.6">
-          הורד קובץ Excel (.xlsx) עם העמודות הנדרשות ושורות לדוגמה. מלא את הנתונים ושמור — ניתן לטעון גם CSV.
+      <!-- Step 1 -->
+      <div class="import-step">
+        <div class="import-step-hdr">
+          <span class="import-step-num">1</span>
+          <span class="import-step-title">הורד טמפלט</span>
         </div>
-        <button class="btn-g sm" id="btn-dl-template" style="width:100%">⬇️ הורד טמפלט Excel</button>
+        <p class="import-step-desc">
+          הורד קובץ Excel מוכן עם העמודות הנדרשות. מלא את הנתונים ושמור — ניתן לטעון גם CSV.
+        </p>
+        <button class="btn-g sm" id="btn-dl-template" style="align-self:flex-start;padding:8px 16px">⬇️ הורד טמפלט Excel</button>
       </div>
 
-      <!-- Format reference -->
-      <div style="background:var(--glass);border:1px solid var(--border);border-radius:var(--rs);padding:14px">
-        <div style="font-weight:700;font-size:.9rem;margin-bottom:8px">📋 מבנה הקובץ <span style="font-size:.7rem;color:var(--text3);font-weight:400">(CSV ו-Excel .xlsx)</span></div>
-        <div style="font-size:.72rem;color:var(--text3);font-family:monospace;line-height:1.8;overflow-x:auto;white-space:nowrap">
-          report_date,report_time,category,description,project<br>
-          2024-03-15,09:00,entry,,<br>
-          2024-03-15,17:30,exit,,<br>
-          2024-03-15,10:00-11:30,task,ישיבת צוות,פרויקט-א
+      <!-- Format ref -->
+      <div class="import-step">
+        <div class="import-step-hdr">
+          <span class="import-step-num" style="background:var(--border2);font-size:.85rem">📋</span>
+          <span class="import-step-title">מבנה הקובץ</span>
         </div>
-        <div style="margin-top:10px;font-size:.74rem;color:var(--text2);line-height:1.7">
-          <b>category:</b> <code style="color:var(--lime)">entry</code> / <code style="color:var(--red)">exit</code> / <code style="color:var(--blue)">task</code><br>
-          <b>report_time:</b> שעה בפורמט <code>HH:MM</code> — או טווח <code>HH:MM-HH:MM</code> למשימות<br>
-          <b>description / project:</b> אופציונלי למשימות
+        <div class="import-fmt-box">
+          report_date · report_time · category · description · project<br>
+          2024-03-15 · 09:00 · entry<br>
+          2024-03-15 · 17:30 · exit<br>
+          2024-03-15 · 10:00-11:30 · task · ישיבה · פרויקט-א
+        </div>
+        <div class="import-legend">
+          <span class="import-legend-item"><span style="color:var(--lime)">●</span> entry — כניסה</span>
+          <span class="import-legend-item"><span style="color:var(--red)">●</span> exit — יציאה</span>
+          <span class="import-legend-item"><span style="color:var(--blue)">●</span> task — משימה</span>
         </div>
       </div>
 
-      <!-- Upload -->
-      <div style="background:var(--glass);border:1px solid var(--border);border-radius:var(--rs);padding:14px">
-        <div style="font-weight:700;font-size:.9rem;margin-bottom:6px">2️⃣ טען קובץ</div>
+      <!-- Step 2 -->
+      <div class="import-step">
+        <div class="import-step-hdr">
+          <span class="import-step-num">2</span>
+          <span class="import-step-title">בחר קובץ לטעינה</span>
+        </div>
         <input type="file" id="import-file-input" accept=".csv,.xlsx,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" style="display:none"/>
-        <button class="btn-g sm" id="btn-pick-csv" style="width:100%;margin-bottom:10px">📂 בחר קובץ CSV / Excel</button>
-        <div id="import-file-name" style="font-size:.74rem;color:var(--text3);text-align:center;margin-bottom:10px;min-height:16px"></div>
-        <div id="import-preview" style="display:none;margin-bottom:12px">
-          <div style="font-weight:600;font-size:.8rem;margin-bottom:6px">תצוגה מקדימה — <span id="import-row-count">0</span> שורות</div>
-          <div id="import-preview-list" style="max-height:160px;overflow-y:auto;font-size:.72rem;font-family:monospace;background:var(--bg0);border-radius:6px;padding:8px;color:var(--text2)"></div>
-          <div id="import-warn" style="font-size:.72rem;color:var(--amber);margin-top:6px;display:none"></div>
+        <button class="btn-g sm" id="btn-pick-csv" style="width:100%;padding:10px">📂 בחר קובץ</button>
+        <div id="import-file-name" style="font-size:.74rem;color:var(--text3);text-align:center;min-height:18px"></div>
+
+        <div id="import-preview" style="display:none">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+            <span style="font-size:.8rem;font-weight:700;color:var(--text)">תצוגה מקדימה</span>
+            <span style="font-size:.75rem;color:var(--lime);font-weight:700"><span id="import-row-count">0</span> שורות</span>
+          </div>
+          <div id="import-preview-list" class="import-preview-wrap"></div>
+          <div id="import-warn" class="import-warn-box" style="display:none;margin-top:8px"></div>
         </div>
-        <button class="btn-p" id="btn-import-confirm" disabled style="width:100%;padding:11px">
+
+        <button class="btn-p" id="btn-import-confirm" disabled style="width:100%;margin-top:4px">
           <span class="btn-text">✅ ייבא דיווחים</span>
         </button>
       </div>
