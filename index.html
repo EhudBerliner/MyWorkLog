@@ -1737,10 +1737,10 @@ function migrateData(prevVer){
   if(!store(K.wstandard)) store(K.wstandard,[]);
   // Ensure queue key exists
   if(!store('mwl_wstandard_queue')) store('mwl_wstandard_queue',[]);
-  // v3.6.0: ensure new keys exist without overwriting
+  // v3.5+: ensure new keys exist without overwriting
   if(!store(K.profile)) store(K.profile,{name:'',role:''});
   if(store(K.rounding)===null) store(K.rounding,0);
-  if(!store(K.clients)) store(K.clients,[]);
+  // Note: mwl_clients was used in v3.3-v3.4, removed in v3.5 — no migration needed
   // Keep all other keys as-is — reports, settings, projects, prefs untouched
 }
 function vBadgeInit(){
@@ -2646,7 +2646,7 @@ async function flushWStandardQueue(){
 /* ─ Daily status card ─ */
 function renderDayWCStatus(ds,reports){
   const sec=$('day-wc-section');if(!sec)return;
-  const{status,actualMins,minMins,diffMins,wdStr,notes,pct,fromTasks,dayType,pairs,hasOpen}=getDayStatus(ds,reports);
+  const{status,actualMins,minMins,diffMins,wdStr,notes,description,pct,fromTasks,dayType,pairs,hasOpen}=getDayStatus(ds,reports);
   const notesEl=$('day-wc-notes');
   const dayTypeLabels={vacation:t('statusVacation'),sick:t('statusSick'),holiday:t('statusHoliday'),sabbatical:'🌴 שבתון'};
   const dayTypeColors={vacation:'var(--amber)',sick:'var(--purple)',holiday:'var(--blue)',sabbatical:'#63cab7'};
