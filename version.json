@@ -1,1 +1,1 @@
-{"version": "3.2.0", "buildDate": "2026-03-09", "changelog": "Settings unified: tabs (UI/Connection/Data/Clients/About), profile, time rounding, client management with projects+tasks+billable, export, about tab"}
+{"version":"3.3.0","buildDate":"2026-03-09","changelog":"CRM: Clients+Projects synced to Sheets (Clients/ClientProjects sheets), global Task Definitions with billable flag synced to TaskDefinitions sheet, getCRM endpoint, background sync every 30min"}

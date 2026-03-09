@@ -499,6 +499,25 @@ details summary::-webkit-details-marker{display:none}
 .add-row .fi{flex:1;font-size:.8rem;padding:8px 10px}
 .add-row .btn-g{padding:8px 12px;font-size:.8rem}
 
+/* ─ CRM TASKS TAB ─ */
+.task-def-item{display:flex;align-items:center;gap:8px;padding:8px 11px;
+  background:var(--bg3);border:1px solid var(--border);border-radius:var(--rs);
+  transition:border-color .15s}
+.task-def-item:hover{border-color:var(--border2)}
+.task-def-name{flex:1;font-size:.84rem;font-weight:600;color:var(--text)}
+.task-def-list{display:flex;flex-direction:column;gap:5px}
+.crm-sync-bar{display:flex;align-items:center;gap:10px;padding:9px 13px;
+  background:var(--bg3);border:1px solid var(--border);border-radius:var(--rs);
+  font-size:.75rem;color:var(--text3)}
+.crm-sync-dot{width:7px;height:7px;border-radius:50%;background:var(--text3);flex-shrink:0;transition:background .3s}
+.crm-sync-dot.ok{background:var(--lime)}
+.crm-sync-dot.syncing{background:var(--amber);animation:pulse 1s ease infinite}
+.crm-sync-dot.err{background:var(--red)}
+.crm-sync-label{flex:1}
+.tab-badge{display:inline-flex;align-items:center;justify-content:center;
+  min-width:16px;height:16px;border-radius:8px;background:var(--blue);
+  color:#fff;font-size:.58rem;font-weight:800;padding:0 4px;margin-right:3px}
+
 /* ─ PROFILE SECTION ─ */
 .profile-avatar{width:56px;height:56px;border-radius:14px;background:var(--limeDim);
   border:2px solid var(--lime);display:flex;align-items:center;justify-content:center;
@@ -561,7 +580,7 @@ details summary::-webkit-details-marker{display:none}
       <a id="menu-sheet-link" href="#" target="_blank" rel="noopener" style="display:none;align-items:center;gap:7px;font-size:.8rem;color:var(--blue);text-decoration:none;padding:3px 2px">
         <span data-i18n="menuOpenSheet">📊 פתח גיליון הדיווחים</span>
       </a>
-      <span id="menu-vbadge" class="vbadge" data-i18n-attr="title" data-i18n="menuVersionTooltip" title="לחץ לאיפוס">v3.2.0</span>
+      <span id="menu-vbadge" class="vbadge" data-i18n-attr="title" data-i18n="menuVersionTooltip" title="לחץ לאיפוס">v3.3.0</span>
     </div>
   </aside>
 
@@ -573,7 +592,7 @@ details summary::-webkit-details-marker{display:none}
         <span class="hdr-name">MyWorkLog</span>
       </div>
       <div class="hdr-acts">
-        <span id="version-badge" class="vbadge" data-i18n="menuVersionTooltip" data-i18n-attr="title" title="לחץ לאיפוס">v3.2.0</span>
+        <span id="version-badge" class="vbadge" data-i18n="menuVersionTooltip" data-i18n-attr="title" title="לחץ לאיפוס">v3.3.0</span>
       </div>
     </div>
   </header>
@@ -813,7 +832,8 @@ details summary::-webkit-details-marker{display:none}
         <button class="stab-btn active" data-stab="ui">🎨 תצוגה</button>
         <button class="stab-btn"        data-stab="connection">🔗 חיבור</button>
         <button class="stab-btn"        data-stab="data">📦 נתונים</button>
-        <button class="stab-btn"        data-stab="clients">👥 לקוחות</button>
+        <button class="stab-btn"        data-stab="clients">🏢 לקוחות</button>
+        <button class="stab-btn"        data-stab="tasks">📋 משימות</button>
         <button class="stab-btn"        data-stab="about">ℹ️ אודות</button>
       </div>
     </div>
@@ -1043,28 +1063,79 @@ details summary::-webkit-details-marker{display:none}
       <!-- ══ TAB: CLIENTS ══ -->
       <div class="stab-pnl" id="stab-clients">
 
+        <!-- CRM SYNC BAR -->
+        <div class="crm-sync-bar" id="crm-sync-bar" style="margin-bottom:2px">
+          <div class="crm-sync-dot" id="crm-sync-dot"></div>
+          <span class="crm-sync-label" id="crm-sync-label">טוען...</span>
+          <button class="btn-g sm" id="btn-sync-crm" style="padding:5px 10px;font-size:.72rem">↻ סנכרן</button>
+        </div>
+
         <!-- ADD CLIENT -->
         <div class="sset-group">
-          <div class="sset-label">הוסף לקוח חדש</div>
+          <div class="sset-label">➕ לקוח חדש</div>
           <div class="sset-block">
             <div class="sset-row">
               <div class="add-row">
                 <input type="text" id="new-client-name" class="fi" placeholder="שם הלקוח..."/>
-                <button class="btn-g" id="btn-add-client">+ לקוח</button>
+                <button class="btn-g" id="btn-add-client">+ הוסף</button>
               </div>
             </div>
           </div>
         </div>
 
         <!-- CLIENTS TREE -->
-        <div id="clients-tree"></div>
+        <div id="clients-tree" style="display:flex;flex-direction:column;gap:8px"></div>
 
-        <!-- hint if empty -->
-        <div id="clients-empty-hint" style="text-align:center;color:var(--text3);font-size:.82rem;padding:18px 0;display:none">
+        <div id="clients-empty-hint" style="text-align:center;color:var(--text3);font-size:.82rem;padding:18px 0">
           אין לקוחות עדיין — הוסף לקוח ראשון למעלה
         </div>
 
       </div><!-- /stab-clients -->
+
+      <!-- ══ TAB: TASKS ══ -->
+      <div class="stab-pnl" id="stab-tasks">
+
+        <!-- CRM SYNC STATUS (shared) -->
+        <div class="crm-sync-bar" id="crm-sync-bar-tasks" style="margin-bottom:2px">
+          <div class="crm-sync-dot" id="crm-sync-dot-tasks"></div>
+          <span class="crm-sync-label" id="crm-sync-label-tasks">טוען...</span>
+          <button class="btn-g sm" onclick="syncCRM()" style="padding:5px 10px;font-size:.72rem">↻ סנכרן</button>
+        </div>
+
+        <!-- ADD TASK DEFINITION -->
+        <div class="sset-group">
+          <div class="sset-label">➕ הגדרת משימה חדשה</div>
+          <div class="sset-block">
+            <div class="sset-row">
+              <div style="font-size:.76rem;color:var(--text3);margin-bottom:8px;line-height:1.6">
+                המשימות משותפות לכל הלקוחות. ניתן להוסיף אותה משימה פעמיים — פעם כבר-חיוב ופעם ללא חיוב.
+              </div>
+              <div class="add-row" style="flex-wrap:wrap;gap:6px">
+                <input type="text" id="new-task-def-name" class="fi" placeholder="שם המשימה..." style="min-width:140px"/>
+                <div class="seg" style="width:190px;flex-shrink:0">
+                  <button class="seg-btn active" data-billable="true">💰 בר-חיוב</button>
+                  <button class="seg-btn"        data-billable="false">🆓 ללא חיוב</button>
+                </div>
+                <button class="btn-g" id="btn-add-task-def" style="padding:8px 14px">+ הוסף</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- TASK DEFINITIONS LIST -->
+        <div class="sset-group">
+          <div class="sset-label">📋 משימות מוגדרות</div>
+          <div class="sset-block">
+            <div class="sset-row" id="task-def-list-wrap">
+              <div id="task-def-list" class="task-def-list"></div>
+              <div id="task-def-empty" style="text-align:center;color:var(--text3);font-size:.82rem;padding:10px 0">
+                אין משימות מוגדרות עדיין
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /stab-tasks -->
 
       <!-- ══ TAB: ABOUT ══ -->
       <div class="stab-pnl" id="stab-about">
@@ -1080,7 +1151,7 @@ details summary::-webkit-details-marker{display:none}
               </div>
               <div class="about-row">
                 <span class="about-lbl">גרסה</span>
-                <span class="about-val" id="about-version">v3.2.0</span>
+                <span class="about-val" id="about-version">v3.3.0</span>
               </div>
               <div class="about-row">
                 <span class="about-lbl">סטטוס PWA</span>
@@ -1458,11 +1529,11 @@ document.addEventListener('DOMContentLoaded',()=>{
     verCheck();themeInit();langInit();prefsApply();
     splashInit();dtInit();tabsInit();catInit();durInit();clockInit();
     submitInit();settingsInit();summaryInit();
-    settingsTabsInit();   // v3.2.0
-    profileInit();        // v3.2.0
-    roundingInit();       // v3.2.0
-    clientsInit();        // v3.2.0
-    exportInit();         // v3.2.0
+    settingsTabsInit();   // v3.3.0
+    profileInit();        // v3.3.0
+    roundingInit();       // v3.3.0
+    clientsInit();        // v3.3.0
+    exportInit();         // v3.3.0
     // Theme toggle in settings
     $('btn-theme-toggle-settings')?.addEventListener('click',()=>{
       applyTheme(document.body.classList.contains('light')?'dark':'light');
@@ -1674,7 +1745,7 @@ function migrateData(prevVer){
   if(!store(K.wstandard)) store(K.wstandard,[]);
   // Ensure queue key exists
   if(!store('mwl_wstandard_queue')) store('mwl_wstandard_queue',[]);
-  // v3.2.0: ensure new keys exist without overwriting
+  // v3.3.0: ensure new keys exist without overwriting
   if(!store(K.profile)) store(K.profile,{name:'',role:''});
   if(store(K.rounding)===null) store(K.rounding,0);
   if(!store(K.clients)) store(K.clients,[]);
@@ -1722,7 +1793,7 @@ function applyTheme(th){
   // sync menu button label
   const btn=$('menu-theme-btn');
   if(btn){btn.textContent=dark?t('menuThemeLight'):t('menuThemeDark');btn.classList.toggle('theme-active',dark);}
-  // v3.2.0: sync settings label
+  // v3.3.0: sync settings label
   themeSettingsSync();
 }
 
@@ -3103,10 +3174,12 @@ function openM(id){
     prefsLoadUI();projChipsRender();
     const lang=window._lang||'he';
     document.querySelectorAll('.seg-btn[data-lang]').forEach(b=>b.classList.toggle('active',b.dataset.lang===lang));
-    // v3.2.0 additions
+    // v3.3.0 additions
     profileLoad();
     roundingLoad();
     clientsRender();
+    taskDefsRender();       // v3.3.0
+    crmSyncStatus();        // v3.3.0
     themeSettingsSync();
     wstdSyncStatusInline();
     aboutTabRender();
@@ -3122,7 +3195,7 @@ function settingsSave(){
   const su=$('settings-sheet-url').value.trim();
   if(su)store(K.sheetUrl,su);else localStorage.removeItem(K.sheetUrl);
   prefsSave();
-  profileSave(); // v3.2.0
+  profileSave(); // v3.3.0
   toast(t('toastSettingsSaved'),'success');buzz([20,20,40]);closeM('modal-settings');updateMenuSheetLink();
 }
 
@@ -3223,6 +3296,10 @@ async function syncFromSheet(){
     const lastSync=store('mwl_wstandard_sync');
     const staleMins=lastSync?Math.floor((Date.now()-new Date(lastSync.replace(/(\d+)\/(\d+)\/(\d+)/,'$3-$2-$1')).getTime())/60000):999;
     if(staleMins>10) await syncWStandard(true);
+    // CRM: only if >30 min since last sync
+    const lastCRM=store(K.crmSync);
+    const staleCRM=lastCRM?Math.floor((Date.now()-new Date(lastCRM.replace(/(\d+)\/(\d+)\/(\d+)/,'$3-$2-$1')).getTime())/60000):999;
+    if(staleCRM>30) syncCRM(true);
   }
 }
 
@@ -3369,7 +3446,7 @@ function scrollInit(){
 }
 
 /* ═══════════════════════════════════════════════════════
-   SETTINGS TABS  v3.2.0
+   SETTINGS TABS  v3.3.0
    ═══════════════════════════════════════════════════════ */
 let _lastSettingsTab = null;
 
@@ -3390,7 +3467,7 @@ function switchSettingsTab(id){
 }
 
 /* ═══════════════════════════════════════════════════════
-   PROFILE  v3.2.0
+   PROFILE  v3.3.0
    ═══════════════════════════════════════════════════════ */
 function profileLoad(){
   const p=store(K.profile)||{name:'',role:''};
@@ -3432,7 +3509,7 @@ function profileInit(){
 }
 
 /* ═══════════════════════════════════════════════════════
-   TIME ROUNDING  v3.2.0
+   TIME ROUNDING  v3.3.0
    ═══════════════════════════════════════════════════════ */
 function roundingInit(){
   document.querySelectorAll('.seg-btn[data-round]').forEach(btn=>{
@@ -3463,10 +3540,112 @@ function applyRounding(timeStr){
 }
 
 /* ═══════════════════════════════════════════════════════
-   CLIENTS / PROJECTS / TASKS  v3.2.0
+   CLIENTS / PROJECTS / TASKS  v3.3.0
    ═══════════════════════════════════════════════════════ */
-function getClients(){ return store(K.clients)||[]; }
-function saveClients(arr){ store(K.clients,arr); }
+/* ═══════════════════════════════════════════════════════
+   CRM — Clients · Projects · Task Definitions  v3.3.0
+   ═══════════════════════════════════════════════════════
+   מבנה נתונים:
+   K.clients  = [{id, name, projects:[{id,name}]}]
+   K.taskDefs = [{id, name, billable}]
+   כל השינויים מסתנכרנים ל-Sheets ב-background.
+   ═══════════════════════════════════════════════════════ */
+
+/* ── Accessors ─────────────────────────────────────────── */
+function getClients()  { return store(K.clients)||[]; }
+function saveClients(arr) { store(K.clients,arr); }
+function getTaskDefs() { return store(K.taskDefs)||[]; }
+function saveTaskDefs(arr) { store(K.taskDefs,arr); }
+
+/* ── CRM Sync ──────────────────────────────────────────── */
+async function syncCRM(silent=false){
+  const ep=store(K.ep);
+  if(!ep||!navigator.onLine){
+    crmSyncUI('err','אין חיבור ל-Endpoint');return;
+  }
+  crmSyncUI('syncing','מסנכרן...');
+  try{
+    const res=await fetch(ep+'?action=getCRM&t='+Date.now(),{cache:'no-store'});
+    const data=await res.json();
+
+    // ── Merge clients ──
+    if(Array.isArray(data.clients)&&Array.isArray(data.clientProjects)){
+      const local=getClients();
+      const localIds=new Set(local.map(c=>c.id));
+      // Build server client list with their projects
+      const merged=data.clients.map(sc=>{
+        const localC=local.find(lc=>lc.id===sc.id)||{projects:[]};
+        // Merge server projects for this client
+        const sProjs=(data.clientProjects||[]).filter(p=>p.clientId===sc.id);
+        const lProjs=localC.projects||[];
+        const lProjIds=new Set(lProjs.map(p=>p.id));
+        const mergedProjs=[
+          ...lProjs,
+          ...sProjs.filter(p=>!lProjIds.has(p.id)).map(p=>({id:p.id,name:p.name}))
+        ];
+        return{id:sc.id,name:sc.name,projects:mergedProjs};
+      });
+      // Keep local-only clients (not yet pushed)
+      const serverIds=new Set(data.clients.map(c=>c.id));
+      local.filter(c=>!serverIds.has(c.id)).forEach(c=>merged.push(c));
+      saveClients(merged);
+    }
+
+    // ── Merge task definitions ──
+    if(Array.isArray(data.taskDefinitions)){
+      const local=getTaskDefs();
+      const localIds=new Set(local.map(t=>t.id));
+      const serverIds=new Set(data.taskDefinitions.map(t=>t.id));
+      const merged=[
+        ...local.filter(t=>serverIds.has(t.id)||!t._pushed), // keep local not-yet-pushed
+        ...data.taskDefinitions.filter(t=>!localIds.has(t.id))
+      ];
+      // Update names/billable from server for existing
+      data.taskDefinitions.forEach(st=>{
+        const lt=merged.find(m=>m.id===st.id);
+        if(lt){lt.name=st.name;lt.billable=st.billable;}
+      });
+      saveTaskDefs(merged);
+    }
+
+    const ts=new Date().toLocaleString('he-IL',{timeZone:'Asia/Jerusalem'});
+    store(K.crmSync,ts);
+    crmSyncUI('ok','סונכרן: '+ts);
+    clientsRender();taskDefsRender();
+    if(!silent)toast('✅ CRM סונכרן','success',2000);
+  }catch(err){
+    crmSyncUI('err','שגיאת סנכרון');
+    console.warn('[syncCRM]',err);
+    if(!silent)toast('❌ שגיאת CRM Sync','error',3000);
+  }
+}
+
+/* ── Push helpers (fire & forget) ─────────────────────── */
+async function _crmPost(payload){
+  const ep=store(K.ep);if(!ep||!navigator.onLine)return;
+  try{ await fetch(ep,{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify(payload),mode:'no-cors'}); }catch(_){}
+}
+
+/* ── CRM Sync Status UI ────────────────────────────────── */
+function crmSyncUI(state,msg){
+  ['','−tasks'].forEach(sfx=>{
+    const dot=$('crm-sync-dot'+sfx),lbl=$('crm-sync-label'+sfx);
+    if(dot){dot.className='crm-sync-dot '+(state==='ok'?'ok':state==='syncing'?'syncing':'err');}
+    if(lbl)lbl.textContent=msg;
+  });
+}
+function crmSyncStatus(){
+  const ts=store(K.crmSync);
+  const ep=store(K.ep);
+  if(!ep)     { crmSyncUI('err','Endpoint לא הוגדר'); return; }
+  if(!ts)     { crmSyncUI('','לא סונכרן עדיין'); return; }
+  crmSyncUI('ok','סונכרן: '+ts);
+}
+
+/* ═══════════════════════════════════════════════════════
+   CLIENTS  v3.3.0
+   ═══════════════════════════════════════════════════════ */
 
 function clientsRender(){
   const tree=$('clients-tree');
@@ -3483,20 +3662,20 @@ function clientsRender(){
 }
 
 function clientBlockHTML(c){
-  const projCount=(c.projects||[]).length;
   const projHTML=(c.projects||[]).map(p=>projItemHTML(c.id,p)).join('');
-  return`<div class="client-block" id="client-block-${c.id}" style="margin-bottom:8px">
+  const cnt=(c.projects||[]).length;
+  return`<div class="client-block" id="client-block-${c.id}">
     <div class="client-hdr" onclick="toggleClient('${c.id}')">
       <div class="client-hdr-dot"></div>
       <span class="client-hdr-name">${esc(c.name)}</span>
-      <span class="client-hdr-count">${projCount} פרויקטים</span>
+      <span class="client-hdr-count">${cnt} פרויקטים</span>
       <button class="ibtn" style="font-size:.75rem;padding:4px 7px;color:var(--red)"
         onclick="event.stopPropagation();removeClient('${c.id}')">🗑</button>
       <span class="client-hdr-chev" id="client-chev-${c.id}">▼</span>
     </div>
     <div class="client-body" id="client-body-${c.id}">
       <div class="client-proj-list" id="proj-list-${c.id}">${projHTML}</div>
-      <div class="add-row">
+      <div class="add-row" style="margin-top:8px">
         <input type="text" id="new-proj-${c.id}" class="fi" placeholder="שם פרויקט חדש..."/>
         <button class="btn-g" onclick="addProject('${c.id}')">+ פרויקט</button>
       </div>
@@ -3505,43 +3684,12 @@ function clientBlockHTML(c){
 }
 
 function projItemHTML(clientId,p){
-  const tasksHTML=(p.tasks||[]).map(tk=>taskItemHTML(clientId,p.id,tk)).join('');
-  return`<div class="client-proj-item" id="proj-item-${p.id}" style="flex-direction:column;align-items:stretch;gap:6px">
-    <div style="display:flex;align-items:center;gap:8px">
-      <span style="font-size:.75rem">📁</span>
-      <span class="client-proj-name">${esc(p.name)}</span>
-      <button class="ibtn" style="font-size:.7rem;padding:3px 6px;color:var(--red)"
-        onclick="removeProject('${clientId}','${p.id}')">🗑</button>
-    </div>
-    <div class="client-task-list" id="task-list-${p.id}">${tasksHTML}</div>
-    <div class="add-row" style="padding-right:12px">
-      <input type="text" id="new-task-${p.id}" class="fi" placeholder="שם משימה..."/>
-      <select id="billable-${p.id}" class="fi" style="max-width:110px;font-size:.76rem;padding:8px 6px">
-        <option value="true">💰 בר-חיוב</option>
-        <option value="false">🆓 ללא חיוב</option>
-      </select>
-      <button class="btn-g" onclick="addTask('${clientId}','${p.id}')">+</button>
-    </div>
+  return`<div class="client-proj-item" id="proj-item-${p.id}">
+    <span style="font-size:.75rem">📁</span>
+    <span class="client-proj-name">${esc(p.name)}</span>
+    <button class="ibtn" style="font-size:.7rem;padding:3px 6px;color:var(--red)"
+      onclick="removeProject('${clientId}','${p.id}')">🗑</button>
   </div>`;
-}
-
-function taskItemHTML(clientId,projId,tk){
-  return`<div class="client-task-item" id="task-item-${tk.id}">
-    <span style="font-size:.68rem">📌</span>
-    <span class="task-name">${esc(tk.name)}</span>
-    <span class="billable-badge ${tk.billable?'yes':'no'}">${tk.billable?'בר-חיוב':'ללא חיוב'}</span>
-    <button class="ibtn" style="font-size:.65rem;padding:2px 5px;color:var(--red)"
-      onclick="removeTask('${clientId}','${projId}','${tk.id}')">✕</button>
-  </div>`;
-}
-
-function esc(s){ return String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
-
-function toggleClient(cid){
-  const body=$(`client-body-${cid}`),chev=$(`client-chev-${cid}`);
-  if(!body)return;
-  const open=body.classList.toggle('open');
-  if(chev)chev.style.transform=open?'rotate(180deg)':'';
 }
 
 function addClient(){
@@ -3550,17 +3698,22 @@ function addClient(){
   if(!name){inp?.focus();return;}
   const clients=getClients();
   if(clients.some(c=>c.name.toLowerCase()===name.toLowerCase())){toast('⚠️ לקוח כבר קיים','warn');return;}
-  clients.push({id:'c'+Date.now(),name,projects:[]});
+  const id='c'+Date.now();
+  clients.push({id,name,projects:[]});
   saveClients(clients);
   inp.value='';
-  clientsRender();
-  buzz([15]);
+  clientsRender();buzz([15]);
+  _crmPost({action:'addClient',id,name});
+  toast('✅ לקוח נוסף','success',1500);
 }
 
 function removeClient(cid){
   if(!confirm('למחוק לקוח זה ואת כל הפרויקטים שלו?'))return;
-  saveClients(getClients().filter(c=>c.id!==cid));
+  const clients=getClients();
+  const c=clients.find(x=>x.id===cid);
+  saveClients(clients.filter(x=>x.id!==cid));
   clientsRender();
+  _crmPost({action:'deleteClient',id:cid});
 }
 
 function addProject(clientId){
@@ -3568,60 +3721,118 @@ function addProject(clientId){
   const name=(inp?.value||'').trim();
   if(!name){inp?.focus();return;}
   const clients=getClients();
-  const c=clients.find(c=>c.id===clientId);if(!c)return;
+  const c=clients.find(x=>x.id===clientId);if(!c)return;
   if(!c.projects)c.projects=[];
   if(c.projects.some(p=>p.name.toLowerCase()===name.toLowerCase())){toast('⚠️ פרויקט כבר קיים','warn');return;}
-  c.projects.push({id:'p'+Date.now(),name,tasks:[]});
+  const id='p'+Date.now();
+  c.projects.push({id,name});
   saveClients(clients);
-  // Also add to flat proj list for report form autocomplete
+  // Also add to flat proj list for report autocomplete
   const ps=store(K.proj)||[];
   if(!ps.includes(name)){ps.push(name);store(K.proj,ps);projLoad();}
   inp.value='';
-  clientsRender();
-  buzz([10]);
+  clientsRender();buzz([10]);
+  _crmPost({action:'addClientProject',id,clientId,name});
+  toast('✅ פרויקט נוסף','success',1500);
 }
 
 function removeProject(clientId,projId){
   const clients=getClients();
-  const c=clients.find(c=>c.id===clientId);if(!c)return;
+  const c=clients.find(x=>x.id===clientId);if(!c)return;
   c.projects=(c.projects||[]).filter(p=>p.id!==projId);
   saveClients(clients);
   clientsRender();
+  _crmPost({action:'deleteClientProject',id:projId});
 }
 
-function addTask(clientId,projId){
-  const inp=$(`new-task-${projId}`);
-  const sel=$(`billable-${projId}`);
-  const name=(inp?.value||'').trim();
-  if(!name){inp?.focus();return;}
-  const billable=sel?.value==='true';
-  const clients=getClients();
-  const c=clients.find(c=>c.id===clientId);if(!c)return;
-  const p=(c.projects||[]).find(p=>p.id===projId);if(!p)return;
-  if(!p.tasks)p.tasks=[];
-  p.tasks.push({id:'t'+Date.now(),name,billable});
-  saveClients(clients);
-  inp.value='';
-  clientsRender();
-  buzz([10]);
-}
-
-function removeTask(clientId,projId,taskId){
-  const clients=getClients();
-  const c=clients.find(c=>c.id===clientId);if(!c)return;
-  const p=(c.projects||[]).find(p=>p.id===projId);if(!p)return;
-  p.tasks=(p.tasks||[]).filter(t=>t.id!==taskId);
-  saveClients(clients);
-  clientsRender();
-}
-
-function clientsInit(){
-  $('btn-add-client')?.addEventListener('click',addClient);
-  $('new-client-name')?.addEventListener('keydown',e=>{if(e.key==='Enter')addClient()});
+function toggleClient(cid){
+  const body=$(`client-body-${cid}`),chev=$(`client-chev-${cid}`);
+  if(!body)return;
+  const open=body.classList.toggle('open');
+  if(chev)chev.style.transform=open?'rotate(180deg)':'';
 }
 
 /* ═══════════════════════════════════════════════════════
-   EXPORT  v3.2.0
+   TASK DEFINITIONS  v3.3.0
+   ═══════════════════════════════════════════════════════
+   משימות גלובליות — לא שייכות ללקוח ספציפי.
+   אותה משימה יכולה להופיע פעמיים: billable + non-billable.
+   ═══════════════════════════════════════════════════════ */
+
+/* Segment control state for billable selection in tasks tab */
+let _newTaskBillable = true;
+
+function taskDefsRender(){
+  const list=$('task-def-list');
+  const empty=$('task-def-empty');
+  if(!list)return;
+  const tasks=getTaskDefs();
+  if(!tasks.length){
+    list.innerHTML='';
+    if(empty)empty.style.display='';
+    return;
+  }
+  if(empty)empty.style.display='none';
+  list.innerHTML=tasks.map(tk=>`
+    <div class="task-def-item" id="task-def-item-${tk.id}">
+      <span class="task-def-name">${esc(tk.name)}</span>
+      <span class="billable-badge ${tk.billable?'yes':'no'}">${tk.billable?'💰 בר-חיוב':'🆓 ללא חיוב'}</span>
+      <button class="ibtn" style="font-size:.7rem;padding:3px 7px;color:var(--red)"
+        onclick="removeTaskDef('${tk.id}')">🗑</button>
+    </div>`).join('');
+}
+
+function addTaskDef(){
+  const inp=$('new-task-def-name');
+  const name=(inp?.value||'').trim();
+  if(!name){inp?.focus();return;}
+  const billable=_newTaskBillable;
+  const tasks=getTaskDefs();
+  // Allow duplicate name with different billable — that's by design
+  if(tasks.some(t=>t.name.toLowerCase()===name.toLowerCase()&&t.billable===billable)){
+    toast('⚠️ משימה זו כבר קיימת עם אותה הגדרת חיוב','warn',3000);return;
+  }
+  const id='t'+Date.now();
+  tasks.push({id,name,billable});
+  saveTaskDefs(tasks);
+  inp.value='';
+  taskDefsRender();buzz([10]);
+  _crmPost({action:'addTaskDef',id,name,billable});
+  toast('✅ משימה נוספה','success',1500);
+}
+
+function removeTaskDef(id){
+  if(!confirm('למחוק משימה זו?'))return;
+  saveTaskDefs(getTaskDefs().filter(t=>t.id!==id));
+  taskDefsRender();
+  _crmPost({action:'deleteTaskDef',id});
+}
+
+/* ── Init ────────────────────────────────────────────────── */
+function clientsInit(){
+  $('btn-add-client')?.addEventListener('click',addClient);
+  $('new-client-name')?.addEventListener('keydown',e=>{if(e.key==='Enter')addClient();});
+
+  // Task definitions
+  $('btn-add-task-def')?.addEventListener('click',addTaskDef);
+  $('new-task-def-name')?.addEventListener('keydown',e=>{if(e.key==='Enter')addTaskDef();});
+
+  // Billable segment control in Tasks tab
+  document.querySelectorAll('.seg-btn[data-billable]').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      document.querySelectorAll('.seg-btn[data-billable]').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      _newTaskBillable=(btn.dataset.billable==='true');
+      buzz([10]);
+    });
+  });
+
+  // CRM sync button in clients tab
+  $('btn-sync-crm')?.addEventListener('click',()=>syncCRM(false));
+}
+
+/* ═══════════════════════════════════════════════════════
+   EXPORT  v3.3.0
    ═══════════════════════════════════════════════════════ */
 function exportCSV(){
   const reps=store(K.reps)||[];
@@ -3678,7 +3889,7 @@ function exportInit(){
 }
 
 /* ═══════════════════════════════════════════════════════
-   ABOUT TAB  v3.2.0
+   ABOUT TAB  v3.3.0
    ═══════════════════════════════════════════════════════ */
 function aboutTabRender(){
   // Version
@@ -3708,7 +3919,7 @@ function aboutTabRender(){
 }
 
 /* ═══════════════════════════════════════════════════════
-   THEME BUTTON IN SETTINGS  v3.2.0
+   THEME BUTTON IN SETTINGS  v3.3.0
    ═══════════════════════════════════════════════════════ */
 function themeSettingsSync(){
   const isDark=!document.body.classList.contains('light');
@@ -3717,7 +3928,7 @@ function themeSettingsSync(){
 }
 
 /* ═══════════════════════════════════════════════════════
-   WORKCAL SYNC INLINE (in connection tab)  v3.2.0
+   WORKCAL SYNC INLINE (in connection tab)  v3.3.0
    ═══════════════════════════════════════════════════════ */
 function wstdSyncStatusInline(){
   const el=$('wstandard-sync-status-inline');if(!el)return;
