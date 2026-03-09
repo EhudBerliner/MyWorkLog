@@ -340,8 +340,8 @@ const I18N = {
   syncStatusOld             : {he:'⚠️ ה-GAS אינו כולל WorkStandard — יש לפרוס מחדש',en:'⚠️ GAS lacks WorkStandard — redeploy required'},
   statWorkday               : {he:'משך יום',en:'Workday'},
   statDays                  : {he:'ימים',en:'Days'},
-  themeDark                 : {he:t('themeDark').replace(/^[^ ]+ /,''),en:'Dark mode'},
-  themeLight                : {he:t('themeLight').replace(/^[^ ]+ /,''),en:'Light mode'},
+  themeDark                 : {he:'מצב כהה',en:'Dark mode'},
+  themeLight                : {he:'מצב בהיר',en:'Light mode'},
 
   /* ── History ── */
   historyRecent             : {he:'דיווחים - 30 ימים אחרונים',en:'Reports — last 30 days'},
