@@ -1,8 +1,8 @@
 /* ═══════════════════════════════════════════════════════
-   MyWorkLog · App Core  v2.0
+   MyWorkLog · App Core  v3.2.0
    ═══════════════════════════════════════════════════════ */
 
-const VER = '3.0.1';
+const VER = '3.2.0';
 
 /* ── Storage keys ── */
 const K = {
@@ -18,7 +18,11 @@ const K = {
   inst:      'mwl_install_dismissed',
   sheetUrl:  'mwl_sheet_url',
   syncToken: 'mwl_sync_token',          // last sync timestamp
-  wstandard: 'mwl_wstandard',            // WorkStandard local cache
+  wstandard: 'mwl_wstandard',           // WorkStandard local cache
+  profile:   'mwl_profile',             // {name, role}
+  rounding:  'mwl_rounding',            // 0 | 5 | 10 | 15
+  clients:   'mwl_clients',             // [{id,name,projects:[{id,name,tasks:[{id,name,billable}]}]}]
+  settingsTab:'mwl_settings_tab',       // last open settings tab
 };
 
 /* ── Runtime state ── */

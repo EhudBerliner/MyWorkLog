@@ -465,6 +465,55 @@ details summary::-webkit-details-marker{display:none}
 .wc-min-row{display:flex;gap:8px;align-items:flex-end}
 .wc-min-row .fg{flex:1}
 .wc-min-row .btn-p{padding:11px 16px;white-space:nowrap}
+
+/* ─ SETTINGS TABS ─ */
+.stab-nav{display:flex;gap:0;background:var(--bg3);border:1px solid var(--border);border-radius:var(--rs);overflow:hidden;margin-bottom:2px;flex-shrink:0}
+.stab-btn{flex:1;padding:9px 4px;background:none;border:none;border-bottom:2px solid transparent;
+  color:var(--text2);font-family:var(--fhe);font-size:.72rem;font-weight:600;
+  cursor:pointer;transition:all .18s;letter-spacing:.2px;white-space:nowrap}
+.stab-btn.active{background:var(--bg2);color:var(--lime);border-bottom-color:var(--lime)}
+.stab-btn:hover:not(.active){color:var(--text);background:var(--glass)}
+.stab-pnl{display:none;flex-direction:column;gap:14px}
+.stab-pnl.active{display:flex;animation:fadeUp .18s ease both}
+
+/* ─ CLIENT/PROJECT TREE ─ */
+.client-block{background:var(--bg3);border:1px solid var(--border);border-radius:var(--rs);overflow:hidden}
+.client-hdr{display:flex;align-items:center;gap:10px;padding:11px 13px;cursor:pointer;transition:background .15s;user-select:none}
+.client-hdr:hover{background:var(--glass2)}
+.client-hdr-dot{width:8px;height:8px;border-radius:50%;background:var(--blue);flex-shrink:0}
+.client-hdr-name{flex:1;font-size:.86rem;font-weight:700;color:var(--text)}
+.client-hdr-count{font-size:.68rem;color:var(--text3);font-family:'Syne',monospace}
+.client-hdr-chev{font-size:.7rem;color:var(--text3);transition:transform .2s;flex-shrink:0}
+.client-body{display:none;padding:0 13px 12px;flex-direction:column;gap:8px}
+.client-body.open{display:flex}
+.client-proj-list{display:flex;flex-direction:column;gap:4px}
+.client-proj-item{display:flex;align-items:center;gap:8px;padding:7px 10px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--rxs);font-size:.8rem}
+.client-proj-name{flex:1;color:var(--text2)}
+.client-task-list{display:flex;flex-direction:column;gap:3px;margin-top:4px;padding-right:16px}
+.client-task-item{display:flex;align-items:center;gap:8px;padding:5px 10px;background:var(--bg3);border-radius:var(--rxs);font-size:.76rem;color:var(--text3)}
+.client-task-item .task-name{flex:1}
+.billable-badge{font-size:.6rem;font-weight:800;letter-spacing:.6px;padding:2px 7px;border-radius:10px;flex-shrink:0}
+.billable-badge.yes{background:var(--limeDim);color:var(--lime)}
+.billable-badge.no{background:var(--glass);color:var(--text3)}
+.add-row{display:flex;gap:7px;margin-top:6px}
+.add-row .fi{flex:1;font-size:.8rem;padding:8px 10px}
+.add-row .btn-g{padding:8px 12px;font-size:.8rem}
+
+/* ─ PROFILE SECTION ─ */
+.profile-avatar{width:56px;height:56px;border-radius:14px;background:var(--limeDim);
+  border:2px solid var(--lime);display:flex;align-items:center;justify-content:center;
+  font-size:1.6rem;flex-shrink:0}
+.profile-row{display:flex;align-items:center;gap:14px;padding:14px 0}
+.profile-info{flex:1;display:flex;flex-direction:column;gap:3px}
+.profile-name{font-size:1rem;font-weight:700;color:var(--text)}
+.profile-role{font-size:.75rem;color:var(--text2)}
+
+/* ─ ABOUT INFO ─ */
+.about-row{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--border);font-size:.83rem}
+.about-row:last-child{border-bottom:none}
+.about-lbl{color:var(--text3);font-size:.76rem}
+.about-val{color:var(--text);font-weight:600;font-family:'Syne',monospace;font-size:.82rem}
+
 </style>
 </head>
 <body>
@@ -512,7 +561,7 @@ details summary::-webkit-details-marker{display:none}
       <a id="menu-sheet-link" href="#" target="_blank" rel="noopener" style="display:none;align-items:center;gap:7px;font-size:.8rem;color:var(--blue);text-decoration:none;padding:3px 2px">
         <span data-i18n="menuOpenSheet">📊 פתח גיליון הדיווחים</span>
       </a>
-      <span id="menu-vbadge" class="vbadge" data-i18n-attr="title" data-i18n="menuVersionTooltip" title="לחץ לאיפוס">v3.0.1</span>
+      <span id="menu-vbadge" class="vbadge" data-i18n-attr="title" data-i18n="menuVersionTooltip" title="לחץ לאיפוס">v3.2.0</span>
     </div>
   </aside>
 
@@ -524,7 +573,7 @@ details summary::-webkit-details-marker{display:none}
         <span class="hdr-name">MyWorkLog</span>
       </div>
       <div class="hdr-acts">
-        <span id="version-badge" class="vbadge" data-i18n="menuVersionTooltip" data-i18n-attr="title" title="לחץ לאיפוס">v3.0.1</span>
+        <span id="version-badge" class="vbadge" data-i18n="menuVersionTooltip" data-i18n-attr="title" title="לחץ לאיפוס">v3.2.0</span>
       </div>
     </div>
   </header>
@@ -757,121 +806,318 @@ details summary::-webkit-details-marker{display:none}
       <h2 data-i18n="settingsTitle">⚙️ הגדרות</h2>
       <button class="ibtn" id="btn-close-settings">✕</button>
     </div>
-    <div class="mbody">
 
-      <!-- LANGUAGE -->
-      <div class="sset-group">
-        <div class="sset-label" data-i18n="settingsLangLabel">שפה</div>
-        <div class="sset-block">
-          <div class="sset-row-inline">
-            <span class="sset-row-label" data-i18n="settingsLangInterface">🌐 שפת ממשק</span>
-            <div class="seg" style="width:140px">
-              <button class="seg-btn active" data-lang="he" data-i18n="settingsLang">עברית</button>
-              <button class="seg-btn"        data-lang="en">English</button>
-            </div>
-          </div>
-        </div>
+    <!-- SETTINGS TABS NAV -->
+    <div style="padding:10px 18px 0">
+      <div class="stab-nav" id="settings-tab-nav">
+        <button class="stab-btn active" data-stab="ui">🎨 תצוגה</button>
+        <button class="stab-btn"        data-stab="connection">🔗 חיבור</button>
+        <button class="stab-btn"        data-stab="data">📦 נתונים</button>
+        <button class="stab-btn"        data-stab="clients">👥 לקוחות</button>
+        <button class="stab-btn"        data-stab="about">ℹ️ אודות</button>
       </div>
-
-      <!-- CONNECTION -->
-      <div class="sset-group">
-        <div class="sset-label" data-i18n="settingsConnectionLabel">חיבור ל-Google</div>
-        <div class="sset-block">
-          <div class="sset-row">
-            <label class="sset-row-label" for="settings-endpoint">🔗 Google Apps Script URL</label>
-            <div class="sset-row-sub" data-i18n="settingsEndpointHint">הדבק את ה-URL של ה-Web App</div>
-            <input type="url" id="settings-endpoint" class="fi" style="margin-top:4px"
-              placeholder="https://script.google.com/macros/s/.../exec"/>
-          </div>
-          <div class="sset-row">
-            <label class="sset-row-label" for="settings-sheet-url">📊 Google Sheets URL</label>
-            <div class="sset-row-sub" data-i18n="sheetUrlHint">הדבק את ה-URL של הגיליון</div>
-            <input type="url" id="settings-sheet-url" class="fi" style="margin-top:4px"
-              placeholder="https://docs.google.com/spreadsheets/d/.../edit"/>
-          </div>
-          <div class="sset-row" id="sheet-link-section" style="display:none">
-            <a id="sheet-link" href="#" target="_blank" rel="noopener"
-              style="display:flex;align-items:center;gap:8px;padding:9px 12px;background:var(--bg0);
-              border:1px solid var(--border);border-radius:var(--rs);color:var(--blue);font-size:.82rem;
-              text-decoration:none;margin-top:8px;transition:border-color .2s"
-              onmouseover="this.style.borderColor='var(--blue)'" onmouseout="this.style.borderColor='var(--border)'">
-              ↗ <span data-i18n="settingsOpenSheet">פתח גיליון הדיווחים</span>
-            </a>
-          </div>
-        </div>
-      </div>
-
-      <!-- SYNC -->
-      <div class="sset-group">
-        <div class="sset-label" data-i18n="settingsSyncLabel">סנכרון</div>
-        <div class="sset-block">
-          <div class="sset-row">
-            <div class="sync-btn-row">
-              <button class="btn-g sm" id="btn-sync-reports" data-i18n="btnSyncReports">↓ דיווחים מגיליון</button>
-              <button class="btn-g sm" id="btn-sync-projects" data-i18n="btnSyncProjects">↓ פרויקטים</button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- PROJECTS -->
-      <div class="sset-group">
-        <div class="sset-label" data-i18n="settingsProjectsLabel">פרויקטים שמורים</div>
-        <div class="sset-block">
-          <div class="sset-row">
-            <div class="proj-row">
-              <input type="text" id="new-project" class="fi"
-                data-i18n="placeholderNewProject" data-i18n-attr="placeholder"
-                data-i18n="placeholderNewProject" data-i18n-attr="placeholder" placeholder="הוסף פרויקט..."/>
-              <button class="btn-g" id="btn-add-project" style="padding:10px 16px">+</button>
-            </div>
-            <div id="projects-chips" class="chips" style="margin-top:6px"></div>
-          </div>
-        </div>
-      </div>
-
-      <!-- PREFERENCES -->
-      <div class="sset-group">
-        <div class="sset-label" data-i18n="settingsPrefTitle">העדפות</div>
-        <div class="sset-block pref-list">
-          <label class="pref-row">
-            <span class="pref-row-icon">📳</span>
-            <span class="pref-row-body">
-              <span class="pref-row-label" data-i18n="prefVibration">רטט</span>
-              <span class="pref-row-desc" data-i18n="prefVibrationDesc">פידבק הפטי בכפתורים ופעולות</span>
-            </span>
-            <input type="checkbox" id="pref-vibration" class="ptog" checked/>
-          </label>
-          <label class="pref-row">
-            <span class="pref-row-icon">✨</span>
-            <span class="pref-row-body">
-              <span class="pref-row-label" data-i18n="prefAnimations">אנימציות</span>
-              <span class="pref-row-desc" data-i18n="prefAnimationsDesc">מעברים ואנימציות ממשק</span>
-            </span>
-            <input type="checkbox" id="pref-animations" class="ptog" checked/>
-          </label>
-          <label class="pref-row">
-            <span class="pref-row-icon">↓</span>
-            <span class="pref-row-body">
-              <span class="pref-row-label" data-i18n="prefPullRefresh">משיכה לרענון</span>
-              <span class="pref-row-desc" data-i18n="prefPullRefreshDesc">משוך למטה לרענון הדף</span>
-            </span>
-            <input type="checkbox" id="pref-pull-refresh" class="ptog"/>
-          </label>
-        </div>
-      </div>
-
-      <!-- DATA MANAGEMENT -->
-      <div class="sset-group">
-        <div class="sset-label" data-i18n="settingsDataLabel">ניהול נתונים</div>
-        <div class="sset-block">
-          <div class="sset-row">
-            <button class="btn-d sm" id="btn-clear-data" style="width:100%" data-i18n="btnClearData">🗑 מחק כל הנתונים המקומיים</button>
-          </div>
-        </div>
-      </div>
-
     </div>
+
+    <div class="mbody" style="padding-top:14px">
+
+      <!-- ══ TAB: UI ══ -->
+      <div class="stab-pnl active" id="stab-ui">
+
+        <!-- PROFILE -->
+        <div class="sset-group">
+          <div class="sset-label">👤 פרופיל</div>
+          <div class="sset-block">
+            <div class="sset-row">
+              <div class="profile-row">
+                <div class="profile-avatar" id="profile-avatar-display">👤</div>
+                <div class="profile-info">
+                  <div class="profile-name" id="profile-name-display">משתמש</div>
+                  <div class="profile-role" id="profile-role-display">תפקיד</div>
+                </div>
+              </div>
+              <div class="fg">
+                <label class="flbl">שם מלא</label>
+                <input type="text" id="settings-username" class="fi" placeholder="הכנס שם..."/>
+              </div>
+              <div class="fg" style="margin-top:8px">
+                <label class="flbl">תפקיד / תואר</label>
+                <input type="text" id="settings-userrole" class="fi" placeholder="למשל: מפתח, מנהל פרויקטים..."/>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- LANGUAGE -->
+        <div class="sset-group">
+          <div class="sset-label" data-i18n="settingsLangLabel">שפה</div>
+          <div class="sset-block">
+            <div class="sset-row-inline">
+              <span class="sset-row-label" data-i18n="settingsLangInterface">🌐 שפת ממשק</span>
+              <div class="seg" style="width:140px">
+                <button class="seg-btn active" data-lang="he" data-i18n="settingsLang">עברית</button>
+                <button class="seg-btn"        data-lang="en">English</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- THEME -->
+        <div class="sset-group">
+          <div class="sset-label">🎨 ערכת נושא</div>
+          <div class="sset-block">
+            <div class="sset-row-inline">
+              <span class="sset-row-label" id="theme-label-settings">🌙 מצב כהה</span>
+              <button class="btn-g sm" id="btn-theme-toggle-settings" style="white-space:nowrap">החלף מצב</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- TIME ROUNDING -->
+        <div class="sset-group">
+          <div class="sset-label">⏱ עיגול שעות</div>
+          <div class="sset-block">
+            <div class="sset-row-inline">
+              <div style="display:flex;flex-direction:column;gap:2px;flex:1">
+                <span class="sset-row-label">עיגול אוטומטי לדיווחי כניסה/יציאה</span>
+                <span class="sset-row-sub">עיגול שעת הדיווח לפי הגדרה</span>
+              </div>
+            </div>
+            <div class="sset-row-inline" style="border-top:1px solid var(--border)">
+              <span style="font-size:.82rem;color:var(--text2)">עגל ל:</span>
+              <div class="seg" style="width:220px">
+                <button class="seg-btn active" data-round="0">ללא</button>
+                <button class="seg-btn" data-round="5">5 דק׳</button>
+                <button class="seg-btn" data-round="10">10 דק׳</button>
+                <button class="seg-btn" data-round="15">15 דק׳</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- PREFERENCES -->
+        <div class="sset-group">
+          <div class="sset-label" data-i18n="settingsPrefTitle">העדפות</div>
+          <div class="sset-block pref-list">
+            <label class="pref-row">
+              <span class="pref-row-icon">📳</span>
+              <span class="pref-row-body">
+                <span class="pref-row-label" data-i18n="prefVibration">רטט</span>
+                <span class="pref-row-desc" data-i18n="prefVibrationDesc">פידבק הפטי בכפתורים ופעולות</span>
+              </span>
+              <input type="checkbox" id="pref-vibration" class="ptog" checked/>
+            </label>
+            <label class="pref-row">
+              <span class="pref-row-icon">✨</span>
+              <span class="pref-row-body">
+                <span class="pref-row-label" data-i18n="prefAnimations">אנימציות</span>
+                <span class="pref-row-desc" data-i18n="prefAnimationsDesc">מעברים ואנימציות ממשק</span>
+              </span>
+              <input type="checkbox" id="pref-animations" class="ptog" checked/>
+            </label>
+            <label class="pref-row">
+              <span class="pref-row-icon">↓</span>
+              <span class="pref-row-body">
+                <span class="pref-row-label" data-i18n="prefPullRefresh">משיכה לרענון</span>
+                <span class="pref-row-desc" data-i18n="prefPullRefreshDesc">משוך למטה לרענון הדף</span>
+              </span>
+              <input type="checkbox" id="pref-pull-refresh" class="ptog"/>
+            </label>
+          </div>
+        </div>
+
+      </div><!-- /stab-ui -->
+
+      <!-- ══ TAB: CONNECTION ══ -->
+      <div class="stab-pnl" id="stab-connection">
+
+        <!-- GAS + SHEETS -->
+        <div class="sset-group">
+          <div class="sset-label" data-i18n="settingsConnectionLabel">חיבור ל-Google</div>
+          <div class="sset-block">
+            <div class="sset-row">
+              <label class="sset-row-label" for="settings-endpoint">🔗 Google Apps Script URL</label>
+              <div class="sset-row-sub" data-i18n="settingsEndpointHint">הדבק את ה-URL של ה-Web App</div>
+              <input type="url" id="settings-endpoint" class="fi" style="margin-top:4px"
+                placeholder="https://script.google.com/macros/s/.../exec"/>
+            </div>
+            <div class="sset-row">
+              <label class="sset-row-label" for="settings-sheet-url">📊 Google Sheets URL</label>
+              <div class="sset-row-sub" data-i18n="sheetUrlHint">הדבק את ה-URL של הגיליון</div>
+              <input type="url" id="settings-sheet-url" class="fi" style="margin-top:4px"
+                placeholder="https://docs.google.com/spreadsheets/d/.../edit"/>
+            </div>
+            <div class="sset-row" id="sheet-link-section" style="display:none">
+              <a id="sheet-link" href="#" target="_blank" rel="noopener"
+                style="display:flex;align-items:center;gap:8px;padding:9px 12px;background:var(--bg0);
+                border:1px solid var(--border);border-radius:var(--rs);color:var(--blue);font-size:.82rem;
+                text-decoration:none;margin-top:8px;transition:border-color .2s"
+                onmouseover="this.style.borderColor='var(--blue)'" onmouseout="this.style.borderColor='var(--border)'">
+                ↗ <span data-i18n="settingsOpenSheet">פתח גיליון הדיווחים</span>
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- SYNC -->
+        <div class="sset-group">
+          <div class="sset-label" data-i18n="settingsSyncLabel">סנכרון</div>
+          <div class="sset-block">
+            <div class="sset-row">
+              <div class="sync-btn-row">
+                <button class="btn-g sm" id="btn-sync-reports" data-i18n="btnSyncReports">↓ דיווחים מגיליון</button>
+                <button class="btn-g sm" id="btn-sync-projects" data-i18n="btnSyncProjects">↓ פרויקטים</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- WORKCAL SYNC -->
+        <div class="sset-group">
+          <div class="sset-label">📊 WorkStandard</div>
+          <div class="sset-block">
+            <div class="sset-row">
+              <div id="wstandard-sync-status-inline" style="font-size:.76rem;color:var(--text3);min-height:18px;margin-bottom:6px"></div>
+              <button class="btn-g sm" id="btn-sync-wstandard-settings" style="width:100%">↻ משוך WorkStandard מגיליון</button>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /stab-connection -->
+
+      <!-- ══ TAB: DATA ══ -->
+      <div class="stab-pnl" id="stab-data">
+
+        <!-- IMPORT -->
+        <div class="sset-group">
+          <div class="sset-label">📥 ייבוא נתונים</div>
+          <div class="sset-block">
+            <div class="sset-row">
+              <div class="sset-row-sub" style="margin-bottom:8px">טען דיווחים מקובץ Excel (.xlsx) או CSV</div>
+              <button class="btn-g sm" id="btn-open-import-from-settings" style="width:100%">📂 פתח חלון ייבוא</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- EXPORT -->
+        <div class="sset-group">
+          <div class="sset-label">📤 ייצוא נתונים</div>
+          <div class="sset-block">
+            <div class="sset-row">
+              <div class="sset-row-sub" style="margin-bottom:8px">ייצא את כל הדיווחים המקומיים לקובץ</div>
+              <div class="sync-btn-row">
+                <button class="btn-g sm" id="btn-export-csv">📄 ייצא CSV</button>
+                <button class="btn-g sm" id="btn-export-xlsx">📊 ייצא Excel</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- PROJECTS (legacy flat list) -->
+        <div class="sset-group">
+          <div class="sset-label" data-i18n="settingsProjectsLabel">פרויקטים שמורים</div>
+          <div class="sset-block">
+            <div class="sset-row">
+              <div class="proj-row">
+                <input type="text" id="new-project" class="fi"
+                  data-i18n="placeholderNewProject" data-i18n-attr="placeholder"
+                  placeholder="הוסף פרויקט..."/>
+                <button class="btn-g" id="btn-add-project" style="padding:10px 16px">+</button>
+              </div>
+              <div id="projects-chips" class="chips" style="margin-top:6px"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- CLEAR DATA -->
+        <div class="sset-group">
+          <div class="sset-label" data-i18n="settingsDataLabel">ניהול נתונים</div>
+          <div class="sset-block">
+            <div class="sset-row">
+              <button class="btn-d sm" id="btn-clear-data" style="width:100%" data-i18n="btnClearData">🗑 מחק כל הנתונים המקומיים</button>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /stab-data -->
+
+      <!-- ══ TAB: CLIENTS ══ -->
+      <div class="stab-pnl" id="stab-clients">
+
+        <!-- ADD CLIENT -->
+        <div class="sset-group">
+          <div class="sset-label">הוסף לקוח חדש</div>
+          <div class="sset-block">
+            <div class="sset-row">
+              <div class="add-row">
+                <input type="text" id="new-client-name" class="fi" placeholder="שם הלקוח..."/>
+                <button class="btn-g" id="btn-add-client">+ לקוח</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- CLIENTS TREE -->
+        <div id="clients-tree"></div>
+
+        <!-- hint if empty -->
+        <div id="clients-empty-hint" style="text-align:center;color:var(--text3);font-size:.82rem;padding:18px 0;display:none">
+          אין לקוחות עדיין — הוסף לקוח ראשון למעלה
+        </div>
+
+      </div><!-- /stab-clients -->
+
+      <!-- ══ TAB: ABOUT ══ -->
+      <div class="stab-pnl" id="stab-about">
+
+        <!-- APP INFO -->
+        <div class="sset-group">
+          <div class="sset-label">📱 פרטי אפליקציה</div>
+          <div class="sset-block">
+            <div class="sset-row" style="gap:0">
+              <div class="about-row">
+                <span class="about-lbl">שם</span>
+                <span class="about-val">MyWorkLog</span>
+              </div>
+              <div class="about-row">
+                <span class="about-lbl">גרסה</span>
+                <span class="about-val" id="about-version">v3.2.0</span>
+              </div>
+              <div class="about-row">
+                <span class="about-lbl">סטטוס PWA</span>
+                <span class="about-val" id="about-pwa-status">בודק...</span>
+              </div>
+              <div class="about-row">
+                <span class="about-lbl">Service Worker</span>
+                <span class="about-val" id="about-sw-status">בודק...</span>
+              </div>
+              <div class="about-row">
+                <span class="about-lbl">נתונים מקומיים</span>
+                <span class="about-val" id="about-data-count">—</span>
+              </div>
+              <div class="about-row">
+                <span class="about-lbl">סנכרון אחרון</span>
+                <span class="about-val" id="about-last-sync">—</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- GAS DOWNLOAD -->
+        <div class="sset-group">
+          <div class="sset-label">🛠 כלי מפתח</div>
+          <div class="sset-block">
+            <div class="sset-row">
+              <button class="btn-g sm" onclick="downloadGS()" style="width:100%">⬇️ הורד google-apps-script.gs</button>
+            </div>
+            <div class="sset-row">
+              <button class="btn-d sm" id="btn-open-reset-about" style="width:100%">⚠️ איפוס אפליקציה</button>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /stab-about -->
+
+    </div><!-- /mbody -->
     <div class="mfoot">
       <button class="btn-p" id="btn-save-settings" data-i18n="btnSaveSettings">שמור הגדרות</button>
     </div>
@@ -1212,8 +1458,29 @@ document.addEventListener('DOMContentLoaded',()=>{
     verCheck();themeInit();langInit();prefsApply();
     splashInit();dtInit();tabsInit();catInit();durInit();clockInit();
     submitInit();settingsInit();summaryInit();
+    settingsTabsInit();   // v3.2.0
+    profileInit();        // v3.2.0
+    roundingInit();       // v3.2.0
+    clientsInit();        // v3.2.0
+    exportInit();         // v3.2.0
+    // Theme toggle in settings
+    $('btn-theme-toggle-settings')?.addEventListener('click',()=>{
+      applyTheme(document.body.classList.contains('light')?'dark':'light');
+      themeSettingsSync();buzz([20]);
+    });
+    // WorkStandard sync in connection tab
+    $('btn-sync-wstandard-settings')?.addEventListener('click',async()=>{
+      const btn=$('btn-sync-wstandard-settings');
+      btn.disabled=true;btn.textContent='⏳ מסנכרן...';
+      await syncWStandard(false);
+      btn.disabled=false;btn.textContent='↻ משוך WorkStandard מגיליון';
+      wstdSyncStatusInline();updateSyncStatus();
+    });
     $('btn-now').addEventListener('click',()=>{
-      const n=new Date();$('report-date').value=isoD(n);$('report-time').value=timeS(n);
+      const n=new Date();
+      $('report-date').value=isoD(n);
+      // Apply rounding to "now" time
+      $('report-time').value=applyRounding(timeS(n));
       toast(t('toastNowUpdated'));buzz([20]);
     });
     fixStoredDates();
@@ -1407,6 +1674,10 @@ function migrateData(prevVer){
   if(!store(K.wstandard)) store(K.wstandard,[]);
   // Ensure queue key exists
   if(!store('mwl_wstandard_queue')) store('mwl_wstandard_queue',[]);
+  // v3.2.0: ensure new keys exist without overwriting
+  if(!store(K.profile)) store(K.profile,{name:'',role:''});
+  if(store(K.rounding)===null) store(K.rounding,0);
+  if(!store(K.clients)) store(K.clients,[]);
   // Keep all other keys as-is — reports, settings, projects, prefs untouched
 }
 function vBadgeInit(){
@@ -1451,6 +1722,8 @@ function applyTheme(th){
   // sync menu button label
   const btn=$('menu-theme-btn');
   if(btn){btn.textContent=dark?t('menuThemeLight'):t('menuThemeDark');btn.classList.toggle('theme-active',dark);}
+  // v3.2.0: sync settings label
+  themeSettingsSync();
 }
 
 /* LANG */
@@ -1462,7 +1735,7 @@ function prefsLoadUI(){const p=getP();$('pref-vibration').checked=p.vibration!==
 function prefsSave(){const p={vibration:$('pref-vibration').checked,animations:$('pref-animations').checked,pullRefresh:$('pref-pull-refresh').checked};store(K.prefs,p);document.body.classList.toggle('no-anim',!p.animations)}
 
 /* DATE/TIME */
-function dtInit(){const n=new Date();$('report-date').value=isoD(n);$('report-time').value=timeS(n)}
+function dtInit(){const n=new Date();$('report-date').value=isoD(n);$('report-time').value=applyRounding(timeS(n))}
 
 /* TABS */
 function tabsInit(){document.querySelectorAll('.tab-btn').forEach(b=>b.addEventListener('click',()=>switchTab(b.dataset.tab)))}
@@ -1488,7 +1761,7 @@ function menuInit(){
   $('menu-settings-btn').addEventListener('click',()=>{menuClose();openM('modal-settings')});
   $('menu-help-btn').addEventListener('click',()=>{menuClose();openM('modal-help')});
   $('menu-gs-btn').addEventListener('click',()=>{menuClose();downloadGS();});
-  $('menu-import-btn').addEventListener('click',()=>{menuClose();openImportModal();});
+  $('menu-import-btn').addEventListener('click',()=>{menuClose();openImportModal();}); // keep in menu too
   $('menu-theme-btn').addEventListener('click',()=>{
     applyTheme(document.body.classList.contains('light')?'dark':'light');buzz([20]);
   });
@@ -1970,6 +2243,8 @@ function buildRep(date,time){
       rTime=`${s}-${e}`;
     }
   }
+  // Apply time rounding for entry/exit
+  if(cat==='entry'||cat==='exit') rTime=applyRounding(rTime);
   return{id:Date.now()+Math.random().toString(36).slice(2),timestamp:new Date().toISOString(),
     report_date:date,report_time:rTime,category:cat,description:desc,project:proj};
 }
@@ -2828,6 +3103,16 @@ function openM(id){
     prefsLoadUI();projChipsRender();
     const lang=window._lang||'he';
     document.querySelectorAll('.seg-btn[data-lang]').forEach(b=>b.classList.toggle('active',b.dataset.lang===lang));
+    // v3.2.0 additions
+    profileLoad();
+    roundingLoad();
+    clientsRender();
+    themeSettingsSync();
+    wstdSyncStatusInline();
+    aboutTabRender();
+    // Restore last settings tab
+    const lastTab=_lastSettingsTab||(()=>{try{return sessionStorage.getItem('mwl_stab')||'ui';}catch{return'ui';}})();
+    switchSettingsTab(lastTab);
   }
 }
 function closeM(id){$(id).classList.add('hidden');document.body.style.overflow='';}
@@ -2836,7 +3121,9 @@ function settingsSave(){
   if(ep)store(K.ep,ep);else localStorage.removeItem(K.ep);
   const su=$('settings-sheet-url').value.trim();
   if(su)store(K.sheetUrl,su);else localStorage.removeItem(K.sheetUrl);
-  prefsSave();toast(t('toastSettingsSaved'),'success');buzz([20,20,40]);closeM('modal-settings');updateMenuSheetLink();
+  prefsSave();
+  profileSave(); // v3.2.0
+  toast(t('toastSettingsSaved'),'success');buzz([20,20,40]);closeM('modal-settings');updateMenuSheetLink();
 }
 
 /* PROJECTS */
@@ -3080,6 +3367,367 @@ function scrollInit(){
   if(pos&&s)s.scrollTop=pos;
   s?.addEventListener('scroll',scrollSave,{passive:true});
 }
+
+/* ═══════════════════════════════════════════════════════
+   SETTINGS TABS  v3.2.0
+   ═══════════════════════════════════════════════════════ */
+let _lastSettingsTab = null;
+
+function settingsTabsInit(){
+  document.querySelectorAll('.stab-btn').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      const id=btn.dataset.stab;
+      switchSettingsTab(id);
+    });
+  });
+}
+
+function switchSettingsTab(id){
+  document.querySelectorAll('.stab-btn').forEach(b=>b.classList.toggle('active',b.dataset.stab===id));
+  document.querySelectorAll('.stab-pnl').forEach(p=>p.classList.toggle('active',p.id===`stab-${id}`));
+  _lastSettingsTab=id;
+  try{sessionStorage.setItem('mwl_stab',id);}catch(_){}
+}
+
+/* ═══════════════════════════════════════════════════════
+   PROFILE  v3.2.0
+   ═══════════════════════════════════════════════════════ */
+function profileLoad(){
+  const p=store(K.profile)||{name:'',role:''};
+  const nameEl=$('settings-username'),roleEl=$('settings-userrole');
+  if(nameEl)nameEl.value=p.name||'';
+  if(roleEl)roleEl.value=p.role||'';
+  profileDisplayUpdate(p);
+}
+
+function profileDisplayUpdate(p){
+  const dn=$('profile-name-display'),dr=$('profile-role-display'),da=$('profile-avatar-display');
+  if(dn)dn.textContent=p.name||'משתמש';
+  if(dr)dr.textContent=p.role||'תפקיד';
+  if(da){
+    const first=(p.name||'').trim().charAt(0).toUpperCase();
+    da.textContent=first||'👤';
+  }
+}
+
+function profileSave(){
+  const nameEl=$('settings-username'),roleEl=$('settings-userrole');
+  const p={name:(nameEl?.value||'').trim(),role:(roleEl?.value||'').trim()};
+  store(K.profile,p);
+  profileDisplayUpdate(p);
+}
+
+function profileInit(){
+  // Live update as user types
+  $('settings-username')?.addEventListener('input',()=>{
+    const p=store(K.profile)||{};
+    p.name=($('settings-username').value||'').trim();
+    profileDisplayUpdate(p);
+  });
+  $('settings-userrole')?.addEventListener('input',()=>{
+    const p=store(K.profile)||{};
+    p.role=($('settings-userrole').value||'').trim();
+    profileDisplayUpdate(p);
+  });
+}
+
+/* ═══════════════════════════════════════════════════════
+   TIME ROUNDING  v3.2.0
+   ═══════════════════════════════════════════════════════ */
+function roundingInit(){
+  document.querySelectorAll('.seg-btn[data-round]').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      document.querySelectorAll('.seg-btn[data-round]').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      store(K.rounding,parseInt(btn.dataset.round)||0);
+      buzz([10]);
+    });
+  });
+}
+
+function roundingLoad(){
+  const r=store(K.rounding)||0;
+  document.querySelectorAll('.seg-btn[data-round]').forEach(b=>{
+    b.classList.toggle('active',parseInt(b.dataset.round||'0')===r);
+  });
+}
+
+/** Apply rounding to a time string "HH:MM" → "HH:MM" */
+function applyRounding(timeStr){
+  const mins=store(K.rounding)||0;
+  if(!mins||!timeStr)return timeStr;
+  const[h,m]=timeStr.split(':').map(Number);
+  const total=h*60+m;
+  const rounded=Math.round(total/mins)*mins;
+  return`${pad(Math.floor(rounded/60)%24)}:${pad(rounded%60)}`;
+}
+
+/* ═══════════════════════════════════════════════════════
+   CLIENTS / PROJECTS / TASKS  v3.2.0
+   ═══════════════════════════════════════════════════════ */
+function getClients(){ return store(K.clients)||[]; }
+function saveClients(arr){ store(K.clients,arr); }
+
+function clientsRender(){
+  const tree=$('clients-tree');
+  const hint=$('clients-empty-hint');
+  if(!tree)return;
+  const clients=getClients();
+  if(!clients.length){
+    tree.innerHTML='';
+    if(hint)hint.style.display='';
+    return;
+  }
+  if(hint)hint.style.display='none';
+  tree.innerHTML=clients.map(c=>clientBlockHTML(c)).join('');
+}
+
+function clientBlockHTML(c){
+  const projCount=(c.projects||[]).length;
+  const projHTML=(c.projects||[]).map(p=>projItemHTML(c.id,p)).join('');
+  return`<div class="client-block" id="client-block-${c.id}" style="margin-bottom:8px">
+    <div class="client-hdr" onclick="toggleClient('${c.id}')">
+      <div class="client-hdr-dot"></div>
+      <span class="client-hdr-name">${esc(c.name)}</span>
+      <span class="client-hdr-count">${projCount} פרויקטים</span>
+      <button class="ibtn" style="font-size:.75rem;padding:4px 7px;color:var(--red)"
+        onclick="event.stopPropagation();removeClient('${c.id}')">🗑</button>
+      <span class="client-hdr-chev" id="client-chev-${c.id}">▼</span>
+    </div>
+    <div class="client-body" id="client-body-${c.id}">
+      <div class="client-proj-list" id="proj-list-${c.id}">${projHTML}</div>
+      <div class="add-row">
+        <input type="text" id="new-proj-${c.id}" class="fi" placeholder="שם פרויקט חדש..."/>
+        <button class="btn-g" onclick="addProject('${c.id}')">+ פרויקט</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function projItemHTML(clientId,p){
+  const tasksHTML=(p.tasks||[]).map(tk=>taskItemHTML(clientId,p.id,tk)).join('');
+  return`<div class="client-proj-item" id="proj-item-${p.id}" style="flex-direction:column;align-items:stretch;gap:6px">
+    <div style="display:flex;align-items:center;gap:8px">
+      <span style="font-size:.75rem">📁</span>
+      <span class="client-proj-name">${esc(p.name)}</span>
+      <button class="ibtn" style="font-size:.7rem;padding:3px 6px;color:var(--red)"
+        onclick="removeProject('${clientId}','${p.id}')">🗑</button>
+    </div>
+    <div class="client-task-list" id="task-list-${p.id}">${tasksHTML}</div>
+    <div class="add-row" style="padding-right:12px">
+      <input type="text" id="new-task-${p.id}" class="fi" placeholder="שם משימה..."/>
+      <select id="billable-${p.id}" class="fi" style="max-width:110px;font-size:.76rem;padding:8px 6px">
+        <option value="true">💰 בר-חיוב</option>
+        <option value="false">🆓 ללא חיוב</option>
+      </select>
+      <button class="btn-g" onclick="addTask('${clientId}','${p.id}')">+</button>
+    </div>
+  </div>`;
+}
+
+function taskItemHTML(clientId,projId,tk){
+  return`<div class="client-task-item" id="task-item-${tk.id}">
+    <span style="font-size:.68rem">📌</span>
+    <span class="task-name">${esc(tk.name)}</span>
+    <span class="billable-badge ${tk.billable?'yes':'no'}">${tk.billable?'בר-חיוב':'ללא חיוב'}</span>
+    <button class="ibtn" style="font-size:.65rem;padding:2px 5px;color:var(--red)"
+      onclick="removeTask('${clientId}','${projId}','${tk.id}')">✕</button>
+  </div>`;
+}
+
+function esc(s){ return String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+function toggleClient(cid){
+  const body=$(`client-body-${cid}`),chev=$(`client-chev-${cid}`);
+  if(!body)return;
+  const open=body.classList.toggle('open');
+  if(chev)chev.style.transform=open?'rotate(180deg)':'';
+}
+
+function addClient(){
+  const inp=$('new-client-name');
+  const name=(inp?.value||'').trim();
+  if(!name){inp?.focus();return;}
+  const clients=getClients();
+  if(clients.some(c=>c.name.toLowerCase()===name.toLowerCase())){toast('⚠️ לקוח כבר קיים','warn');return;}
+  clients.push({id:'c'+Date.now(),name,projects:[]});
+  saveClients(clients);
+  inp.value='';
+  clientsRender();
+  buzz([15]);
+}
+
+function removeClient(cid){
+  if(!confirm('למחוק לקוח זה ואת כל הפרויקטים שלו?'))return;
+  saveClients(getClients().filter(c=>c.id!==cid));
+  clientsRender();
+}
+
+function addProject(clientId){
+  const inp=$(`new-proj-${clientId}`);
+  const name=(inp?.value||'').trim();
+  if(!name){inp?.focus();return;}
+  const clients=getClients();
+  const c=clients.find(c=>c.id===clientId);if(!c)return;
+  if(!c.projects)c.projects=[];
+  if(c.projects.some(p=>p.name.toLowerCase()===name.toLowerCase())){toast('⚠️ פרויקט כבר קיים','warn');return;}
+  c.projects.push({id:'p'+Date.now(),name,tasks:[]});
+  saveClients(clients);
+  // Also add to flat proj list for report form autocomplete
+  const ps=store(K.proj)||[];
+  if(!ps.includes(name)){ps.push(name);store(K.proj,ps);projLoad();}
+  inp.value='';
+  clientsRender();
+  buzz([10]);
+}
+
+function removeProject(clientId,projId){
+  const clients=getClients();
+  const c=clients.find(c=>c.id===clientId);if(!c)return;
+  c.projects=(c.projects||[]).filter(p=>p.id!==projId);
+  saveClients(clients);
+  clientsRender();
+}
+
+function addTask(clientId,projId){
+  const inp=$(`new-task-${projId}`);
+  const sel=$(`billable-${projId}`);
+  const name=(inp?.value||'').trim();
+  if(!name){inp?.focus();return;}
+  const billable=sel?.value==='true';
+  const clients=getClients();
+  const c=clients.find(c=>c.id===clientId);if(!c)return;
+  const p=(c.projects||[]).find(p=>p.id===projId);if(!p)return;
+  if(!p.tasks)p.tasks=[];
+  p.tasks.push({id:'t'+Date.now(),name,billable});
+  saveClients(clients);
+  inp.value='';
+  clientsRender();
+  buzz([10]);
+}
+
+function removeTask(clientId,projId,taskId){
+  const clients=getClients();
+  const c=clients.find(c=>c.id===clientId);if(!c)return;
+  const p=(c.projects||[]).find(p=>p.id===projId);if(!p)return;
+  p.tasks=(p.tasks||[]).filter(t=>t.id!==taskId);
+  saveClients(clients);
+  clientsRender();
+}
+
+function clientsInit(){
+  $('btn-add-client')?.addEventListener('click',addClient);
+  $('new-client-name')?.addEventListener('keydown',e=>{if(e.key==='Enter')addClient()});
+}
+
+/* ═══════════════════════════════════════════════════════
+   EXPORT  v3.2.0
+   ═══════════════════════════════════════════════════════ */
+function exportCSV(){
+  const reps=store(K.reps)||[];
+  if(!reps.length){toast('⚠️ אין דיווחים לייצוא','warn');return;}
+  const header='report_date,report_time,category,description,project,id';
+  const rows=reps.map(r=>[
+    r.report_date||'',
+    r.report_time||'',
+    r.category||'',
+    `"${(r.description||'').replace(/"/g,'""')}"`,
+    `"${(r.project||'').replace(/"/g,'""')}"`,
+    r.id||''
+  ].join(','));
+  const csv='\uFEFF'+header+'\n'+rows.join('\n'); // BOM for Hebrew
+  const b=new Blob([csv],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(b);
+  a.download=`worklog-export-${isoD(new Date())}.csv`;
+  document.body.appendChild(a);a.click();
+  setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1000);
+  toast('📄 CSV יוצא בהצלחה','success');buzz([20,40]);
+}
+
+async function exportXLSX(){
+  const reps=store(K.reps)||[];
+  if(!reps.length){toast('⚠️ אין דיווחים לייצוא','warn');return;}
+  try{
+    await loadSheetJS();
+    const rows=reps.map(r=>({
+      report_date:r.report_date||'',
+      report_time:r.report_time||'',
+      category:r.category||'',
+      description:r.description||'',
+      project:r.project||'',
+      id:r.id||''
+    }));
+    const ws=XLSX.utils.json_to_sheet(rows,{header:['report_date','report_time','category','description','project','id']});
+    ws['!cols']=[{wch:14},{wch:16},{wch:10},{wch:36},{wch:22},{wch:22}];
+    const wb=XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb,ws,'דיווחים');
+    const buf=XLSX.write(wb,{type:'array',bookType:'xlsx'});
+    const b=new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+    const a=document.createElement('a');a.href=URL.createObjectURL(b);
+    a.download=`worklog-export-${isoD(new Date())}.xlsx`;
+    document.body.appendChild(a);a.click();
+    setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1000);
+    toast('📊 Excel יוצא בהצלחה','success');buzz([20,40]);
+  }catch(e){toast('❌ שגיאה בייצוא: '+e.message,'error',4000);}
+}
+
+function exportInit(){
+  $('btn-export-csv')?.addEventListener('click',exportCSV);
+  $('btn-export-xlsx')?.addEventListener('click',exportXLSX);
+  $('btn-open-import-from-settings')?.addEventListener('click',()=>{closeM('modal-settings');openImportModal();});
+}
+
+/* ═══════════════════════════════════════════════════════
+   ABOUT TAB  v3.2.0
+   ═══════════════════════════════════════════════════════ */
+function aboutTabRender(){
+  // Version
+  const av=$('about-version');if(av)av.textContent='v'+VER;
+  // PWA installed status
+  const pwaEl=$('about-pwa-status');
+  if(pwaEl){
+    const installed=window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone===true;
+    pwaEl.textContent=installed?'✅ מותקן':'🌐 פתוח בדפדפן';
+    pwaEl.style.color=installed?'var(--lime)':'var(--text3)';
+  }
+  // SW status
+  const swEl=$('about-sw-status');
+  if(swEl){
+    const hasSW='serviceWorker'in navigator&&navigator.serviceWorker.controller;
+    swEl.textContent=hasSW?'✅ פעיל':'⚠️ לא פעיל';
+    swEl.style.color=hasSW?'var(--lime)':'var(--amber)';
+  }
+  // Data count
+  const dcEl=$('about-data-count');
+  if(dcEl){const n=(store(K.reps)||[]).length;dcEl.textContent=`${n} דיווחים`;}
+  // Last sync
+  const lsEl=$('about-last-sync');
+  if(lsEl){const ls=store('mwl_last_full_sync');lsEl.textContent=ls?new Date(Number(ls)).toLocaleString('he-IL'):'לא סונכרן';}
+  // Reset button in about
+  $('btn-open-reset-about')?.addEventListener('click',()=>{closeM('modal-settings');openM('modal-reset');},{once:true});
+}
+
+/* ═══════════════════════════════════════════════════════
+   THEME BUTTON IN SETTINGS  v3.2.0
+   ═══════════════════════════════════════════════════════ */
+function themeSettingsSync(){
+  const isDark=!document.body.classList.contains('light');
+  const lbl=$('theme-label-settings');
+  if(lbl)lbl.textContent=isDark?'🌙 מצב כהה':'☀️ מצב בהיר';
+}
+
+/* ═══════════════════════════════════════════════════════
+   WORKCAL SYNC INLINE (in connection tab)  v3.2.0
+   ═══════════════════════════════════════════════════════ */
+function wstdSyncStatusInline(){
+  const el=$('wstandard-sync-status-inline');if(!el)return;
+  const last=store('mwl_wstandard_sync');
+  const count=getWStandard().length;
+  const ep=store(K.ep);
+  if(!ep){el.textContent='⚠️ Endpoint לא הוגדר';return;}
+  el.textContent=last?`✅ סנכרן: ${last} · ${count} ימים`:'לא סונכרן עדיין';
+}
+
 </script>
 
 <!-- IMPORT MODAL -->
