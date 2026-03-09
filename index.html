@@ -424,12 +424,15 @@ textarea.fi{resize:vertical;min-height:72px}
 .wc-cell.deficit{background:rgba(255,77,106,.07);border-color:rgba(255,77,106,.25)}
 .wc-cell.vacation{background:rgba(255,184,48,.07);border-color:rgba(255,184,48,.25)}
 .wc-cell.sick{background:rgba(167,139,250,.08);border-color:rgba(167,139,250,.28)}
+.wc-cell.sabbatical{background:rgba(99,202,183,.08);border-color:rgba(99,202,183,.28)}
 .wc-cell.today{border-color:var(--blue)!important;border-width:2px}
 .wc-day-num{font-family:'Syne',monospace;font-size:.75rem;font-weight:700;color:var(--text2);line-height:1}
 .wc-cell.ok .wc-day-num{color:var(--lime)}
 .wc-cell.deficit .wc-day-num{color:var(--red)}
 .wc-cell.vacation .wc-day-num{color:var(--amber)}
 .wc-cell.sick .wc-day-num{color:var(--purple)}
+.wc-cell.sabbatical .wc-day-num{color:#63cab7}
+.wc-cell.sabbatical .wc-day-num{color:#63cab7}
 .wc-actual{font-family:'Syne',monospace;font-size:.57rem;font-weight:700;color:var(--text3);line-height:1}
 .wc-cell.ok .wc-actual{color:rgba(200,241,53,.75)}
 .wc-cell.deficit .wc-actual{color:rgba(255,77,106,.8)}
@@ -450,6 +453,7 @@ textarea.fi{resize:vertical;min-height:72px}
 .day-status-badge.deficit{background:var(--redDim);color:var(--red)}
 .day-status-badge.vacation{background:var(--amberDim);color:var(--amber)}
 .day-status-badge.sick{background:var(--purpleDim);color:var(--purple)}
+.day-status-badge.sabbatical{background:rgba(99,202,183,.12);color:#63cab7}
 .day-status-badge.nodata{background:var(--glass);color:var(--text3)}
 .wc-legend{display:flex;gap:10px;flex-wrap:wrap;padding:4px 0}
 .wc-legend-item{display:flex;align-items:center;gap:5px;font-size:.67rem;color:var(--text3)}
@@ -458,6 +462,8 @@ textarea.fi{resize:vertical;min-height:72px}
 .wc-legend-dot.deficit{background:var(--red)}
 .wc-legend-dot.vacation{background:var(--amber)}
 .wc-legend-dot.sick{background:var(--purple)}
+.wc-legend-dot.sabbatical{background:#63cab7}
+.wc-legend-dot.sabbatical{background:#63cab7}
 .wc-sect-lbl{font-size:.67rem;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:1.5px;margin:2px 0 6px}
 .workcal-hint{font-size:.72rem;color:var(--text3);text-align:center;padding:6px 0}
 details summary::-webkit-details-marker{display:none}
@@ -580,7 +586,7 @@ details summary::-webkit-details-marker{display:none}
       <a id="menu-sheet-link" href="#" target="_blank" rel="noopener" style="display:none;align-items:center;gap:7px;font-size:.8rem;color:var(--blue);text-decoration:none;padding:3px 2px">
         <span data-i18n="menuOpenSheet">📊 פתח גיליון הדיווחים</span>
       </a>
-      <span id="menu-vbadge" class="vbadge" data-i18n-attr="title" data-i18n="menuVersionTooltip" title="לחץ לאיפוס">v3.5.0</span>
+      <span id="menu-vbadge" class="vbadge" data-i18n-attr="title" data-i18n="menuVersionTooltip" title="לחץ לאיפוס">v3.6.0</span>
     </div>
   </aside>
 
@@ -592,7 +598,7 @@ details summary::-webkit-details-marker{display:none}
         <span class="hdr-name">MyWorkLog</span>
       </div>
       <div class="hdr-acts">
-        <span id="version-badge" class="vbadge" data-i18n="menuVersionTooltip" data-i18n-attr="title" title="לחץ לאיפוס">v3.5.0</span>
+        <span id="version-badge" class="vbadge" data-i18n="menuVersionTooltip" data-i18n-attr="title" title="לחץ לאיפוס">v3.6.0</span>
       </div>
     </div>
   </header>
@@ -803,6 +809,7 @@ details summary::-webkit-details-marker{display:none}
             <div class="wc-legend-item"><div class="wc-legend-dot deficit"></div><span data-i18n="legendDeficit">חוסר שעות</span></div>
             <div class="wc-legend-item"><div class="wc-legend-dot vacation"></div><span data-i18n="legendVacation">חופש</span></div>
             <div class="wc-legend-item"><div class="wc-legend-dot sick"></div><span data-i18n="legendSick">מחלה</span></div>
+            <div class="wc-legend-item"><div class="wc-legend-dot sabbatical"></div><span>שבתון</span></div>
           </div>
           <p class="workcal-hint">&#1500;&#1495;&#1509; &#1506;&#1500; &#1497;&#1493;&#1501; &#1500;&#1506;&#1512;&#1497;&#1499;&#1492;</p>
         </div>
@@ -1028,6 +1035,21 @@ details summary::-webkit-details-marker{display:none}
                 <button class="btn-g sm" id="btn-export-xlsx">📊 ייצא Excel</button>
               </div>
             </div>
+            <div class="sset-row" style="border-top:1px solid var(--border);padding-top:11px">
+              <div class="sset-row-label">📅 ייצוא לתקופה</div>
+              <div class="sset-row-sub" style="margin-bottom:10px">נוכחות + משימות לטווח תאריכים נבחר — שני Sheets</div>
+              <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+                <div style="display:flex;flex-direction:column;gap:3px">
+                  <label style="font-size:.68rem;color:var(--text3)">מתאריך</label>
+                  <input type="date" id="export-from-date" class="fi" style="width:140px;padding:7px 10px;font-size:.8rem"/>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:3px">
+                  <label style="font-size:.68rem;color:var(--text3)">עד תאריך</label>
+                  <input type="date" id="export-to-date" class="fi" style="width:140px;padding:7px 10px;font-size:.8rem"/>
+                </div>
+              </div>
+              <button class="btn-p sm" id="btn-export-period" style="margin-top:10px;width:100%">📊 ייצא לאקסל</button>
+            </div>
           </div>
         </div>
 
@@ -1118,7 +1140,7 @@ details summary::-webkit-details-marker{display:none}
               </div>
               <div class="about-row">
                 <span class="about-lbl">גרסה</span>
-                <span class="about-val" id="about-version">v3.5.0</span>
+                <span class="about-val" id="about-version">v3.6.0</span>
               </div>
               <div class="about-row">
                 <span class="about-lbl">סטטוס PWA</span>
@@ -1282,13 +1304,16 @@ details summary::-webkit-details-marker{display:none}
       <div class="fg">
         <label class="flbl" data-i18n="labelQuickStatus">סטאטוס מהיר</label>
         <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px">
-          <button class="status-quick-btn" data-status="vacation" data-i18n="statusVacation" style="background:var(--amberDim);border:1.5px solid var(--amber);color:var(--amber);border-radius:16px;padding:5px 13px;font-size:.76rem;font-weight:700;cursor:pointer">🏖 חופש</button>
-          <button class="status-quick-btn" data-status="sick"     data-i18n="statusSick" style="background:var(--purpleDim);border:1.5px solid var(--purple);color:var(--purple);border-radius:16px;padding:5px 13px;font-size:.76rem;font-weight:700;cursor:pointer">🤒 מחלה</button>
-          <button class="status-quick-btn" data-status="holiday"  data-i18n="statusHoliday" style="background:var(--blueDim);border:1.5px solid var(--blue);color:var(--blue);border-radius:16px;padding:5px 13px;font-size:.76rem;font-weight:700;cursor:pointer">✡ חג</button>
-          <button class="status-quick-btn" data-status="clear"    data-i18n="statusClear" style="background:var(--glass);border:1.5px solid var(--border2);color:var(--text2);border-radius:16px;padding:5px 13px;font-size:.76rem;font-weight:700;cursor:pointer">✕ נקה</button>
+          <button class="status-quick-btn" data-status="vacation"    style="background:var(--amberDim);border:1.5px solid var(--amber);color:var(--amber);border-radius:16px;padding:5px 13px;font-size:.76rem;font-weight:700;cursor:pointer">🏖 חופש</button>
+          <button class="status-quick-btn" data-status="sick"        style="background:var(--purpleDim);border:1.5px solid var(--purple);color:var(--purple);border-radius:16px;padding:5px 13px;font-size:.76rem;font-weight:700;cursor:pointer">🤒 מחלה</button>
+          <button class="status-quick-btn" data-status="holiday"     style="background:var(--blueDim);border:1.5px solid var(--blue);color:var(--blue);border-radius:16px;padding:5px 13px;font-size:.76rem;font-weight:700;cursor:pointer">✡ חג</button>
+          <button class="status-quick-btn" data-status="sabbatical"  style="background:rgba(99,202,183,.12);border:1.5px solid #63cab7;color:#63cab7;border-radius:16px;padding:5px 13px;font-size:.76rem;font-weight:700;cursor:pointer">🌴 שבתון</button>
+          <button class="status-quick-btn" data-status="clear"       style="background:var(--glass);border:1.5px solid var(--border2);color:var(--text2);border-radius:16px;padding:5px 13px;font-size:.76rem;font-weight:700;cursor:pointer">✕ נקה</button>
         </div>
-        <label class="flbl" data-i18n="labelNotes">הערות</label>
-        <input type="text" id="dayedit-notes" class="fi" data-i18n="placeholderNotes" data-i18n-attr="placeholder" placeholder="לדוגמה: יום חופש, ראש השנה..."/>
+        <label class="flbl">סיווג (Notes)</label>
+        <input type="text" id="dayedit-notes" class="fi" placeholder="לדוגמה: חג, חופש, שבתון, מחלה..."/>
+        <label class="flbl" style="margin-top:8px">תיאור <span style="font-size:.72rem;color:var(--text3);font-weight:400">(אופציונלי)</span></label>
+        <input type="text" id="dayedit-description" class="fi" placeholder="לדוגמה: יום העצמאות, חופשת קיץ..."/>
       </div>
       <div id="dayedit-offline-hint" style="display:none;background:var(--amberDim);border:1px solid var(--amber);border-radius:var(--rxs);padding:8px 11px;font-size:.76rem;color:var(--amber)">
         &#9888;&#65039; &#1488;&#1497;&#1503; &#1495;&#1497;&#1489;&#1493;&#1512; &#8212; &#1492;&#1513;&#1497;&#1504;&#1493;&#1497; &#1497;&#1513;&#1502;&#1512; &#1502;&#1511;&#1493;&#1502;&#1497;&#1514; &#1493;&#1497;&#1505;&#1493;&#1504;&#1499;&#1512;&#1503; &#1489;&#1514;&#1493;&#1505;&#1508;&#1514; &#1495;&#1497;&#1489;&#1493;&#1512;
@@ -1496,11 +1521,11 @@ document.addEventListener('DOMContentLoaded',()=>{
     verCheck();themeInit();langInit();prefsApply();
     splashInit();dtInit();tabsInit();catInit();durInit();clockInit();
     submitInit();settingsInit();summaryInit();
-    settingsTabsInit();   // v3.5.0
-    profileInit();        // v3.5.0
-    roundingInit();       // v3.5.0
-    clientsInit();        // v3.5.0
-    exportInit();         // v3.5.0
+    settingsTabsInit();   // v3.6.0
+    profileInit();        // v3.6.0
+    roundingInit();       // v3.6.0
+    clientsInit();        // v3.6.0
+    exportInit();         // v3.6.0
     // Theme toggle in settings
     $('btn-theme-toggle-settings')?.addEventListener('click',()=>{
       applyTheme(document.body.classList.contains('light')?'dark':'light');
@@ -1712,7 +1737,7 @@ function migrateData(prevVer){
   if(!store(K.wstandard)) store(K.wstandard,[]);
   // Ensure queue key exists
   if(!store('mwl_wstandard_queue')) store('mwl_wstandard_queue',[]);
-  // v3.5.0: ensure new keys exist without overwriting
+  // v3.6.0: ensure new keys exist without overwriting
   if(!store(K.profile)) store(K.profile,{name:'',role:''});
   if(store(K.rounding)===null) store(K.rounding,0);
   if(!store(K.clients)) store(K.clients,[]);
@@ -1760,7 +1785,7 @@ function applyTheme(th){
   // sync menu button label
   const btn=$('menu-theme-btn');
   if(btn){btn.textContent=dark?t('menuThemeLight'):t('menuThemeDark');btn.classList.toggle('theme-active',dark);}
-  // v3.5.0: sync settings label
+  // v3.6.0: sync settings label
   themeSettingsSync();
 }
 
@@ -2402,18 +2427,20 @@ function saveWStandardLocal(arr){ store(K.wstandard,arr); }
 function classifyNotes(notes){
   if(!notes)return'normal';
   const n=notes.trim().toLowerCase();
+  if(/שבתון|sabbatical|לא זמין|חופשה ממושכת/.test(n))return'sabbatical';
   if(/חופש|vacation|holiday|חג|פסח|שבועות|ראש השנה|יום כיפור|סוכות|שמחת תורה|חנוכה|פורים|יום עצמאות/.test(n))return'vacation';
-  if(/מחלה|חולה|sick|ill|מחלה/.test(n))return'sick';
+  if(/מחלה|חולה|sick|ill/.test(n))return'sick';
   return'normal';
 }
 
 function getDayStd(ds){
   const row=getWStandard().find(r=>r.date===ds);
-  if(!row)return{stdHours:0,notes:'',isWorkDay:false,dayType:'normal'};
+  if(!row)return{stdHours:0,notes:'',description:'',isWorkDay:false,dayType:'normal'};
   const h=parseFloat(row.stdHours)||0;
   const notes=row.notes||'';
+  const description=row.description||'';
   const dayType=classifyNotes(notes);
-  return{stdHours:h,notes,isWorkDay:h>0,dayType};
+  return{stdHours:h,notes,description,isWorkDay:h>0,dayType};
 }
 
 /* Hebrew weekday */
@@ -2480,17 +2507,17 @@ function calcDayWorkMins(ds,reports){
 
 /* Full status for a day */
 function getDayStatus(ds,reports){
-  const{stdHours,notes,isWorkDay,dayType}=getDayStd(ds);
+  const{stdHours,notes,description,isWorkDay,dayType}=getDayStd(ds);
   const{mins:actualMins,fromTasks,pairs,hasOpen}=calcDayWorkMins(ds,reports);
   const wdStr=actualMins>0?`${pad(Math.floor(actualMins/60))}:${pad(actualMins%60)}`:'-';
   if(!isWorkDay){
-    return{status:dayType!=='normal'?dayType:'nostandard',actualMins,minMins:0,diffMins:actualMins,wdStr,notes,pct:null,fromTasks,dayType,pairs,hasOpen};
+    return{status:dayType!=='normal'?dayType:'nostandard',actualMins,minMins:0,diffMins:actualMins,wdStr,notes,description,pct:null,fromTasks,dayType,pairs,hasOpen};
   }
   const minMins=Math.round(stdHours*60);
   const diffMins=actualMins-minMins;
   const status=diffMins>=0?'ok':'deficit';
   const pct=minMins>0?Math.min(999,Math.round(actualMins/minMins*100)):100;
-  return{status,actualMins,minMins,diffMins,wdStr,notes,pct,fromTasks,dayType,pairs,hasOpen};
+  return{status,actualMins,minMins,diffMins,wdStr,notes,description,pct,fromTasks,dayType,pairs,hasOpen};
 }
 
 function minsToHHMM(m){
@@ -2548,11 +2575,11 @@ async function syncWStandard(quiet=false){
 }
 
 /* Push one day's standard to sheet */
-async function setDayStd(ds,stdHours,notes){
+async function setDayStd(ds,stdHours,notes,description=''){
   const wd=hebDow(ds);
   const std=getWStandard();
   const idx=std.findIndex(r=>r.date===ds);
-  const rec={date:ds,weekDay:wd,stdHours:Number(stdHours)||0,notes:notes||''};
+  const rec={date:ds,weekDay:wd,stdHours:Number(stdHours)||0,notes:notes||'',description:description||''};
   if(idx>=0)std[idx]=rec;else std.push(rec);
   std.sort((a,b)=>a.date<b.date?-1:1);
   saveWStandardLocal(std);
@@ -2576,7 +2603,7 @@ async function _wstdSend(rec){
     const body=JSON.stringify({
       action:'setDayStandard',
       date:rec.date,weekDay:rec.weekDay,
-      stdHours:rec.stdHours,notes:rec.notes
+      stdHours:rec.stdHours,notes:rec.notes,description:rec.description||''
     });
     await fetch(ep,{
       method:'POST',
@@ -2621,19 +2648,21 @@ function renderDayWCStatus(ds,reports){
   const sec=$('day-wc-section');if(!sec)return;
   const{status,actualMins,minMins,diffMins,wdStr,notes,pct,fromTasks,dayType,pairs,hasOpen}=getDayStatus(ds,reports);
   const notesEl=$('day-wc-notes');
-  const dayTypeLabels={vacation:t('statusVacation'),sick:t('statusSick'),holiday:t('statusHoliday')};
-  const dayTypeColors={vacation:'var(--amber)',sick:'var(--purple)',holiday:'var(--blue)'};
+  const dayTypeLabels={vacation:t('statusVacation'),sick:t('statusSick'),holiday:t('statusHoliday'),sabbatical:'🌴 שבתון'};
+  const dayTypeColors={vacation:'var(--amber)',sick:'var(--purple)',holiday:'var(--blue)',sabbatical:'#63cab7'};
+  const dayTypeBg={vacation:'var(--amberDim)',sick:'var(--purpleDim)',holiday:'var(--blueDim)',sabbatical:'rgba(99,202,183,.12)'};
   if(notesEl){
-    notesEl.textContent=notes?notes:'';
+    const displayText=[notes,description].filter(Boolean).join(' — ');
+    notesEl.textContent=displayText;
     const dtColor=dayTypeColors[dayType]||'var(--amber)';
-    notesEl.style.background=dayType==='sick'?'var(--purpleDim)':dayType==='vacation'?'var(--amberDim)':'var(--blueDim)';
+    notesEl.style.background=dayTypeBg[dayType]||'var(--amberDim)';
     notesEl.style.borderLeft=`3px solid ${dtColor}`;
     notesEl.style.color=dtColor;
-    notesEl.style.display=notes?'':'none';
+    notesEl.style.display=displayText?'':'none';
   }
   $('day-wc-section').dataset.date=ds;
   let html='';
-  if(status==='vacation'||status==='sick'||status==='holiday'){
+  if(status==='vacation'||status==='sick'||status==='holiday'||status==='sabbatical'){
     const dtLabel=dayTypeLabels[status]||('📝 '+notes);
     const dtColor=dayTypeColors[status]||'var(--amber)';
     html+=`<span class="day-status-badge ${status}">${dtLabel}</span>`;
@@ -2710,6 +2739,7 @@ function renderWCCalendar(year,month,reports){
     const isToday=ds===todayStr;
     const showActual=actualMins>0;
     const cellClass=dayType==='sick'?'sick':
+      dayType==='sabbatical'?'sabbatical':
       dayType==='vacation'||dayType==='holiday'?'vacation':
       status==='nostandard'?'':status;
     const stdStr=minMins>0?minsToHHMM(minMins):'';
@@ -2717,7 +2747,7 @@ function renderWCCalendar(year,month,reports){
       <span class="wc-day-num">${d}</span>
       ${showActual?`<span class="wc-actual">${wdStr}${fromTasks?'*':''}</span>`:''}
       ${stdStr&&!showActual?`<span class="wc-actual" style="color:var(--text3)">${stdStr}</span>`:''}
-      ${dayType==='sick'?`<span class="wc-vac-icon" title="${notes}">🤒</span>`:dayType==='vacation'||dayType==='holiday'?`<span class="wc-vac-icon" title="${notes}">🏖</span>`:notes?`<span class="wc-vac-icon" title="${notes}">📝</span>`:''}
+      ${dayType==='sick'?`<span class="wc-vac-icon" title="${notes}">🤒</span>`:dayType==='sabbatical'?`<span class="wc-vac-icon" title="${notes}">🌴</span>`:dayType==='vacation'||dayType==='holiday'?`<span class="wc-vac-icon" title="${notes}">🏖</span>`:notes?`<span class="wc-vac-icon" title="${notes}">📝</span>`:''}
     </div>`;
   }
   daysGrid.innerHTML=html;
@@ -2728,14 +2758,15 @@ function renderMonthlyWCStats(year,month,reports){
   const el=$('monthly-wc-stats');if(!el)return;
   const todayStr=isoD(new Date());
   const lastDate=new Date(year,month+1,0).getDate();
-  let reqMins=0,actualMins=0,surplusMins=0,deficitMins=0,deficitDays=0,okDays=0,workDays=0,pastDays=0,vacDays=0,sickDays=0;
+  let reqMins=0,actualMins=0,surplusMins=0,deficitMins=0,deficitDays=0,okDays=0,workDays=0,pastDays=0,vacDays=0,sickDays=0,sabbDays=0;
   for(let d=1;d<=lastDate;d++){
     const ds=`${year}-${pad(month+1)}-${pad(d)}`;
     const{status,actualMins:am,minMins,dayType}=getDayStatus(ds,reports);
     // Count special days regardless of work status
     if(dayType==='vacation'||dayType==='holiday')vacDays++;
     if(dayType==='sick')sickDays++;
-    if(status==='nostandard'||status==='vacation'||status==='sick'||status==='holiday')continue;
+    if(dayType==='sabbatical')sabbDays++;
+    if(status==='nostandard'||status==='vacation'||status==='sick'||status==='holiday'||status==='sabbatical')continue;
     workDays++;
     if(ds<=todayStr){
       pastDays++;reqMins+=minMins;actualMins+=am;
@@ -2771,7 +2802,7 @@ let _editDs='';
 function editDayConfig(ds){
   _editDs=ds;
   const reports=store(K.reps)||[];
-  const{stdHours,notes,isWorkDay}=getDayStd(ds);
+  const{stdHours,notes,description,isWorkDay}=getDayStd(ds);
   const{actualMins,wdStr,status,diffMins,minMins,pct}=getDayStatus(ds,reports);
   const[y,m,d]=ds.split('-');
   $('dayedit-title').textContent=`📅 ${d}/${m}/${y} — ${hebDow(ds)}`;
@@ -2786,14 +2817,18 @@ function editDayConfig(ds){
   infoEl.innerHTML=infoHtml;
   $('dayedit-stdhours').value=stdHours>0?stdHours:'';
   $('dayedit-notes').value=notes;
+  $('dayedit-description').value=description;
   $('dayedit-offline-hint').style.display=navigator.onLine?'none':'';
   // Wire quick-status buttons
-  const STATUS_NOTES={vacation:'חופש',sick:'מחלה',holiday:'חג',clear:''};
+  const STATUS_NOTES={vacation:'חופש',sick:'מחלה',holiday:'חג',sabbatical:'שבתון',clear:''};
+  const STATUS_DESC={vacation:'',sick:'',holiday:'',sabbatical:'',clear:''};
   document.querySelectorAll('.status-quick-btn').forEach(btn=>{
     btn.onclick=()=>{
-      const sn=STATUS_NOTES[btn.dataset.status];
-      $('dayedit-notes').value=sn;
-      if(btn.dataset.status!=='clear'&&!$('dayedit-stdhours').value)
+      const st=btn.dataset.status;
+      $('dayedit-notes').value=STATUS_NOTES[st]??'';
+      // Don't overwrite user description unless clearing
+      if(st==='clear') $('dayedit-description').value='';
+      if(st!=='clear'&&!$('dayedit-stdhours').value)
         $('dayedit-stdhours').value='0';
     };
   });
@@ -2804,9 +2839,10 @@ async function saveDayConfig(){
   if(!_editDs)return;
   const stdHours=$('dayedit-stdhours').value===''?0:Number($('dayedit-stdhours').value);
   const notes=$('dayedit-notes').value.trim();
+  const description=($('dayedit-description')?.value||'').trim();
   const btn=$('btn-dayedit-save');
   btn.disabled=true;btn.textContent='...';
-  await setDayStd(_editDs,stdHours,notes);
+  await setDayStd(_editDs,stdHours,notes,description);
   btn.disabled=false;btn.textContent=t('btnSaveSync');
   closeM('modal-dayedit');
   buzz([20,20]);
@@ -2884,7 +2920,8 @@ function renderAnnualStats(year, reports){
       const{status,actualMins:am,minMins,dayType}=getDayStatus(ds,reports);
       if(dayType==='vacation'||dayType==='holiday')vac++;
       if(dayType==='sick')sick++;
-      if(status==='nostandard'||status==='vacation'||status==='sick'||status==='holiday')continue;
+      if(dayType==='sabbatical')vac++; // count sabbatical with special days
+      if(status==='nostandard'||status==='vacation'||status==='sick'||status==='holiday'||status==='sabbatical')continue;
       wDays++;req+=minMins;act+=am;
       const diff=am-minMins;
       if(diff>=0){surplus+=diff;okD++;}else{deficit+=Math.abs(diff);defD++;}
@@ -3141,11 +3178,11 @@ function openM(id){
     prefsLoadUI();projChipsRender();
     const lang=window._lang||'he';
     document.querySelectorAll('.seg-btn[data-lang]').forEach(b=>b.classList.toggle('active',b.dataset.lang===lang));
-    // v3.5.0 additions
+    // v3.6.0 additions
     profileLoad();
     roundingLoad();
-    taskDefsRender();       // v3.5.0
-    crmSyncStatus();        // v3.5.0
+    taskDefsRender();       // v3.6.0
+    crmSyncStatus();        // v3.6.0
     themeSettingsSync();
     wstdSyncStatusInline();
     aboutTabRender();
@@ -3161,7 +3198,7 @@ function settingsSave(){
   const su=$('settings-sheet-url').value.trim();
   if(su)store(K.sheetUrl,su);else localStorage.removeItem(K.sheetUrl);
   prefsSave();
-  profileSave(); // v3.5.0
+  profileSave(); // v3.6.0
   toast(t('toastSettingsSaved'),'success');buzz([20,20,40]);closeM('modal-settings');updateMenuSheetLink();
 }
 
@@ -3412,7 +3449,7 @@ function scrollInit(){
 }
 
 /* ═══════════════════════════════════════════════════════
-   SETTINGS TABS  v3.5.0
+   SETTINGS TABS  v3.6.0
    ═══════════════════════════════════════════════════════ */
 let _lastSettingsTab = null;
 
@@ -3433,7 +3470,7 @@ function switchSettingsTab(id){
 }
 
 /* ═══════════════════════════════════════════════════════
-   PROFILE  v3.5.0
+   PROFILE  v3.6.0
    ═══════════════════════════════════════════════════════ */
 function profileLoad(){
   const p=store(K.profile)||{name:'',role:''};
@@ -3475,7 +3512,7 @@ function profileInit(){
 }
 
 /* ═══════════════════════════════════════════════════════
-   TIME ROUNDING  v3.5.0
+   TIME ROUNDING  v3.6.0
    ═══════════════════════════════════════════════════════ */
 function roundingInit(){
   document.querySelectorAll('.seg-btn[data-round]').forEach(btn=>{
@@ -3506,10 +3543,10 @@ function applyRounding(timeStr){
 }
 
 /* ═══════════════════════════════════════════════════════
-   CLIENTS / PROJECTS / TASKS  v3.5.0
+   CLIENTS / PROJECTS / TASKS  v3.6.0
    ═══════════════════════════════════════════════════════ */
 /* ═══════════════════════════════════════════════════════
-   CRM — Projects · Task Definitions  v3.5.0
+   CRM — Projects · Task Definitions  v3.6.0
    ═══════════════════════════════════════════════════════
    K.taskDefs = [{id, name, billable}]
      • משימות גלובליות — משותפות לכל הפרויקטים
@@ -3573,7 +3610,7 @@ function crmSyncStatus(){
 }
 
 /* ═══════════════════════════════════════════════════════
-   TASK DEFINITIONS  v3.5.0
+   TASK DEFINITIONS  v3.6.0
    ═══════════════════════════════════════════════════════
    משימות גלובליות — לא שייכות לפרויקט ספציפי.
    אותה משימה יכולה להופיע פעמיים: billable + non-billable.
@@ -3651,7 +3688,7 @@ function clientsInit(){
 }
 
 /* ═══════════════════════════════════════════════════════
-   EXPORT  v3.5.0
+   EXPORT  v3.6.0
    ═══════════════════════════════════════════════════════ */
 function exportCSV(){
   const reps=store(K.reps)||[];
@@ -3674,7 +3711,7 @@ function exportCSV(){
   toast('📄 CSV יוצא בהצלחה','success');buzz([20,40]);
 }
 
-async function exportXLSX(){
+async async function exportXLSX(){
   const reps=store(K.reps)||[];
   if(!reps.length){toast('⚠️ אין דיווחים לייצוא','warn');return;}
   try{
@@ -3701,14 +3738,121 @@ async function exportXLSX(){
   }catch(e){toast('❌ שגיאה בייצוא: '+e.message,'error',4000);}
 }
 
+/* ─ Period Excel Export (2 sheets: Attendance + Tasks)  v3.6.0 ─ */
+async function exportPeriodXLSX(){
+  const fromDate=($('export-from-date')?.value||'').trim();
+  const toDate=($('export-to-date')?.value||'').trim();
+  if(!fromDate||!toDate){toast('⚠️ בחר תאריך התחלה וסיום','warn',3000);return;}
+  if(fromDate>toDate){toast('⚠️ תאריך התחלה חייב להיות לפני תאריך הסיום','warn',3000);return;}
+
+  const reps=store(K.reps)||[];
+  const periodReps=reps.filter(r=>r.report_date>=fromDate&&r.report_date<=toDate);
+  if(!periodReps.length){toast('⚠️ אין דיווחים בתקופה הנבחרת','warn',3000);return;}
+
+  try{
+    await loadSheetJS();
+
+    /* ── Sheet 1: Attendance ─────────────────────────────── */
+    // Get all unique dates in range that have entry/exit/task activity
+    const dates=[...new Set(periodReps.map(r=>r.report_date))].sort();
+    const attendanceRows=[];
+
+    for(const ds of dates){
+      const{stdHours,notes,description}=getDayStd(ds);
+      const stdMins=Math.round(stdHours*60);
+      const stdStr=stdMins>0?minsToHHMM(stdMins):'';
+      const notesLabel=[notes,description].filter(Boolean).join(' — ');
+      const{pairs,mins:totalMins,hasOpen}=calcDayWorkMins(ds,periodReps);
+
+      if(pairs.length>0){
+        pairs.forEach((pair,i)=>{
+          const dur=minsToHHMM(pair.mins);
+          const diff=i===0?minsToHHMM(totalMins-stdMins):''; // deviation only on first row
+          attendanceRows.push({
+            'תאריך': i===0?ds:'',
+            'כניסה': pair.entry||'',
+            'יציאה': pair.exit||'',
+            'משך': dur,
+            'זמן תקן': i===0?stdStr:'',
+            'Notes תקן': i===0?notesLabel:'',
+            'חריגה (+/-)': diff
+          });
+        });
+      } else {
+        // Day with no entry/exit pairs (tasks only or open session)
+        const dr=periodReps.filter(r=>r.report_date===ds);
+        const hasAny=dr.some(r=>r.category==='entry'||r.category==='exit'||r.category==='task');
+        if(!hasAny) continue;
+        const entryRec=dr.find(r=>r.category==='entry');
+        const exitRec=dr.find(r=>r.category==='exit');
+        attendanceRows.push({
+          'תאריך': ds,
+          'כניסה': entryRec?.report_time||'',
+          'יציאה': exitRec?.report_time||(hasOpen?'פתוח':''),
+          'משך': '',
+          'זמן תקן': stdStr,
+          'Notes תקן': notesLabel,
+          'חריגה (+/-)': ''
+        });
+      }
+    }
+
+    /* ── Sheet 2: Tasks ──────────────────────────────────── */
+    const taskReps=periodReps.filter(r=>r.category==='task');
+    const taskRows=taskReps.map(r=>({
+      'תאריך': r.report_date||'',
+      'משך': r.report_time||'',
+      'פרויקט': r.project||'',
+      'תיאור': r.description||''
+    }));
+
+    /* ── Build workbook ──────────────────────────────────── */
+    const wb=XLSX.utils.book_new();
+
+    const ws1=XLSX.utils.json_to_sheet(attendanceRows,{
+      header:['תאריך','כניסה','יציאה','משך','זמן תקן','Notes תקן','חריגה (+/-)']
+    });
+    ws1['!cols']=[{wch:13},{wch:9},{wch:9},{wch:9},{wch:10},{wch:28},{wch:12}];
+    ws1['!rtl']=true;
+    XLSX.utils.book_append_sheet(wb,ws1,'נוכחות');
+
+    const ws2=taskRows.length>0
+      ? XLSX.utils.json_to_sheet(taskRows,{header:['תאריך','משך','פרויקט','תיאור']})
+      : XLSX.utils.aoa_to_sheet([['תאריך','משך','פרויקט','תיאור'],['אין משימות בתקופה זו']]);
+    if(ws2['!cols']===undefined) ws2['!cols']=[{wch:13},{wch:11},{wch:20},{wch:36}];
+    ws2['!rtl']=true;
+    XLSX.utils.book_append_sheet(wb,ws2,'משימות');
+
+    const buf=XLSX.write(wb,{type:'array',bookType:'xlsx'});
+    const b=new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+    const a=document.createElement('a');a.href=URL.createObjectURL(b);
+    a.download=`worklog-${fromDate}_${toDate}.xlsx`;
+    document.body.appendChild(a);a.click();
+    setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1000);
+    toast(`📊 Excel יוצא — ${attendanceRows.length} שורות נוכחות, ${taskRows.length} משימות`,'success',3000);
+    buzz([20,40]);
+  }catch(e){
+    console.error('[exportPeriod]',e);
+    toast('❌ שגיאה בייצוא: '+e.message,'error',4000);
+  }
+}
+
 function exportInit(){
   $('btn-export-csv')?.addEventListener('click',exportCSV);
   $('btn-export-xlsx')?.addEventListener('click',exportXLSX);
+  $('btn-export-period')?.addEventListener('click',exportPeriodXLSX);
   $('btn-open-import-from-settings')?.addEventListener('click',()=>{closeM('modal-settings');openImportModal();});
+  // Default period: current month
+  const now=new Date();
+  const y=now.getFullYear(),m=String(now.getMonth()+1).padStart(2,'0');
+  const lastDay=new Date(now.getFullYear(),now.getMonth()+1,0).getDate();
+  const fromEl=$('export-from-date'),toEl=$('export-to-date');
+  if(fromEl&&!fromEl.value) fromEl.value=`${y}-${m}-01`;
+  if(toEl&&!toEl.value) toEl.value=`${y}-${m}-${lastDay}`;
 }
 
 /* ═══════════════════════════════════════════════════════
-   ABOUT TAB  v3.5.0
+   ABOUT TAB  v3.6.0
    ═══════════════════════════════════════════════════════ */
 function aboutTabRender(){
   // Version
@@ -3738,7 +3882,7 @@ function aboutTabRender(){
 }
 
 /* ═══════════════════════════════════════════════════════
-   THEME BUTTON IN SETTINGS  v3.5.0
+   THEME BUTTON IN SETTINGS  v3.6.0
    ═══════════════════════════════════════════════════════ */
 function themeSettingsSync(){
   const isDark=!document.body.classList.contains('light');
@@ -3747,7 +3891,7 @@ function themeSettingsSync(){
 }
 
 /* ═══════════════════════════════════════════════════════
-   WORKCAL SYNC INLINE (in connection tab)  v3.5.0
+   WORKCAL SYNC INLINE (in connection tab)  v3.6.0
    ═══════════════════════════════════════════════════════ */
 function wstdSyncStatusInline(){
   const el=$('wstandard-sync-status-inline');if(!el)return;
