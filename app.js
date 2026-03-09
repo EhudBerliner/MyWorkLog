@@ -2,7 +2,7 @@
    MyWorkLog · App Core  v2.0
    ═══════════════════════════════════════════════════════ */
 
-const VER = '2.0.0';
+const VER = '3.0.1';
 
 /* ── Storage keys ── */
 const K = {
@@ -18,6 +18,7 @@ const K = {
   inst:      'mwl_install_dismissed',
   sheetUrl:  'mwl_sheet_url',
   syncToken: 'mwl_sync_token',          // last sync timestamp
+  wstandard: 'mwl_wstandard',            // WorkStandard local cache
 };
 
 /* ── Runtime state ── */
@@ -25,7 +26,7 @@ const ST = {
   cat: 'entry', dur: 'duration',
   sumPer: 'day', sumOff: 0,
   swReg: null, install: null,
-  swX: 0, swY: 0, pullY: 0, pulling: false,
+  swX: 0, swY: 0, pullY: 0, pulling: false, _reloading: false,
 };
 
 /* ── Utilities ── */
