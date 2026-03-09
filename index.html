@@ -3711,7 +3711,7 @@ function exportCSV(){
   toast('📄 CSV יוצא בהצלחה','success');buzz([20,40]);
 }
 
-async async function exportXLSX(){
+async function exportXLSX(){
   const reps=store(K.reps)||[];
   if(!reps.length){toast('⚠️ אין דיווחים לייצוא','warn');return;}
   try{
