@@ -783,11 +783,13 @@ details summary::-webkit-details-marker{display:none}
             <input type="url" id="settings-endpoint" class="fi" style="margin-top:4px"
               placeholder="https://script.google.com/macros/s/.../exec"/>
           </div>
-          <div class="sset-row" id="sheet-link-section" style="display:none">
+          <div class="sset-row">
             <label class="sset-row-label" for="settings-sheet-url">📊 Google Sheets URL</label>
             <div class="sset-row-sub" data-i18n="sheetUrlHint">הדבק את ה-URL של הגיליון</div>
             <input type="url" id="settings-sheet-url" class="fi" style="margin-top:4px"
               placeholder="https://docs.google.com/spreadsheets/d/.../edit"/>
+          </div>
+          <div class="sset-row" id="sheet-link-section" style="display:none">
             <a id="sheet-link" href="#" target="_blank" rel="noopener"
               style="display:flex;align-items:center;gap:8px;padding:9px 12px;background:var(--bg0);
               border:1px solid var(--border);border-radius:var(--rs);color:var(--blue);font-size:.82rem;
@@ -2155,11 +2157,12 @@ function calcDayWorkMins(ds,reports){
 
   if(pairs.length>0) return{mins:totalMins,fromTasks:false,pairs,hasOpen};
 
-  // Fallback: sum task durations if no entry/exit at all
+  // Fallback: sum task durations when no closed entry/exit pairs exist
+  // (covers: no entry, no exit, or open session with no exit)
   const tasks=dr.filter(r=>r.category==='task');
-  if(!tasks.length)return{mins:0,fromTasks:false,pairs:[],hasOpen:false};
+  if(!tasks.length)return{mins:0,fromTasks:false,pairs:[],hasOpen};
   const total=tasks.reduce((s,r)=>s+parseTaskMins(r.report_time),0);
-  return{mins:total,fromTasks:true,pairs:[],hasOpen:false};
+  return{mins:total,fromTasks:true,pairs:[],hasOpen};
 }
 
 /* Full status for a day */
@@ -2744,7 +2747,9 @@ function summaryRender(){
   $('stat-entries').textContent=fil.filter(r=>r.category==='entry').length;
   $('stat-exits').textContent=fil.filter(r=>r.category==='exit').length;
   $('stat-tasks').textContent=fil.filter(r=>r.category==='task').length;
+  // Sum ALL work: task durations + entry/exit pair durations
   let mins=0;
+  // Task durations
   fil.filter(r=>r.category==='task').forEach(r=>{
     if(!r.report_time)return;
     if(r.report_time.includes('-')){
@@ -2752,10 +2757,14 @@ function summaryRender(){
       const[sh,sm]=s.split(':').map(Number),[eh,em]=e.split(':').map(Number);
       const d=(eh*60+em)-(sh*60+sm);if(d>0)mins+=d;
     }else if(r.report_time.includes(':')){
-      const[hh,mm]=r.report_time.split(':').map(Number);
-      mins+=((hh||0)*60)+(mm||0);
+      const[hh2,mm2]=r.report_time.split(':').map(Number);
+      mins+=((hh2||0)*60)+(mm2||0);
     }
   });
+  // Entry/exit pair durations (by day, to avoid double-counting open sessions)
+  const daysInFil=[...new Set(fil.filter(r=>r.category==='entry'||r.category==='exit').map(r=>r.report_date))];
+  const rs2=store(K.reps)||[];
+  daysInFil.forEach(ds=>{const{mins:pm,pairs}=calcDayWorkMins(ds,rs2);if(pairs.length>0)mins+=pm;});
   const hh=Math.floor(mins/60),mm=mins%60;
   $('stat-hours').textContent=mm>0?`${hh}:${pad(mm)}`:`${hh}`;
   $('summary-list').innerHTML=fil.length?fil.map(r=>hItem(r,false)).join(''):`<p class="empty">${t('summaryEmpty')}</p>`;
