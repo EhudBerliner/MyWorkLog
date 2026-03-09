@@ -1,1 +1,1 @@
-{"version":"3.4.0","buildDate":"2026-03-09","changelog":"Fix: addClient/addTaskDef event listeners, clientBlockHTML param shadowing, project global uniqueness enforced"}
+{"version":"3.5.0","buildDate":"2026-03-09","changelog":"Remove client management; keep projects (flat) and global task definitions with billable flag"}

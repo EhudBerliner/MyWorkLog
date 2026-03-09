@@ -580,7 +580,7 @@ details summary::-webkit-details-marker{display:none}
       <a id="menu-sheet-link" href="#" target="_blank" rel="noopener" style="display:none;align-items:center;gap:7px;font-size:.8rem;color:var(--blue);text-decoration:none;padding:3px 2px">
         <span data-i18n="menuOpenSheet">📊 פתח גיליון הדיווחים</span>
       </a>
-      <span id="menu-vbadge" class="vbadge" data-i18n-attr="title" data-i18n="menuVersionTooltip" title="לחץ לאיפוס">v3.4.0</span>
+      <span id="menu-vbadge" class="vbadge" data-i18n-attr="title" data-i18n="menuVersionTooltip" title="לחץ לאיפוס">v3.5.0</span>
     </div>
   </aside>
 
@@ -592,7 +592,7 @@ details summary::-webkit-details-marker{display:none}
         <span class="hdr-name">MyWorkLog</span>
       </div>
       <div class="hdr-acts">
-        <span id="version-badge" class="vbadge" data-i18n="menuVersionTooltip" data-i18n-attr="title" title="לחץ לאיפוס">v3.4.0</span>
+        <span id="version-badge" class="vbadge" data-i18n="menuVersionTooltip" data-i18n-attr="title" title="לחץ לאיפוס">v3.5.0</span>
       </div>
     </div>
   </header>
@@ -832,7 +832,6 @@ details summary::-webkit-details-marker{display:none}
         <button class="stab-btn active" data-stab="ui">🎨 תצוגה</button>
         <button class="stab-btn"        data-stab="connection">🔗 חיבור</button>
         <button class="stab-btn"        data-stab="data">📦 נתונים</button>
-        <button class="stab-btn"        data-stab="clients">🏢 לקוחות</button>
         <button class="stab-btn"        data-stab="tasks">📋 משימות</button>
         <button class="stab-btn"        data-stab="about">ℹ️ אודות</button>
       </div>
@@ -1060,38 +1059,6 @@ details summary::-webkit-details-marker{display:none}
 
       </div><!-- /stab-data -->
 
-      <!-- ══ TAB: CLIENTS ══ -->
-      <div class="stab-pnl" id="stab-clients">
-
-        <!-- CRM SYNC BAR -->
-        <div class="crm-sync-bar" id="crm-sync-bar" style="margin-bottom:2px">
-          <div class="crm-sync-dot" id="crm-sync-dot"></div>
-          <span class="crm-sync-label" id="crm-sync-label">טוען...</span>
-          <button class="btn-g sm" id="btn-sync-crm" style="padding:5px 10px;font-size:.72rem">↻ סנכרן</button>
-        </div>
-
-        <!-- ADD CLIENT -->
-        <div class="sset-group">
-          <div class="sset-label">➕ לקוח חדש</div>
-          <div class="sset-block">
-            <div class="sset-row">
-              <div class="add-row">
-                <input type="text" id="new-client-name" class="fi" placeholder="שם הלקוח..."/>
-                <button class="btn-g" id="btn-add-client">+ הוסף</button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- CLIENTS TREE -->
-        <div id="clients-tree" style="display:flex;flex-direction:column;gap:8px"></div>
-
-        <div id="clients-empty-hint" style="text-align:center;color:var(--text3);font-size:.82rem;padding:18px 0">
-          אין לקוחות עדיין — הוסף לקוח ראשון למעלה
-        </div>
-
-      </div><!-- /stab-clients -->
-
       <!-- ══ TAB: TASKS ══ -->
       <div class="stab-pnl" id="stab-tasks">
 
@@ -1099,7 +1066,7 @@ details summary::-webkit-details-marker{display:none}
         <div class="crm-sync-bar" id="crm-sync-bar-tasks" style="margin-bottom:2px">
           <div class="crm-sync-dot" id="crm-sync-dot-tasks"></div>
           <span class="crm-sync-label" id="crm-sync-label-tasks">טוען...</span>
-          <button class="btn-g sm" onclick="syncCRM()" style="padding:5px 10px;font-size:.72rem">↻ סנכרן</button>
+          <button class="btn-g sm" id="btn-sync-crm-tasks" style="padding:5px 10px;font-size:.72rem">↻ סנכרן</button>
         </div>
 
         <!-- ADD TASK DEFINITION -->
@@ -1151,7 +1118,7 @@ details summary::-webkit-details-marker{display:none}
               </div>
               <div class="about-row">
                 <span class="about-lbl">גרסה</span>
-                <span class="about-val" id="about-version">v3.4.0</span>
+                <span class="about-val" id="about-version">v3.5.0</span>
               </div>
               <div class="about-row">
                 <span class="about-lbl">סטטוס PWA</span>
@@ -1529,11 +1496,11 @@ document.addEventListener('DOMContentLoaded',()=>{
     verCheck();themeInit();langInit();prefsApply();
     splashInit();dtInit();tabsInit();catInit();durInit();clockInit();
     submitInit();settingsInit();summaryInit();
-    settingsTabsInit();   // v3.4.0
-    profileInit();        // v3.4.0
-    roundingInit();       // v3.4.0
-    clientsInit();        // v3.4.0
-    exportInit();         // v3.4.0
+    settingsTabsInit();   // v3.5.0
+    profileInit();        // v3.5.0
+    roundingInit();       // v3.5.0
+    clientsInit();        // v3.5.0
+    exportInit();         // v3.5.0
     // Theme toggle in settings
     $('btn-theme-toggle-settings')?.addEventListener('click',()=>{
       applyTheme(document.body.classList.contains('light')?'dark':'light');
@@ -1745,7 +1712,7 @@ function migrateData(prevVer){
   if(!store(K.wstandard)) store(K.wstandard,[]);
   // Ensure queue key exists
   if(!store('mwl_wstandard_queue')) store('mwl_wstandard_queue',[]);
-  // v3.4.0: ensure new keys exist without overwriting
+  // v3.5.0: ensure new keys exist without overwriting
   if(!store(K.profile)) store(K.profile,{name:'',role:''});
   if(store(K.rounding)===null) store(K.rounding,0);
   if(!store(K.clients)) store(K.clients,[]);
@@ -1793,7 +1760,7 @@ function applyTheme(th){
   // sync menu button label
   const btn=$('menu-theme-btn');
   if(btn){btn.textContent=dark?t('menuThemeLight'):t('menuThemeDark');btn.classList.toggle('theme-active',dark);}
-  // v3.4.0: sync settings label
+  // v3.5.0: sync settings label
   themeSettingsSync();
 }
 
@@ -3174,12 +3141,11 @@ function openM(id){
     prefsLoadUI();projChipsRender();
     const lang=window._lang||'he';
     document.querySelectorAll('.seg-btn[data-lang]').forEach(b=>b.classList.toggle('active',b.dataset.lang===lang));
-    // v3.4.0 additions
+    // v3.5.0 additions
     profileLoad();
     roundingLoad();
-    clientsRender();
-    taskDefsRender();       // v3.4.0
-    crmSyncStatus();        // v3.4.0
+    taskDefsRender();       // v3.5.0
+    crmSyncStatus();        // v3.5.0
     themeSettingsSync();
     wstdSyncStatusInline();
     aboutTabRender();
@@ -3195,7 +3161,7 @@ function settingsSave(){
   const su=$('settings-sheet-url').value.trim();
   if(su)store(K.sheetUrl,su);else localStorage.removeItem(K.sheetUrl);
   prefsSave();
-  profileSave(); // v3.4.0
+  profileSave(); // v3.5.0
   toast(t('toastSettingsSaved'),'success');buzz([20,20,40]);closeM('modal-settings');updateMenuSheetLink();
 }
 
@@ -3446,7 +3412,7 @@ function scrollInit(){
 }
 
 /* ═══════════════════════════════════════════════════════
-   SETTINGS TABS  v3.4.0
+   SETTINGS TABS  v3.5.0
    ═══════════════════════════════════════════════════════ */
 let _lastSettingsTab = null;
 
@@ -3467,7 +3433,7 @@ function switchSettingsTab(id){
 }
 
 /* ═══════════════════════════════════════════════════════
-   PROFILE  v3.4.0
+   PROFILE  v3.5.0
    ═══════════════════════════════════════════════════════ */
 function profileLoad(){
   const p=store(K.profile)||{name:'',role:''};
@@ -3509,7 +3475,7 @@ function profileInit(){
 }
 
 /* ═══════════════════════════════════════════════════════
-   TIME ROUNDING  v3.4.0
+   TIME ROUNDING  v3.5.0
    ═══════════════════════════════════════════════════════ */
 function roundingInit(){
   document.querySelectorAll('.seg-btn[data-round]').forEach(btn=>{
@@ -3540,26 +3506,22 @@ function applyRounding(timeStr){
 }
 
 /* ═══════════════════════════════════════════════════════
-   CLIENTS / PROJECTS / TASKS  v3.4.0
+   CLIENTS / PROJECTS / TASKS  v3.5.0
    ═══════════════════════════════════════════════════════ */
 /* ═══════════════════════════════════════════════════════
-   CRM — Clients · Projects · Task Definitions  v3.4.0
+   CRM — Projects · Task Definitions  v3.5.0
    ═══════════════════════════════════════════════════════
-   K.clients  = [{id, name, projects:[{id,name}]}]
-     • פרויקט שייך ללקוח אחד בלבד
-     • לא ניתן לחלוק פרויקט בין שני לקוחות
    K.taskDefs = [{id, name, billable}]
-     • משימות גלובליות — משותפות לכל הלקוחות
+     • משימות גלובליות — משותפות לכל הפרויקטים
      • אותה משימה יכולה להופיע פעמיים: billable + non-billable
+   סנכרון פרויקטים: דרך הלשונית "נתונים" (legacy flat list)
    ═══════════════════════════════════════════════════════ */
 
 /* ── Accessors ────────────────────────────────────────── */
-function getClients()       { return store(K.clients)  || []; }
-function saveClients(arr)   { store(K.clients, arr); }
-function getTaskDefs()      { return store(K.taskDefs) || []; }
-function saveTaskDefs(arr)  { store(K.taskDefs, arr); }
+function getTaskDefs()     { return store(K.taskDefs) || []; }
+function saveTaskDefs(arr) { store(K.taskDefs, arr); }
 
-/* ── CRM Sync ─────────────────────────────────────────── */
+/* ── CRM Sync (Task Definitions only) ────────────────── */
 async function syncCRM(silent=false){
   const ep=store(K.ep);
   if(!ep||!navigator.onLine){ crmSyncUI('err','אין חיבור'); return; }
@@ -3567,24 +3529,6 @@ async function syncCRM(silent=false){
   try{
     const res=await fetch(ep+'?action=getCRM&t='+Date.now(),{cache:'no-store'});
     const data=await res.json();
-
-    if(Array.isArray(data.clients)&&Array.isArray(data.clientProjects)){
-      const local=getClients();
-      const merged=data.clients.map(sc=>{
-        const localC=local.find(lc=>lc.id===sc.id)||{projects:[]};
-        const sProjs=(data.clientProjects||[]).filter(p=>p.clientId===sc.id);
-        const lProjs=localC.projects||[];
-        const lProjIds=new Set(lProjs.map(p=>p.id));
-        const mergedProjs=[
-          ...lProjs,
-          ...sProjs.filter(p=>!lProjIds.has(p.id)).map(p=>({id:p.id,name:p.name}))
-        ];
-        return {id:sc.id,name:sc.name,projects:mergedProjs};
-      });
-      const serverIds=new Set(data.clients.map(cl=>cl.id));
-      local.filter(cl=>!serverIds.has(cl.id)).forEach(cl=>merged.push(cl));
-      saveClients(merged);
-    }
 
     if(Array.isArray(data.taskDefinitions)){
       const local=getTaskDefs();
@@ -3601,8 +3545,8 @@ async function syncCRM(silent=false){
     const ts=new Date().toLocaleString('he-IL',{timeZone:'Asia/Jerusalem'});
     store(K.crmSync,ts);
     crmSyncUI('ok','סונכרן: '+ts);
-    clientsRender(); taskDefsRender();
-    if(!silent) toast('✅ CRM סונכרן','success',2000);
+    taskDefsRender();
+    if(!silent) toast('✅ משימות סונכרנו','success',2000);
   }catch(err){
     crmSyncUI('err','שגיאת סנכרון');
     console.warn('[syncCRM]',err);
@@ -3617,141 +3561,21 @@ async function _crmPost(payload){
 }
 
 function crmSyncUI(state,msg){
-  ['','-tasks'].forEach(sfx=>{
-    const dot=$('crm-sync-dot'+sfx), lbl=$('crm-sync-label'+sfx);
-    if(dot) dot.className='crm-sync-dot'+(state==='ok'?' ok':state==='syncing'?' syncing':state==='err'?' err':'');
-    if(lbl) lbl.textContent=msg;
-  });
+  const dot=$('crm-sync-dot-tasks'), lbl=$('crm-sync-label-tasks');
+  if(dot) dot.className='crm-sync-dot'+(state==='ok'?' ok':state==='syncing'?' syncing':state==='err'?' err':'');
+  if(lbl) lbl.textContent=msg;
 }
 function crmSyncStatus(){
   const ts=store(K.crmSync), ep=store(K.ep);
-  if(!ep)     { crmSyncUI('err','Endpoint לא הוגדר'); return; }
-  if(!ts)     { crmSyncUI('','טרם סונכרן'); return; }
+  if(!ep)  { crmSyncUI('err','Endpoint לא הוגדר'); return; }
+  if(!ts)  { crmSyncUI('','טרם סונכרן'); return; }
   crmSyncUI('ok','סונכרן: '+ts);
 }
 
 /* ═══════════════════════════════════════════════════════
-   CLIENTS  v3.4.0
-   ═══════════════════════════════════════════════════════ */
-
-function clientsRender(){
-  const tree=$('clients-tree');
-  const hint=$('clients-empty-hint');
-  if(!tree) return;
-  const clients=getClients();
-  if(!clients.length){
-    tree.innerHTML='';
-    if(hint) hint.style.display='';
-    return;
-  }
-  if(hint) hint.style.display='none';
-  tree.innerHTML=clients.map(cl=>_clientBlockHTML(cl)).join('');
-}
-
-function _clientBlockHTML(cl){
-  const projHTML=(cl.projects||[]).map(p=>_projItemHTML(cl.id,p)).join('');
-  const cnt=(cl.projects||[]).length;
-  return `<div class="client-block" id="client-block-${cl.id}">
-    <div class="client-hdr" onclick="toggleClient('${cl.id}')">
-      <div class="client-hdr-dot"></div>
-      <span class="client-hdr-name">${esc(cl.name)}</span>
-      <span class="client-hdr-count">${cnt} פרויקטים</span>
-      <button class="ibtn" style="font-size:.75rem;padding:4px 7px;color:var(--red)"
-        onclick="event.stopPropagation();removeClient('${cl.id}')">🗑</button>
-      <span class="client-hdr-chev" id="client-chev-${cl.id}">▼</span>
-    </div>
-    <div class="client-body" id="client-body-${cl.id}">
-      <div class="client-proj-list" id="proj-list-${cl.id}">${projHTML||'<div style="font-size:.76rem;color:var(--text3);padding:6px 4px">אין פרויקטים עדיין</div>'}</div>
-      <div class="add-row" style="margin-top:8px">
-        <input type="text" id="new-proj-${cl.id}" class="fi"
-          placeholder="שם פרויקט חדש..." onkeydown="if(event.key==='Enter')addProject('${cl.id}')"/>
-        <button class="btn-g" onclick="addProject('${cl.id}')">+ פרויקט</button>
-      </div>
-    </div>
-  </div>`;
-}
-
-function _projItemHTML(clientId, p){
-  return `<div class="client-proj-item" id="proj-item-${p.id}">
-    <span style="font-size:.75rem">📁</span>
-    <span class="client-proj-name">${esc(p.name)}</span>
-    <button class="ibtn" style="font-size:.7rem;padding:3px 6px;color:var(--red)"
-      onclick="removeProject('${clientId}','${p.id}')">🗑</button>
-  </div>`;
-}
-
-function addClient(){
-  const inp=$('new-client-name');
-  const name=(inp?.value||'').trim();
-  if(!name){ if(inp) inp.focus(); return; }
-  const clients=getClients();
-  if(clients.some(cl=>cl.name.toLowerCase()===name.toLowerCase())){
-    toast('⚠️ לקוח כבר קיים','warn'); return;
-  }
-  const id='c'+Date.now();
-  clients.push({id, name, projects:[]});
-  saveClients(clients);
-  if(inp) inp.value='';
-  clientsRender();
-  buzz([15]);
-  _crmPost({action:'addClient', id, name});
-  toast('✅ לקוח נוסף','success',1500);
-}
-
-function removeClient(cid){
-  if(!confirm('למחוק לקוח זה ואת כל הפרויקטים שלו?')) return;
-  saveClients(getClients().filter(cl=>cl.id!==cid));
-  clientsRender();
-  _crmPost({action:'deleteClient', id:cid});
-}
-
-function addProject(clientId){
-  const inp=$('new-proj-'+clientId);
-  const name=(inp?.value||'').trim();
-  if(!name){ if(inp) inp.focus(); return; }
-  const clients=getClients();
-  const cl=clients.find(x=>x.id===clientId);
-  if(!cl) return;
-  if(!cl.projects) cl.projects=[];
-  // Project name must be unique across ALL clients
-  const allProjects=clients.flatMap(x=>x.projects||[]);
-  if(allProjects.some(p=>p.name.toLowerCase()===name.toLowerCase())){
-    toast('⚠️ פרויקט בשם זה כבר קיים אצל לקוח אחר','warn',3000); return;
-  }
-  const id='p'+Date.now();
-  cl.projects.push({id, name});
-  saveClients(clients);
-  // Sync to flat proj list for report autocomplete
-  const ps=store(K.proj)||[];
-  if(!ps.includes(name)){ ps.push(name); store(K.proj,ps); projLoad(); }
-  if(inp) inp.value='';
-  clientsRender();
-  buzz([10]);
-  _crmPost({action:'addClientProject', id, clientId, name});
-  toast('✅ פרויקט נוסף','success',1500);
-}
-
-function removeProject(clientId, projId){
-  const clients=getClients();
-  const cl=clients.find(x=>x.id===clientId);
-  if(!cl) return;
-  cl.projects=(cl.projects||[]).filter(p=>p.id!==projId);
-  saveClients(clients);
-  clientsRender();
-  _crmPost({action:'deleteClientProject', id:projId});
-}
-
-function toggleClient(cid){
-  const body=$('client-body-'+cid), chev=$('client-chev-'+cid);
-  if(!body) return;
-  const open=body.classList.toggle('open');
-  if(chev) chev.style.transform=open?'rotate(180deg)':'';
-}
-
-/* ═══════════════════════════════════════════════════════
-   TASK DEFINITIONS  v3.4.0
+   TASK DEFINITIONS  v3.5.0
    ═══════════════════════════════════════════════════════
-   משימות גלובליות — לא שייכות ללקוח ספציפי.
+   משימות גלובליות — לא שייכות לפרויקט ספציפי.
    אותה משימה יכולה להופיע פעמיים: billable + non-billable.
    ═══════════════════════════════════════════════════════ */
 
@@ -3805,19 +3629,13 @@ function removeTaskDef(id){
 
 /* ── CRM Init ─────────────────────────────────────────── */
 function clientsInit(){
-  // Clients tab
-  const btnAddClient=$('btn-add-client');
-  const inpClientName=$('new-client-name');
-  if(btnAddClient) btnAddClient.addEventListener('click', addClient);
-  if(inpClientName) inpClientName.addEventListener('keydown', e=>{ if(e.key==='Enter') addClient(); });
-
   // Tasks tab
   const btnAddTask=$('btn-add-task-def');
   const inpTaskName=$('new-task-def-name');
   if(btnAddTask) btnAddTask.addEventListener('click', addTaskDef);
   if(inpTaskName) inpTaskName.addEventListener('keydown', e=>{ if(e.key==='Enter') addTaskDef(); });
 
-  // Billable segment control (Tasks tab)
+  // Billable segment control
   document.querySelectorAll('.seg-btn[data-billable]').forEach(btn=>{
     btn.addEventListener('click', ()=>{
       document.querySelectorAll('.seg-btn[data-billable]').forEach(b=>b.classList.remove('active'));
@@ -3827,13 +3645,13 @@ function clientsInit(){
     });
   });
 
-  // CRM sync buttons
-  const btnSyncCRM=$('btn-sync-crm');
+  // CRM sync button
+  const btnSyncCRM=$('btn-sync-crm-tasks');
   if(btnSyncCRM) btnSyncCRM.addEventListener('click', ()=>syncCRM(false));
 }
 
 /* ═══════════════════════════════════════════════════════
-   EXPORT  v3.4.0
+   EXPORT  v3.5.0
    ═══════════════════════════════════════════════════════ */
 function exportCSV(){
   const reps=store(K.reps)||[];
@@ -3890,7 +3708,7 @@ function exportInit(){
 }
 
 /* ═══════════════════════════════════════════════════════
-   ABOUT TAB  v3.4.0
+   ABOUT TAB  v3.5.0
    ═══════════════════════════════════════════════════════ */
 function aboutTabRender(){
   // Version
@@ -3920,7 +3738,7 @@ function aboutTabRender(){
 }
 
 /* ═══════════════════════════════════════════════════════
-   THEME BUTTON IN SETTINGS  v3.4.0
+   THEME BUTTON IN SETTINGS  v3.5.0
    ═══════════════════════════════════════════════════════ */
 function themeSettingsSync(){
   const isDark=!document.body.classList.contains('light');
@@ -3929,7 +3747,7 @@ function themeSettingsSync(){
 }
 
 /* ═══════════════════════════════════════════════════════
-   WORKCAL SYNC INLINE (in connection tab)  v3.4.0
+   WORKCAL SYNC INLINE (in connection tab)  v3.5.0
    ═══════════════════════════════════════════════════════ */
 function wstdSyncStatusInline(){
   const el=$('wstandard-sync-status-inline');if(!el)return;
