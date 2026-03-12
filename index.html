@@ -539,6 +539,18 @@ details summary::-webkit-details-marker{display:none}
 .about-lbl{color:var(--text3);font-size:.76rem}
 .about-val{color:var(--text);font-weight:600;font-family:'Syne',monospace;font-size:.82rem}
 
+
+/* - Edit-report category buttons - */
+.edit-cat-btn.active[data-cat=entry]{border-color:var(--lime)!important;color:var(--lime)!important;background:var(--limeDim)!important}
+.edit-cat-btn.active[data-cat=exit]{border-color:var(--red)!important;color:var(--red)!important;background:var(--redDim)!important}
+.edit-cat-btn.active[data-cat=task]{border-color:var(--blue)!important;color:var(--blue)!important;background:var(--blueDim)!important}
+/* - Changelog - */
+.changelog-ver{padding:12px 18px;border-bottom:1px solid var(--border)}
+.changelog-ver:last-child{border-bottom:none}
+.changelog-badge{display:inline-block;background:var(--bg3);border:1px solid var(--border2);border-radius:12px;padding:3px 11px;font-size:.72rem;font-weight:700;color:var(--text2);margin-bottom:7px;font-family:'Syne',monospace}
+.changelog-items{display:flex;flex-direction:column;gap:4px}
+.changelog-item{font-size:.8rem;color:var(--text2);padding-right:4px}
+.changelog-item.new{color:var(--lime);font-weight:600}
 </style>
 </head>
 <body>
@@ -586,7 +598,7 @@ details summary::-webkit-details-marker{display:none}
       <a id="menu-sheet-link" href="#" target="_blank" rel="noopener" style="display:none;align-items:center;gap:7px;font-size:.8rem;color:var(--blue);text-decoration:none;padding:3px 2px">
         <span data-i18n="menuOpenSheet">📊 פתח גיליון הדיווחים</span>
       </a>
-      <span id="menu-vbadge" class="vbadge" data-i18n-attr="title" data-i18n="menuVersionTooltip" title="לחץ לאיפוס">v3.6.0</span>
+      <span id="menu-vbadge" class="vbadge" data-i18n-attr="title" data-i18n="menuVersionTooltip" title="לחץ לאיפוס">v3.7.0</span>
     </div>
   </aside>
 
@@ -598,7 +610,7 @@ details summary::-webkit-details-marker{display:none}
         <span class="hdr-name">MyWorkLog</span>
       </div>
       <div class="hdr-acts">
-        <span id="version-badge" class="vbadge" data-i18n="menuVersionTooltip" data-i18n-attr="title" title="לחץ לאיפוס">v3.6.0</span>
+        <span id="version-badge" class="vbadge" data-i18n="menuVersionTooltip" data-i18n-attr="title" title="לחץ לאיפוס">v3.7.0</span>
       </div>
     </div>
   </header>
@@ -1131,7 +1143,7 @@ details summary::-webkit-details-marker{display:none}
 
         <!-- APP INFO -->
         <div class="sset-group">
-          <div class="sset-label">📱 פרטי אפליקציה</div>
+          <div class="sset-label" style="display:flex;align-items:center;justify-content:space-between"><span>📱 פרטי אפליקציה</span><button class="btn-g sm" onclick="openChangelog()" style="font-size:.72rem">📋 מה חדש?</button></div>
           <div class="sset-block">
             <div class="sset-row" style="gap:0">
               <div class="about-row">
@@ -1140,7 +1152,7 @@ details summary::-webkit-details-marker{display:none}
               </div>
               <div class="about-row">
                 <span class="about-lbl">גרסה</span>
-                <span class="about-val" id="about-version">v3.6.0</span>
+                <span class="about-val" id="about-version">v3.7.0</span>
               </div>
               <div class="about-row">
                 <span class="about-lbl">סטטוס PWA</span>
@@ -1167,6 +1179,7 @@ details summary::-webkit-details-marker{display:none}
           <div class="sset-label">🛠 כלי מפתח</div>
           <div class="sset-block">
             <div class="sset-row">
+              <button class="btn-g sm" id="btn-open-changelog" style="width:100%">📋 Change Log</button>
               <button class="btn-g sm" onclick="downloadGS()" style="width:100%">⬇️ הורד google-apps-script.gs</button>
             </div>
             <div class="sset-row">
@@ -1322,6 +1335,152 @@ details summary::-webkit-details-marker{display:none}
     <div class="mfoot mfoot2">
       <button id="btn-dayedit-cancel" class="btn-g">&#1489;&#1497;&#1496;&#1493;&#1500;</button>
       <button id="btn-dayedit-save" class="btn-p sm">&#9889; &#1513;&#1502;&#1493;&#1512; &#1493;&#1505;&#1504;&#1499;&#1512;&#1503;</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- EDIT REPORT MODAL  v3.7.0 -->
+<div id="modal-editrep" class="moverlay hidden" role="dialog" aria-modal="true">
+  <div class="mbox sm">
+    <div class="mhdr">
+      <h2 id="editrep-title">&#9999;&#65039; עריכת דיווח</h2>
+      <button class="ibtn" id="btn-close-editrep">&#10005;</button>
+    </div>
+    <div class="mbody" style="gap:10px">
+      <div class="fg">
+        <label class="flbl">קטגוריה</label>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <button class="edit-cat-btn" data-cat="entry"
+            style="border-radius:16px;padding:6px 14px;font-size:.78rem;font-weight:700;cursor:pointer;border:1.5px solid var(--lime);background:var(--bg3);color:var(--text)">&#128994; כניסה</button>
+          <button class="edit-cat-btn" data-cat="exit"
+            style="border-radius:16px;padding:6px 14px;font-size:.78rem;font-weight:700;cursor:pointer;border:1.5px solid var(--red);background:var(--bg3);color:var(--text)">&#128308; יציאה</button>
+          <button class="edit-cat-btn" data-cat="task"
+            style="border-radius:16px;padding:6px 14px;font-size:.78rem;font-weight:700;cursor:pointer;border:1.5px solid var(--blue);background:var(--bg3);color:var(--text)">&#128203; משימה</button>
+        </div>
+      </div>
+      <div class="row2">
+        <div class="fg">
+          <label class="flbl">תאריך</label>
+          <input type="date" id="editrep-date" class="fi"/>
+        </div>
+        <div class="fg">
+          <label class="flbl" id="editrep-time-label">שעה</label>
+          <input type="time" id="editrep-time" class="fi"/>
+        </div>
+      </div>
+      <div id="editrep-task-fields" style="display:none;flex-direction:column;gap:10px">
+        <div class="fg">
+          <label class="flbl">פרויקט <span style="color:var(--red);font-size:.75rem">*</span></label>
+          <input type="text" id="editrep-project" class="fi" list="editrep-projects-list" placeholder="שם הפרויקט"/>
+          <datalist id="editrep-projects-list"></datalist>
+        </div>
+        <div class="fg">
+          <label class="flbl">תיאור <span style="font-size:.72rem;color:var(--text3);font-weight:400">(אופציונלי)</span></label>
+          <textarea id="editrep-desc" class="fi" rows="2" placeholder="מה בוצע..."></textarea>
+        </div>
+        <div class="fg">
+          <label class="flbl">משך / טווח</label>
+          <div style="display:flex;margin-bottom:8px">
+            <button class="edit-dur-btn active" data-mode="duration">&#9201; משך</button>
+            <button class="edit-dur-btn" data-mode="range">&#8596; טווח</button>
+          </div>
+          <div id="editrep-duration-mode" style="display:flex;gap:8px;align-items:center">
+            <input type="number" id="editrep-dur-h" class="fi" min="0" max="23" placeholder="שע'" style="width:80px"/>
+            <span style="color:var(--text3);font-size:1.1rem">:</span>
+            <input type="number" id="editrep-dur-m" class="fi" min="0" max="59" placeholder="דק'" style="width:80px"/>
+            <span style="font-size:.75rem;color:var(--text3)">שע' : דק'</span>
+          </div>
+          <div id="editrep-range-mode" style="display:none">
+            <div class="row2">
+              <div class="fg">
+                <label class="flbl">התחלה</label>
+                <input type="time" id="editrep-range-start" class="fi"/>
+              </div>
+              <div class="fg">
+                <label class="flbl">סיום</label>
+                <input type="time" id="editrep-range-end" class="fi"/>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="mfoot mfoot2">
+      <button id="btn-editrep-cancel" class="btn-g">ביטול</button>
+      <button id="btn-editrep-save" class="btn-p sm">&#9889; שמור שינויים</button>
+    </div>
+  </div>
+</div>
+
+<!-- CHANGELOG MODAL  v3.7.0 -->
+<div id="modal-changelog" class="moverlay hidden" role="dialog" aria-modal="true">
+  <div class="mbox" style="max-height:88dvh;display:flex;flex-direction:column">
+    <div class="mhdr" style="position:sticky;top:0;background:var(--bg1);z-index:2">
+      <h2 style="font-size:1rem">&#128203; מה חדש?</h2>
+      <button class="ibtn" id="btn-close-changelog">&#10005;</button>
+    </div>
+    <div class="mbody" style="flex:1;overflow-y:auto;gap:0;padding:0" id="changelog-body">
+      <div style="padding:4px 0 8px">
+        <div class="changelog-ver"><div class="changelog-badge">v3.7.0</div><div class="changelog-items"><div class="changelog-item new">&#9999;&#65039; &#1506;&#1512;&#1497;&#1499;&#1514; &#1491;&#1497;&#1493;&#1493;&#1495;&#1497;&#1501; &#1511;&#1497;&#1497;&#1502;&#1497;&#1501;</div><div class="changelog-item new">&#128203; Change Log</div></div></div>
+        <div class="changelog-ver"><div class="changelog-badge">v3.6.0</div><div class="changelog-items"><div class="changelog-item">&#127796; &#1513;&#1489;&#1514;&#1493;&#1503;</div><div class="changelog-item">&#128221; &#1514;&#1497;&#1488;&#1493;&#1512; &#1500;&#1505;&#1497;&#1493;&#1493;&#1490; &#1497;&#1493;&#1501;</div><div class="changelog-item">&#128197; &#1497;&#1497;&#1510;&#1493;&#1488; Excel &#1500;&#1514;&#1511;&#1493;&#1508;&#1492;</div></div></div>
+        <div class="changelog-ver"><div class="changelog-badge">v3.5.0</div><div class="changelog-items"><div class="changelog-item">&#128203; &#1492;&#1490;&#1491;&#1512;&#1493;&#1514; &#1502;&#1513;&#1497;&#1502;&#1493;&#1514; &#1490;&#1500;&#1493;&#1489;&#1500;&#1497;&#1493;&#1514;</div><div class="changelog-item">&#128279; &#1505;&#1504;&#1499;&#1512;&#1493;&#1503; &#1502;&#1513;&#1497;&#1502;&#1493;&#1514;</div></div></div>
+        <div class="changelog-ver"><div class="changelog-badge">v3.3.0 &#8211; v3.4.0</div><div class="changelog-items"><div class="changelog-item">&#127959; &#1502;&#1504;&#1492;&#1500; &#1508;&#1512;&#1493;&#1497;&#1511;&#1496;&#1497;&#1501; &#1493;&#1500;&#1511;&#1493;&#1495;&#1493;&#1514;</div><div class="changelog-item">&#128027; &#1514;&#1497;&#1511;&#1493;&#1504;&#1497; &#1489;&#1488;&#1490;&#1497;&#1501;</div></div></div>
+        <div class="changelog-ver"><div class="changelog-badge">v3.0.0 &#8211; v3.2.0</div><div class="changelog-items"><div class="changelog-item">&#128202; WorkStandard &#8212; &#1514;&#1511;&#1503; &#1513;&#1506;&#1493;&#1514;</div><div class="changelog-item">&#9881;&#65039; &#1512;&#1508;&#1511;&#1496;&#1493;&#1512; &#1492;&#1490;&#1491;&#1512;&#1493;&#1514;</div></div></div>
+      </div></div>
+    <div class="mfoot">
+      <button class="btn-p sm" id="btn-close-changelog2">הבנתי &#10003;</button>
+    </div>
+  </div>
+</div>
+
+<!-- EDIT REPORT MODAL -->
+<div id="modal-edit-report" class="moverlay hidden" role="dialog" aria-modal="true">
+  <div class="mbox sm">
+    <div class="mhdr">
+      <h2 id="edit-report-title">&#9999;&#65039; &#1506;&#1512;&#1497;&#1499;&#1514; &#1491;&#1497;&#1493;&#1493;&#1495;</h2>
+      <button class="ibtn" id="btn-close-edit-report">&#10005;</button>
+    </div>
+    <div class="mbody">
+      <div id="edit-report-info" style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--rs);padding:10px 13px;font-size:.75rem;color:var(--text3);margin-bottom:2px"></div>
+      <div class="fg">
+        <label class="flbl">&#1511;&#1496;&#1490;&#1493;&#1512;&#1497;&#1492;</label>
+        <div style="display:flex;gap:8px">
+          <button class="edit-cat-btn" data-cat="entry" style="flex:1;padding:9px 4px;border-radius:var(--rs);border:1.5px solid var(--border);background:var(--glass);color:var(--text2);font-size:.8rem;font-weight:600;cursor:pointer">&#11014; &#1499;&#1504;&#1497;&#1505;&#1492;</button>
+          <button class="edit-cat-btn" data-cat="exit"  style="flex:1;padding:9px 4px;border-radius:var(--rs);border:1.5px solid var(--border);background:var(--glass);color:var(--text2);font-size:.8rem;font-weight:600;cursor:pointer">&#11015; &#1497;&#1510;&#1497;&#1488;&#1492;</button>
+          <button class="edit-cat-btn" data-cat="task"  style="flex:1;padding:9px 4px;border-radius:var(--rs);border:1.5px solid var(--border);background:var(--glass);color:var(--text2);font-size:.8rem;font-weight:600;cursor:pointer">&#10004; &#1502;&#1513;&#1497;&#1502;&#1492;</button>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px">
+        <div class="fg" style="flex:1">
+          <label class="flbl">&#1514;&#1488;&#1512;&#1497;&#1498;</label>
+          <input type="date" id="edit-report-date" class="fi"/>
+        </div>
+        <div class="fg" style="flex:1" id="edit-time-wrap">
+          <label class="flbl">&#1513;&#1506;&#1492;</label>
+          <input type="time" id="edit-report-time" class="fi"/>
+        </div>
+      </div>
+      <div id="edit-task-fields" style="display:none;flex-direction:column;gap:10px">
+        <div class="fg">
+          <label class="flbl">&#1508;&#1512;&#1493;&#1497;&#1511;&#1496;</label>
+          <input type="text" id="edit-task-project" class="fi" list="projects-list" placeholder="&#1513;&#1501; &#1508;&#1512;&#1493;&#1497;&#1511;&#1496;"/>
+        </div>
+        <div class="fg">
+          <label class="flbl">&#1514;&#1497;&#1488;&#1493;&#1512; &#1502;&#1513;&#1497;&#1502;&#1492;</label>
+          <input type="text" id="edit-task-desc" class="fi" placeholder="&#1514;&#1497;&#1488;&#1493;&#1512; &#1511;&#1510;&#1512;..."/>
+        </div>
+        <div class="fg">
+          <label class="flbl">&#1502;&#1513;&#1498; / &#1496;&#1493;&#1493;&#1495; &#1513;&#1506;&#1493;&#1514;</label>
+          <input type="text" id="edit-report-duration" class="fi" placeholder="0:30  &#1488;&#1493;  09:00-09:30"/>
+          <p class="fhint">&#1508;&#1493;&#1512;&#1502;&#1496; &#1502;&#1513;&#1498;: H:MM &#8212; &#1508;&#1493;&#1512;&#1502;&#1496; &#1496;&#1493;&#1493;&#1495;: HH:MM-HH:MM</p>
+        </div>
+      </div>
+      <div id="edit-report-offline-hint" style="display:none;background:var(--amberDim);border:1px solid var(--amber);border-radius:var(--rxs);padding:8px 11px;font-size:.76rem;color:var(--amber)">&#9888;&#65039; &#1488;&#1497;&#1503; &#1495;&#1497;&#1489;&#1493;&#1512; &#8212; &#1492;&#1513;&#1497;&#1504;&#1493;&#1497; &#1497;&#1497;&#1513;&#1502;&#1512; &#1502;&#1511;&#1493;&#1502;&#1497;&#1514;</div>
+    </div>
+    <div class="mfoot mfoot2">
+      <button id="btn-edit-report-cancel" class="btn-g">&#1489;&#1497;&#1496;&#1493;&#1500;</button>
+      <button id="btn-edit-report-save" class="btn-p sm">&#9889; &#1513;&#1502;&#1493;&#1512; &#1513;&#1497;&#1504;&#1493;&#1497;&#1497;&#1501;</button>
     </div>
   </div>
 </div>
@@ -1521,11 +1680,13 @@ document.addEventListener('DOMContentLoaded',()=>{
     verCheck();themeInit();langInit();prefsApply();
     splashInit();dtInit();tabsInit();catInit();durInit();clockInit();
     submitInit();settingsInit();summaryInit();
-    settingsTabsInit();   // v3.6.0
-    profileInit();        // v3.6.0
-    roundingInit();       // v3.6.0
-    clientsInit();        // v3.6.0
-    exportInit();         // v3.6.0
+    settingsTabsInit();   // v3.7.0
+    profileInit();        // v3.7.0
+    roundingInit();       // v3.7.0
+    clientsInit();        // v3.7.0
+    exportInit();         // v3.7.0
+    editReportInit();     // v3.7.0
+    changelogInit();      // v3.7.0
     // Theme toggle in settings
     $('btn-theme-toggle-settings')?.addEventListener('click',()=>{
       applyTheme(document.body.classList.contains('light')?'dark':'light');
@@ -1785,7 +1946,7 @@ function applyTheme(th){
   // sync menu button label
   const btn=$('menu-theme-btn');
   if(btn){btn.textContent=dark?t('menuThemeLight'):t('menuThemeDark');btn.classList.toggle('theme-active',dark);}
-  // v3.6.0: sync settings label
+  // v3.7.0: sync settings label
   themeSettingsSync();
 }
 
@@ -2410,9 +2571,111 @@ function delReport(id){
   histRender();summaryRender();updateSessionBanner();toast(t('toastDeleted')||'🗑 דיווח נמחק','success');
 }
 function hItem(r,showDel=false){
-  const delBtn=showDel?`<button class="btn-d sm hitem-del" data-id="${r.id}" onclick="delReport('${r.id}')" style="padding:4px 8px;font-size:.7rem;flex-shrink:0">🗑</button>`:'';
-  return`<div class="hitem" data-id="${r.id}"><div class="hdot ${r.category}"></div><div class="hmeta"><div class="htitle">${r.description||catLbl(r.category)}</div><div class="hsub">${fmtD(r.report_date)} · ${fmtT(r.report_time)}${r.project?' · '+r.project:''}${r.workDuration?' · ⏱'+r.workDuration:''}</div></div><span class="hbadge ${r.category}">${catLbl(r.category)}</span>${delBtn}</div>`;
+  const actBtns=showDel?`<div style="display:flex;gap:5px;flex-shrink:0"><button class="btn-g sm" onclick="openEditReport('${r.id}')" style="padding:4px 8px;font-size:.7rem" title="ערוך">✏️</button><button class="btn-d sm" onclick="delReport('${r.id}')" style="padding:4px 8px;font-size:.7rem" title="מחק">🗑</button></div>`:'';
+  return`<div class="hitem" data-id="${r.id}"><div class="hdot ${r.category}"></div><div class="hmeta"><div class="htitle">${r.description||catLbl(r.category)}</div><div class="hsub">${fmtD(r.report_date)} · ${fmtT(r.report_time)}${r.project?' · '+r.project:''}${r.workDuration?' · ⏱'+r.workDuration:''}</div></div><span class="hbadge ${r.category}">${catLbl(r.category)}</span>${actBtns}</div>`;
 }
+
+/* ────────────────────────────────────────────────────
+   EDIT REPORT  v3.7.0
+──────────────────────────────────────────────────── */
+let _editRepId = null;
+let _editRepCat = 'entry';
+
+function openEditReport(id){
+  const reps = store(K.reps)||[];
+  const r = reps.find(x=>x.id===id);
+  if(!r){ toast('\u26a0\ufe0f \u05d3\u05d9\u05d5\u05d5\u05d7 \u05dc\u05d0 \u05e0\u05de\u05e6\u05d0','warn'); return; }
+  _editRepId = id;
+  _editRepCat = r.category||'entry';
+  const[y,mo,d] = (r.report_date||'').split('-');
+  $('edit-report-title').textContent = '\u270f\ufe0f \u05e2\u05e8\u05d9\u05db\u05ea \u05d3\u05d9\u05d5\u05d5\u05d7 \u2014 '+(d||'')+'/'+(mo||'')+'/'+(y||'');
+  $('edit-report-info').textContent = '\u05de\u05d6\u05d4\u05d4: '+id.slice(0,14)+'\u2026  |  \u05e0\u05e9\u05dc\u05d7: '+(r.sent?'\u05db\u05df':'\u05dc\u05d0');
+  $('edit-report-date').value = r.report_date||'';
+  document.querySelectorAll('.edit-cat-btn').forEach(b=>{
+    b.classList.toggle('active', b.dataset.cat === _editRepCat);
+  });
+  _syncEditFields();
+  if(r.category==='task'){
+    $('edit-task-project').value = r.project||'';
+    $('edit-task-desc').value = r.description||'';
+    $('edit-report-duration').value = r.report_time||'';
+    $('edit-report-time').value = '';
+  } else {
+    $('edit-report-time').value = r.report_time||'';
+    $('edit-report-duration').value = '';
+  }
+  $('edit-report-offline-hint').style.display = navigator.onLine?'none':'';
+  openM('modal-edit-report');
+}
+
+function _syncEditFields(){
+  const isTask = _editRepCat==='task';
+  $('edit-task-fields').style.display = isTask?'flex':'none';
+  $('edit-time-wrap').style.display   = isTask?'none':'';
+}
+
+async function saveEditReport(){
+  if(!_editRepId) return;
+  const reps = store(K.reps)||[];
+  const idx = reps.findIndex(x=>x.id===_editRepId);
+  if(idx<0){ toast('\u26a0\ufe0f \u05d3\u05d9\u05d5\u05d5\u05d7 \u05dc\u05d0 \u05e0\u05de\u05e6\u05d0','warn'); return; }
+  const btn = $('btn-edit-report-save');
+  btn.disabled=true; btn.textContent='...';
+  const date = $('edit-report-date').value;
+  if(!date){ toast('\u26a0\ufe0f \u05e0\u05d0 \u05dc\u05de\u05dc\u05d0 \u05ea\u05d0\u05e8\u05d9\u05da','warn'); btn.disabled=false; btn.textContent='\u26a1 \u05e9\u05de\u05d5\u05e8 \u05e9\u05d9\u05e0\u05d5\u05d9\u05d9\u05dd'; return; }
+  const isTask = _editRepCat==='task';
+  let report_time, description='', project='';
+  if(isTask){
+    report_time = ($('edit-report-duration').value||'').trim();
+    description = ($('edit-task-desc').value||'').trim();
+    project     = ($('edit-task-project').value||'').trim();
+    if(!project){ toast('\u26a0\ufe0f \u05e0\u05d0 \u05dc\u05de\u05dc\u05d0 \u05e4\u05e8\u05d5\u05d9\u05e7\u05d8','warn'); btn.disabled=false; btn.textContent='\u26a1 \u05e9\u05de\u05d5\u05e8 \u05e9\u05d9\u05e0\u05d5\u05d9\u05d9\u05dd'; return; }
+    if(!report_time){ toast('\u26a0\ufe0f \u05e0\u05d0 \u05dc\u05de\u05dc\u05d0 \u05de\u05e9\u05da','warn'); btn.disabled=false; btn.textContent='\u26a1 \u05e9\u05de\u05d5\u05e8 \u05e9\u05d9\u05e0\u05d5\u05d9\u05d9\u05dd'; return; }
+    const ps=store(K.proj)||[];
+    if(!ps.includes(project)){ps.push(project);store(K.proj,ps);projLoad();}
+  } else {
+    report_time = ($('edit-report-time').value||'').trim();
+    if(!report_time){ toast('\u26a0\ufe0f \u05e0\u05d0 \u05dc\u05de\u05dc\u05d0 \u05e9\u05e2\u05d4','warn'); btn.disabled=false; btn.textContent='\u26a1 \u05e9\u05de\u05d5\u05e8 \u05e9\u05d9\u05e0\u05d5\u05d9\u05d9\u05dd'; return; }
+    report_time = applyRounding(report_time);
+  }
+  const updated = {...reps[idx], report_date:date, report_time, category:_editRepCat, description, project, edited:new Date().toISOString()};
+  reps[idx] = updated;
+  store(K.reps, reps);
+  const ep = store(K.ep);
+  if(ep && navigator.onLine){
+    fetch(ep,{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({action:'editReport',...updated}),mode:'no-cors'}).catch(()=>{});
+  }
+  histRender(); summaryRender(); updateSessionBanner();
+  buzz([20,40]);
+  toast('\u2705 \u05d3\u05d9\u05d5\u05d5\u05d7 \u05e2\u05d5\u05d3\u05db\u05df','success');
+  btn.disabled=false; btn.textContent='\u26a1 \u05e9\u05de\u05d5\u05e8 \u05e9\u05d9\u05e0\u05d5\u05d9\u05d9\u05dd';
+  closeM('modal-edit-report');
+}
+
+function editReportInit(){
+  $('btn-close-edit-report').addEventListener('click',()=>closeM('modal-edit-report'));
+  $('btn-edit-report-cancel').addEventListener('click',()=>closeM('modal-edit-report'));
+  $('btn-edit-report-save').addEventListener('click',saveEditReport);
+  $('modal-edit-report').addEventListener('click',e=>{if(e.target===$('modal-edit-report'))closeM('modal-edit-report');});
+  document.querySelectorAll('.edit-cat-btn').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      document.querySelectorAll('.edit-cat-btn').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      _editRepCat = btn.dataset.cat;
+      _syncEditFields();
+      buzz([10]);
+    });
+  });
+}
+
+function changelogInit(){
+  $('btn-close-changelog')?.addEventListener('click',()=>closeM('modal-changelog'));
+  $('btn-close-changelog2')?.addEventListener('click',()=>closeM('modal-changelog'));
+  $('modal-changelog')?.addEventListener('click',e=>{if(e.target===$('modal-changelog'))closeM('modal-changelog');});
+  $('btn-open-changelog')?.addEventListener('click',()=>openM('modal-changelog'));
+}
+
 
 /* ═══════════════════════════════════════════
    WORK STANDARD  (WorkStandard sheet + local cache)
@@ -3097,25 +3360,20 @@ function summaryRender(){
   $('stat-entries').textContent=fil.filter(r=>r.category==='entry').length;
   $('stat-exits').textContent=fil.filter(r=>r.category==='exit').length;
   $('stat-tasks').textContent=fil.filter(r=>r.category==='task').length;
-  // Sum ALL work: task durations + entry/exit pair durations
-  let mins=0;
-  // Task durations
+  // Sum task durations only
+  let taskMins=0;
   fil.filter(r=>r.category==='task').forEach(r=>{
     if(!r.report_time)return;
     if(r.report_time.includes('-')){
       const[s,e]=r.report_time.split('-');
       const[sh,sm]=s.split(':').map(Number),[eh,em]=e.split(':').map(Number);
-      const d=(eh*60+em)-(sh*60+sm);if(d>0)mins+=d;
+      const d=(eh*60+em)-(sh*60+sm);if(d>0)taskMins+=d;
     }else if(r.report_time.includes(':')){
       const[hh2,mm2]=r.report_time.split(':').map(Number);
-      mins+=((hh2||0)*60)+(mm2||0);
+      taskMins+=((hh2||0)*60)+(mm2||0);
     }
   });
-  // Entry/exit pair durations (by day, to avoid double-counting open sessions)
-  const daysInFil=[...new Set(fil.filter(r=>r.category==='entry'||r.category==='exit').map(r=>r.report_date))];
-  const rs2=store(K.reps)||[];
-  daysInFil.forEach(ds=>{const{mins:pm,pairs}=calcDayWorkMins(ds,rs2);if(pairs.length>0)mins+=pm;});
-  const hh=Math.floor(mins/60),mm=mins%60;
+  const hh=Math.floor(taskMins/60),mm=taskMins%60;
   $('stat-hours').textContent=mm>0?`${hh}:${pad(mm)}`:`${hh}`;
   $('summary-list').innerHTML=fil.length?fil.map(r=>hItem(r,false)).join(''):`<p class="empty">${t('summaryEmpty')}</p>`;
 }
@@ -3178,11 +3436,11 @@ function openM(id){
     prefsLoadUI();projChipsRender();
     const lang=window._lang||'he';
     document.querySelectorAll('.seg-btn[data-lang]').forEach(b=>b.classList.toggle('active',b.dataset.lang===lang));
-    // v3.6.0 additions
+    // v3.7.0 additions
     profileLoad();
     roundingLoad();
-    taskDefsRender();       // v3.6.0
-    crmSyncStatus();        // v3.6.0
+    taskDefsRender();       // v3.7.0
+    crmSyncStatus();        // v3.7.0
     themeSettingsSync();
     wstdSyncStatusInline();
     aboutTabRender();
@@ -3198,7 +3456,7 @@ function settingsSave(){
   const su=$('settings-sheet-url').value.trim();
   if(su)store(K.sheetUrl,su);else localStorage.removeItem(K.sheetUrl);
   prefsSave();
-  profileSave(); // v3.6.0
+  profileSave(); // v3.7.0
   toast(t('toastSettingsSaved'),'success');buzz([20,20,40]);closeM('modal-settings');updateMenuSheetLink();
 }
 
@@ -3449,7 +3707,7 @@ function scrollInit(){
 }
 
 /* ═══════════════════════════════════════════════════════
-   SETTINGS TABS  v3.6.0
+   SETTINGS TABS  v3.7.0
    ═══════════════════════════════════════════════════════ */
 let _lastSettingsTab = null;
 
@@ -3470,7 +3728,7 @@ function switchSettingsTab(id){
 }
 
 /* ═══════════════════════════════════════════════════════
-   PROFILE  v3.6.0
+   PROFILE  v3.7.0
    ═══════════════════════════════════════════════════════ */
 function profileLoad(){
   const p=store(K.profile)||{name:'',role:''};
@@ -3512,7 +3770,7 @@ function profileInit(){
 }
 
 /* ═══════════════════════════════════════════════════════
-   TIME ROUNDING  v3.6.0
+   TIME ROUNDING  v3.7.0
    ═══════════════════════════════════════════════════════ */
 function roundingInit(){
   document.querySelectorAll('.seg-btn[data-round]').forEach(btn=>{
@@ -3543,10 +3801,10 @@ function applyRounding(timeStr){
 }
 
 /* ═══════════════════════════════════════════════════════
-   CLIENTS / PROJECTS / TASKS  v3.6.0
+   CLIENTS / PROJECTS / TASKS  v3.7.0
    ═══════════════════════════════════════════════════════ */
 /* ═══════════════════════════════════════════════════════
-   CRM — Projects · Task Definitions  v3.6.0
+   CRM — Projects · Task Definitions  v3.7.0
    ═══════════════════════════════════════════════════════
    K.taskDefs = [{id, name, billable}]
      • משימות גלובליות — משותפות לכל הפרויקטים
@@ -3610,7 +3868,7 @@ function crmSyncStatus(){
 }
 
 /* ═══════════════════════════════════════════════════════
-   TASK DEFINITIONS  v3.6.0
+   TASK DEFINITIONS  v3.7.0
    ═══════════════════════════════════════════════════════
    משימות גלובליות — לא שייכות לפרויקט ספציפי.
    אותה משימה יכולה להופיע פעמיים: billable + non-billable.
@@ -3688,7 +3946,7 @@ function clientsInit(){
 }
 
 /* ═══════════════════════════════════════════════════════
-   EXPORT  v3.6.0
+   EXPORT  v3.7.0
    ═══════════════════════════════════════════════════════ */
 function exportCSV(){
   const reps=store(K.reps)||[];
@@ -3738,7 +3996,7 @@ async function exportXLSX(){
   }catch(e){toast('❌ שגיאה בייצוא: '+e.message,'error',4000);}
 }
 
-/* ─ Period Excel Export (2 sheets: Attendance + Tasks)  v3.6.0 ─ */
+/* ─ Period Excel Export (2 sheets: Attendance + Tasks)  v3.7.0 ─ */
 async function exportPeriodXLSX(){
   const fromDate=($('export-from-date')?.value||'').trim();
   const toDate=($('export-to-date')?.value||'').trim();
@@ -3852,7 +4110,7 @@ function exportInit(){
 }
 
 /* ═══════════════════════════════════════════════════════
-   ABOUT TAB  v3.6.0
+   ABOUT TAB  v3.7.0
    ═══════════════════════════════════════════════════════ */
 function aboutTabRender(){
   // Version
@@ -3882,7 +4140,7 @@ function aboutTabRender(){
 }
 
 /* ═══════════════════════════════════════════════════════
-   THEME BUTTON IN SETTINGS  v3.6.0
+   THEME BUTTON IN SETTINGS  v3.7.0
    ═══════════════════════════════════════════════════════ */
 function themeSettingsSync(){
   const isDark=!document.body.classList.contains('light');
@@ -3891,7 +4149,7 @@ function themeSettingsSync(){
 }
 
 /* ═══════════════════════════════════════════════════════
-   WORKCAL SYNC INLINE (in connection tab)  v3.6.0
+   WORKCAL SYNC INLINE (in connection tab)  v3.7.0
    ═══════════════════════════════════════════════════════ */
 function wstdSyncStatusInline(){
   const el=$('wstandard-sync-status-inline');if(!el)return;
