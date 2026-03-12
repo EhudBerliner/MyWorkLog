@@ -1,4 +1,4 @@
-//  MyWorkLog – Google Apps Script  v4.1
+//  MyWorkLog – Google Apps Script  v4.4
 //  הדבק קוד זה ב-Apps Script של הגיליון שלך
 //  לאחר מכן: Deploy > New deployment > Web App
 //  ✅ הרשאות: Anyone (אנונימי) / Execute as: Me
@@ -121,7 +121,7 @@ function doGet(e) {
     return ok('Attendance rebuilt');
   }
 
-  return jsonResp({ status:'ok', app:'MyWorkLog', version:'4.1' });
+  return jsonResp({ status:'ok', app:'MyWorkLog', version:'4.4' });
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -223,6 +223,7 @@ function deleteAttendanceRowsForDate(sheet, dateStr) {
 function rebuildDayAttendance(ss, dateStr) {
   const sheet = getOrCreateAttSheet(ss);
   deleteAttendanceRowsForDate(sheet, dateStr);
+  SpreadsheetApp.flush(); // commit deletions before reading getLastRow()
 
   const { pairs, openEntry } = getPairsForDate(ss, dateStr);
   if (pairs.length === 0 && !openEntry) return;
@@ -254,44 +255,114 @@ function rebuildDayAttendance(ss, dateStr) {
     }
   }
 
-  // Find insertion point (keep dates sorted ascending)
-  let insertAfter = sheet.getLastRow(); // default: append
+  // Find insertion point — scan only 'single' and 'summary' rows (col G) to avoid
+  // confusion with 'detail' rows that share the same date.
+  // We need the first anchor row whose date is strictly greater than dateStr.
+  let insertBefore = -1; // sheet row number to insert before (-1 = append)
   if (sheet.getLastRow() > 1) {
-    const colA = sheet.getRange(2, 1, sheet.getLastRow()-1, 1).getValues();
-    for (let i=0; i<colA.length; i++) {
-      const v = String(colA[i][0]);
-      if (v && v > dateStr) { insertAfter = i+1; break; } // i+1 because row 1 is header
+    const data = sheet.getRange(2, 1, sheet.getLastRow()-1, ATT_NCOLS).getValues();
+    for (let i=0; i<data.length; i++) {
+      const rowDate = String(data[i][0]);
+      const rowType = String(data[i][6]);
+      if ((rowType === 'single' || rowType === 'summary') && rowDate > dateStr) {
+        insertBefore = i + 2; // +1 for header, +1 because getRange is 1-based
+        break;
+      }
     }
   }
 
   // Write rows
-  if (insertAfter < sheet.getLastRow()) {
-    sheet.insertRowsBefore(insertAfter+1, newRows.length);
-    sheet.getRange(insertAfter+1, 1, newRows.length, ATT_NCOLS).setValues(newRows);
-    formatAttRows(sheet, insertAfter+1, newRows);
+  if (insertBefore !== -1) {
+    sheet.insertRowsBefore(insertBefore, newRows.length);
+    sheet.getRange(insertBefore, 1, newRows.length, ATT_NCOLS).setValues(newRows);
+    formatAttRows(sheet, insertBefore, newRows);
   } else {
-    const firstNew = sheet.getLastRow()+1;
-    newRows.forEach(r => sheet.appendRow(r));
+    const firstNew = sheet.getLastRow() + 1;
+    sheet.getRange(firstNew, 1, newRows.length, ATT_NCOLS).setValues(newRows);
     formatAttRows(sheet, firstNew, newRows);
   }
 }
 
-/** Rebuild entire Attendance from WorkLog. Safe to run at any time. */
+/** Rebuild entire Attendance from WorkLog. Safe to run at any time.
+ *  Builds ALL rows in memory then writes in a single setValues() call.
+ */
 function rebuildAllAttendance() {
   const ss   = SpreadsheetApp.getActiveSpreadsheet();
   const main = ss.getSheetByName(SHEET_NAME);
   if (!main || main.getLastRow() <= 1) return;
 
-  const dates = new Set();
-  main.getDataRange().getValues().slice(1).forEach(r => {
+  // Collect all entry/exit records from WorkLog
+  const worklogRows = main.getDataRange().getValues().slice(1);
+
+  // Group by date
+  const dateMap = {}; // date -> { entries:[], exits:[] }
+  worklogRows.forEach(r => {
     const cat = reverseCategory(String(r[3]||''));
-    if (cat==='entry'||cat==='exit') { const d=fmtDateCell(r[1]); if(d) dates.add(d); }
+    const d   = fmtDateCell(r[1]);
+    const t   = parseTimeCell(r[2]);
+    if (!d || !t) return;
+    if (!dateMap[d]) dateMap[d] = { entries:[], exits:[] };
+    if (cat === 'entry') dateMap[d].entries.push(t);
+    else if (cat === 'exit') dateMap[d].exits.push(t);
   });
 
+  // Load WorkStandard once
+  const wss = ss.getSheetByName(SHEET_WSTANDARD);
+  const stdMap = {}; // date -> { stdHours, stdStr }
+  if (wss && wss.getLastRow() > 1) {
+    wss.getRange(2, 1, wss.getLastRow()-1, 3).getValues().forEach(r => {
+      const d = fmtDateCell(r[0]);
+      if (!d) return;
+      const h = parseFloat(r[2]) || 0;
+      stdMap[d] = { stdHours:h, stdStr: h>0 ? pad(Math.floor(h))+':'+pad(Math.round((h%1)*60)) : '' };
+    });
+  }
+
+  // Build all rows in memory (sorted by date)
+  const allRows = [];
+  Object.keys(dateMap).sort().forEach(dateStr => {
+    const { entries, exits } = dateMap[dateStr];
+    entries.sort(); exits.sort();
+
+    // Match pairs greedily
+    const pairs = [], usedExits = new Set();
+    entries.forEach(en => {
+      const ex = exits.find(x => x >= en && !usedExits.has(x));
+      if (ex) { usedExits.add(ex); const dur=toMins(ex)-toMins(en); if(dur>0) pairs.push({entry:en,exit:ex,durationMins:dur}); }
+    });
+    const pairedEntries = new Set(pairs.map(p=>p.entry));
+    const openEntry = entries.find(e=>!pairedEntries.has(e)) || null;
+
+    if (pairs.length === 0 && !openEntry) return;
+
+    const std      = stdMap[dateStr] || { stdHours:0, stdStr:'' };
+    const stdMins  = Math.round(std.stdHours * 60);
+    const totalMins = pairs.reduce((s,p)=>s+p.durationMins, 0);
+    const devMins  = stdMins > 0 ? totalMins - stdMins : null;
+    const devStr   = devMins !== null ? fmtDev(devMins) : '';
+
+    if (pairs.length <= 1 && !openEntry) {
+      // Single
+      const p = pairs[0];
+      allRows.push([dateStr, p.entry, p.exit, fmtMins(p.durationMins), std.stdStr, devStr, 'single']);
+    } else {
+      // Summary + details
+      const firstEntry = pairs.length>0 ? pairs[0].entry : openEntry;
+      const lastExit   = pairs.length>0 ? pairs[pairs.length-1].exit : '';
+      allRows.push([dateStr, firstEntry, lastExit, fmtMins(totalMins), std.stdStr, devStr, 'summary']);
+      pairs.forEach(p => allRows.push([dateStr, p.entry, p.exit, fmtMins(p.durationMins), '', '', 'detail']));
+      if (openEntry) allRows.push([dateStr, openEntry, '⏳ פתוח', '', '', '', 'detail']);
+    }
+  });
+
+  // Write to sheet in one operation
   const sheet = getOrCreateAttSheet(ss);
   if (sheet.getLastRow() > 1) sheet.deleteRows(2, sheet.getLastRow()-1);
 
-  [...dates].sort().forEach(d => rebuildDayAttendance(ss, d));
+  if (allRows.length > 0) {
+    sheet.getRange(2, 1, allRows.length, ATT_NCOLS).setValues(allRows);
+    formatAttRows(sheet, 2, allRows);
+  }
 }
 
 /** Get/create Attendance sheet with correct headers and column widths. */
@@ -529,6 +600,66 @@ function autoFormatLastRow(sheet, colCount) {
 }
 function translateCategory(c) { return{entry:'כניסה',exit:'יציאה',task:'משימה'}[c]||c; }
 function reverseCategory(h)   { return{'כניסה':'entry','יציאה':'exit','משימה':'task'}[h]||h; }
+
+
+/**
+ * DEBUG — הרץ מהעורך כדי לראות מה קורה.
+ * יוצר גיליון "Debug_Attendance" עם הנתונים שיהיו ב-Attendance.
+ */
+function debugAttendanceData() {
+  const ss   = SpreadsheetApp.getActiveSpreadsheet();
+  const main = ss.getSheetByName(SHEET_NAME);
+  const wss  = ss.getSheetByName(SHEET_WSTANDARD);
+
+  const log = [];
+  log.push(['=== WorkStandard rows ===','','','']);
+  if (!wss || wss.getLastRow() <= 1) {
+    log.push(['WorkStandard: EMPTY or missing','','','']);
+  } else {
+    const wsRows = wss.getRange(2,1,wss.getLastRow()-1,3).getValues();
+    wsRows.forEach((r,i) => {
+      const raw  = r[0];
+      const fmt  = fmtDateCell(r[0]);
+      const hrs  = r[2];
+      log.push([`row ${i+2}`, `raw="${raw}" type=${typeof raw}`, `fmt="${fmt}"`, `hours=${hrs}`]);
+    });
+  }
+
+  log.push(['','','','']);
+  log.push(['=== WorkLog entry/exit dates ===','','','']);
+  if (!main || main.getLastRow() <= 1) {
+    log.push(['WorkLog: EMPTY','','','']);
+  } else {
+    const wlRows = main.getDataRange().getValues().slice(1);
+    const seen = new Set();
+    wlRows.forEach(r => {
+      const cat = reverseCategory(String(r[3]||''));
+      if (cat !== 'entry' && cat !== 'exit') return;
+      const d = fmtDateCell(r[1]);
+      if (seen.has(d)) return;
+      seen.add(d);
+      // Try to find WorkStandard for this date
+      let stdResult = 'NOT FOUND in stdMap';
+      if (wss && wss.getLastRow() > 1) {
+        const wsRows = wss.getRange(2,1,wss.getLastRow()-1,3).getValues();
+        for (const wr of wsRows) {
+          if (fmtDateCell(wr[0]) === d) {
+            stdResult = `FOUND: hours=${wr[2]}`;
+            break;
+          }
+        }
+      }
+      log.push([d, `raw WorkLog date: "${r[1]}"`, `type: ${typeof r[1]}`, stdResult]);
+    });
+  }
+
+  // Write to debug sheet
+  let dbgSheet = ss.getSheetByName('Debug_Attendance');
+  if (!dbgSheet) dbgSheet = ss.insertSheet('Debug_Attendance');
+  else dbgSheet.clearContents();
+  dbgSheet.getRange(1,1,log.length,4).setValues(log);
+  SpreadsheetApp.getUi().alert('Debug complete — see sheet: Debug_Attendance');
+}
 
 /*
   ═══════════════════════════════════════════════════════

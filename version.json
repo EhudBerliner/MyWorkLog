@@ -1,1 +1,1 @@
-{"version":"3.6.1-gas4.1","buildDate":"2026-03-12","changelog":"GAS v4.1: detail rows include date; English column headers; Std/Deviation only on summary/single rows"}
+{"version":"3.6.1-gas4.4","buildDate":"2026-03-12","changelog":"GAS v4.4: fixed Standard+Deviation — rebuildAllAttendance loads WorkStandard once into stdMap, builds all rows in memory, single setValues call"}
