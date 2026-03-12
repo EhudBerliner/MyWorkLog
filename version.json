@@ -1,1 +1,1 @@
-{"version":"3.6.0","buildDate":"2026-03-09","changelog":"Fix boot freeze: K.clients removed from migrateData; sabbatical day type; description field; period Excel export"}
+{"version":"3.6.1-gas4.1","buildDate":"2026-03-12","changelog":"GAS v4.1: detail rows include date; English column headers; Std/Deviation only on summary/single rows"}
