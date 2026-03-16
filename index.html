@@ -407,6 +407,25 @@ textarea.fi{resize:vertical;min-height:72px}
 .clock-preset{padding:5px 12px;border-radius:20px;border:1.5px solid var(--border);background:none;color:var(--text2);font-size:.75rem;font-weight:600;cursor:pointer;transition:all .15s}
 .clock-preset:hover{border-color:var(--blue);color:var(--blue)}
 
+/* ─ USER CHIP ─ */
+.user-chip{width:28px;height:28px;border-radius:50%;background:var(--limeDim);border:1.5px solid var(--lime);
+  color:var(--lime);font-weight:800;font-size:.78rem;display:flex;align-items:center;justify-content:center;
+  cursor:pointer;transition:all .15s;flex-shrink:0;font-family:var(--fui)}
+.user-chip:hover{background:rgba(82,214,138,.22);transform:scale(1.06)}
+
+/* ─ LOGIN OVERLAY ─ */
+#login-overlay{position:fixed;inset:0;z-index:4000;background:var(--bg0);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;
+  overflow-y:auto}
+.login-card{width:100%;max-width:380px;display:flex;flex-direction:column;align-items:center;gap:20px}
+.login-logo{text-align:center}
+.login-logo-img{width:72px;height:72px;border-radius:20px;margin-bottom:12px;
+  animation:up .5s cubic-bezier(.175,.885,.32,1.275) both;
+  box-shadow:0 0 40px rgba(82,214,138,.25)}
+.login-title{font-family:var(--fui);font-size:1.7rem;font-weight:800;color:var(--lime);letter-spacing:-1px}
+.login-sub{font-size:.8rem;color:var(--text3);margin-top:3px}
+.login-error{color:var(--red);font-size:.78rem;text-align:center;min-height:18px;padding:2px 0}
+
 .hidden{display:none!important}
 .reset-desc{font-size:.85rem;color:var(--text2)}
 
@@ -569,6 +588,60 @@ details summary::-webkit-details-marker{display:none}
   </div>
 </div>
 
+
+<!-- LOGIN OVERLAY v4.0 -->
+<div id="login-overlay" class="hidden">
+  <div class="login-card">
+
+    <div class="login-logo">
+      <img src="logo.png" alt="MyWorkLog" class="login-logo-img"/>
+      <div class="login-title">MyWorkLog</div>
+      <div class="login-sub">כניסה למערכת</div>
+    </div>
+
+    <!-- Mode toggle -->
+    <div class="seg" style="width:100%">
+      <button class="seg-btn active" id="login-tab-name">כניסה ראשונה</button>
+      <button class="seg-btn"       id="login-tab-id">כניסה עם מזהה</button>
+    </div>
+
+    <!-- Panel: first login by name -->
+    <div id="login-pnl-name" style="width:100%;display:flex;flex-direction:column;gap:12px">
+      <div style="font-size:.8rem;color:var(--text3);text-align:center;line-height:1.65">
+        הזן את שמך המלא כפי שהוגדר על ידי מנהל המערכת
+      </div>
+      <input type="text" id="login-name-input" class="fi"
+        placeholder="שם מלא..." autocomplete="name" autocapitalize="words"
+        style="text-align:center;font-size:1rem"/>
+      <div id="login-name-error" class="login-error"></div>
+      <button class="btn-p" id="btn-login-name">כניסה ←</button>
+    </div>
+
+    <!-- Panel: re-login by ID -->
+    <div id="login-pnl-id" style="width:100%;display:none;flex-direction:column;gap:12px">
+      <div style="font-size:.8rem;color:var(--text3);text-align:center;line-height:1.65">
+        הזן את המזהה הייחודי שלך לכניסה ממכשיר חדש
+      </div>
+      <input type="text" id="login-id-input" class="fi"
+        placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+        autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
+        style="text-align:center;font-size:.8rem;direction:ltr;font-family:monospace"/>
+      <div id="login-id-error" class="login-error"></div>
+      <button class="btn-p" id="btn-login-id">כניסה ←</button>
+    </div>
+
+    <!-- No-endpoint notice -->
+    <div id="login-no-ep" style="display:none;width:100%;background:var(--amberDim);
+      border:1px solid var(--amber);border-radius:var(--rs);padding:12px;
+      font-size:.78rem;color:var(--amber);text-align:center;line-height:1.6">
+      ⚠️ Endpoint לא הוגדר עדיין.<br/>
+      הגדר תחילה את כתובת ה-Google Apps Script.
+      <br/><button class="btn-g sm" id="btn-login-go-settings" style="margin-top:8px">⚙️ להגדרות</button>
+    </div>
+
+  </div>
+</div>
+
 <!-- APP SHELL -->
 <div id="app" class="hidden">
 
@@ -610,6 +683,7 @@ details summary::-webkit-details-marker{display:none}
         <span class="hdr-name">MyWorkLog</span>
       </div>
       <div class="hdr-acts">
+        <button id="user-chip" class="user-chip hidden" title="המשתמש שלי" onclick="openM('modal-settings');switchSettingsTab('users')">?</button>
         <span id="version-badge" class="vbadge" data-i18n="menuVersionTooltip" data-i18n-attr="title" title="לחץ לאיפוס">v3.7.0</span>
       </div>
     </div>
@@ -853,6 +927,7 @@ details summary::-webkit-details-marker{display:none}
         <button class="stab-btn"        data-stab="data">📦 נתונים</button>
         <button class="stab-btn"        data-stab="tasks">📋 משימות</button>
         <button class="stab-btn"        data-stab="about">ℹ️ אודות</button>
+        <button class="stab-btn" id="stab-btn-users" data-stab="users">👥 צוות</button>
       </div>
     </div>
 
@@ -875,7 +950,8 @@ details summary::-webkit-details-marker{display:none}
               </div>
               <div class="fg">
                 <label class="flbl">שם מלא</label>
-                <input type="text" id="settings-username" class="fi" placeholder="הכנס שם..."/>
+                <input type="text" id="settings-username" class="fi" placeholder="הכנס שם..." readonly
+                  style="background:var(--bg0);color:var(--text3);cursor:default" title="השם נקבע בעת הכניסה"/>
               </div>
               <div class="fg" style="margin-top:8px">
                 <label class="flbl">תפקיד / תואר</label>
@@ -1189,6 +1265,60 @@ details summary::-webkit-details-marker{display:none}
         </div>
 
       </div><!-- /stab-about -->
+
+
+      <!-- ══ TAB: USERS v4.0 ══ -->
+      <div class="stab-pnl" id="stab-users">
+
+        <!-- Current user card -->
+        <div class="sset-group">
+          <div class="sset-label">👤 המשתמש שלי</div>
+          <div class="sset-block">
+            <div class="sset-row">
+              <div style="display:flex;align-items:center;gap:14px;margin-bottom:12px">
+                <div id="user-tab-avatar" style="width:52px;height:52px;border-radius:14px;background:var(--limeDim);color:var(--lime);font-family:var(--fui);font-size:1.4rem;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0">?</div>
+                <div style="flex:1;min-width:0">
+                  <div id="user-tab-name" style="font-size:1rem;font-weight:700;color:var(--text)">—</div>
+                  <span id="user-tab-admin-badge" style="display:none;font-size:.66rem;font-weight:700;color:var(--lime);background:var(--limeDim);padding:2px 9px;border-radius:10px;margin-top:3px">🔑 מנהל מערכת</span>
+                </div>
+              </div>
+              <div style="font-size:.68rem;color:var(--text3);margin-bottom:4px">מזהה ייחודי (לכניסה ממכשיר חדש):</div>
+              <div style="display:flex;gap:6px;align-items:center;margin-bottom:12px">
+                <code id="user-tab-id" style="font-size:.67rem;color:var(--blue);background:var(--bg0);padding:6px 10px;border-radius:var(--rxs);flex:1;direction:ltr;font-family:monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;border:1px solid var(--border)">—</code>
+                <button class="btn-g sm" onclick="copyUserId()" style="flex-shrink:0">📋</button>
+              </div>
+              <button class="btn-d sm" id="btn-logout-user" style="width:100%">🚪 החלף משתמש</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Admin: user management -->
+        <div class="sset-group" id="admin-users-section" style="display:none">
+          <div class="sset-label">🔑 ניהול משתמשים</div>
+          <div class="sset-block">
+            <div class="sset-row">
+              <div style="font-size:.76rem;color:var(--text3);line-height:1.6;margin-bottom:10px">
+                הוסף משתמשים — בכניסה ראשונה יקישו את שמם בדיוק כפי שהוזן.
+              </div>
+              <div style="display:flex;gap:8px;margin-bottom:8px">
+                <input type="text" id="new-user-name" class="fi" placeholder="שם מלא..." style="flex:1"/>
+                <label style="display:flex;align-items:center;gap:5px;font-size:.75rem;color:var(--text2);flex-shrink:0;cursor:pointer">
+                  <input type="checkbox" id="new-user-admin" class="ptog" style="width:34px;height:20px"/>
+                  <span>אדמין</span>
+                </label>
+              </div>
+              <button class="btn-p sm" id="btn-add-user" style="width:100%">+ הוסף משתמש</button>
+            </div>
+          </div>
+          <div class="sset-block" style="margin-top:8px">
+            <div class="sset-row" id="users-list-wrap">
+              <div id="users-list"><div style="text-align:center;color:var(--text3);font-size:.82rem;padding:10px">טוען...</div></div>
+              <button class="btn-g sm" onclick="loadUsersList()" style="width:100%;margin-top:8px;font-size:.72rem">↻ רענן</button>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /stab-users -->
 
     </div><!-- /mbody -->
     <div class="mfoot">
@@ -1656,6 +1786,60 @@ details summary::-webkit-details-marker{display:none}
         </div>
       </div>
 
+
+      <!-- ══ TAB: USERS v4.0 ══ -->
+      <div class="stab-pnl" id="stab-users">
+
+        <!-- Current user card -->
+        <div class="sset-group">
+          <div class="sset-label">👤 המשתמש שלי</div>
+          <div class="sset-block">
+            <div class="sset-row">
+              <div style="display:flex;align-items:center;gap:14px;margin-bottom:12px">
+                <div id="user-tab-avatar" style="width:52px;height:52px;border-radius:14px;background:var(--limeDim);color:var(--lime);font-family:var(--fui);font-size:1.4rem;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0">?</div>
+                <div style="flex:1;min-width:0">
+                  <div id="user-tab-name" style="font-size:1rem;font-weight:700;color:var(--text)">—</div>
+                  <span id="user-tab-admin-badge" style="display:none;font-size:.66rem;font-weight:700;color:var(--lime);background:var(--limeDim);padding:2px 9px;border-radius:10px;margin-top:3px">🔑 מנהל מערכת</span>
+                </div>
+              </div>
+              <div style="font-size:.68rem;color:var(--text3);margin-bottom:4px">מזהה ייחודי (לכניסה ממכשיר חדש):</div>
+              <div style="display:flex;gap:6px;align-items:center;margin-bottom:12px">
+                <code id="user-tab-id" style="font-size:.67rem;color:var(--blue);background:var(--bg0);padding:6px 10px;border-radius:var(--rxs);flex:1;direction:ltr;font-family:monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;border:1px solid var(--border)">—</code>
+                <button class="btn-g sm" onclick="copyUserId()" style="flex-shrink:0">📋</button>
+              </div>
+              <button class="btn-d sm" id="btn-logout-user" style="width:100%">🚪 החלף משתמש</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Admin: user management -->
+        <div class="sset-group" id="admin-users-section" style="display:none">
+          <div class="sset-label">🔑 ניהול משתמשים</div>
+          <div class="sset-block">
+            <div class="sset-row">
+              <div style="font-size:.76rem;color:var(--text3);line-height:1.6;margin-bottom:10px">
+                הוסף משתמשים — בכניסה ראשונה יקישו את שמם בדיוק כפי שהוזן.
+              </div>
+              <div style="display:flex;gap:8px;margin-bottom:8px">
+                <input type="text" id="new-user-name" class="fi" placeholder="שם מלא..." style="flex:1"/>
+                <label style="display:flex;align-items:center;gap:5px;font-size:.75rem;color:var(--text2);flex-shrink:0;cursor:pointer">
+                  <input type="checkbox" id="new-user-admin" class="ptog" style="width:34px;height:20px"/>
+                  <span>אדמין</span>
+                </label>
+              </div>
+              <button class="btn-p sm" id="btn-add-user" style="width:100%">+ הוסף משתמש</button>
+            </div>
+          </div>
+          <div class="sset-block" style="margin-top:8px">
+            <div class="sset-row" id="users-list-wrap">
+              <div id="users-list"><div style="text-align:center;color:var(--text3);font-size:.82rem;padding:10px">טוען...</div></div>
+              <button class="btn-g sm" onclick="loadUsersList()" style="width:100%;margin-top:8px;font-size:.72rem">↻ רענן</button>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /stab-users -->
+
     </div><!-- /mbody -->
   </div>
 </div>
@@ -1687,6 +1871,9 @@ document.addEventListener('DOMContentLoaded',()=>{
     exportInit();         // v3.7.0
     editReportInit();     // v3.7.0
     changelogInit();      // v3.7.0
+    authInit();           // v4.0 — user auth
+    usersTabInit();       // v4.0 — user management tab
+    userChipUpdate();     // v4.0 — header chip
     // Theme toggle in settings
     $('btn-theme-toggle-settings')?.addEventListener('click',()=>{
       applyTheme(document.body.classList.contains('light')?'dark':'light');
@@ -1731,10 +1918,17 @@ function splashInit(){
     $('splash').classList.add('out');
     setTimeout(()=>{
       try{$('splash').remove();}catch(_){}
+      // v4.0: Auth gate — require login when endpoint is configured
+      const _ep=store(K.ep), _uid=store(K.userId);
+      if(_ep && !_uid){
+        showLoginOverlay();
+        return; // app stays hidden until login completes
+      }
       try{$('app').classList.remove('hidden');}catch(_){}
       try{applyLang(window._lang||'he');}catch(_){}
       try{summaryRender();}catch(e){console.error('[summaryRender]',e);}
       try{updateMenuSheetLink();}catch(_){}
+      try{userChipUpdate();}catch(_){}
       // Background sync: projects + WorkStandard on every launch
       setTimeout(()=>{try{bgSync();}catch(_){}}, 2000);
     },420);
@@ -1919,6 +2113,7 @@ async function hardReset(){
   const sR=kR?store(K.reps):null;
   const sE=kS?store(K.ep):null,sSU=kS?store(K.sheetUrl):null;
   const sP=kS?store(K.proj):null,sTH=kS?store(K.theme):null,sLN=kS?store(K.lang):null,sPR=kS?store(K.prefs):null;
+  const sUID=kS?store(K.userId):null,sUNM=kS?store(K.userName):null,sUADM=kS?store(K.isAdmin):null;
   const sQ=kQ?store(K.q):null;
   localStorage.clear();sessionStorage.clear();
   document.cookie.split(';').forEach(c=>document.cookie=c.replace(/^ +/,'').replace(/=.*/,'=;expires='+new Date().toUTCString()+';path=/'));
@@ -1930,6 +2125,7 @@ async function hardReset(){
   if(sE)store(K.ep,sE);if(sSU)store(K.sheetUrl,sSU);
   if(sP)store(K.proj,sP);if(sTH)store(K.theme,sTH);if(sLN)store(K.lang,sLN);if(sPR)store(K.prefs,sPR);
   if(sQ)store(K.q,sQ);
+  if(sUID)store(K.userId,sUID);if(sUNM)store(K.userName,sUNM);if(sUADM!==null)store(K.isAdmin,sUADM);
   buzz([100,50,100]);window.location.reload(true);
 }
 
@@ -2470,7 +2666,8 @@ function buildRep(date,time){
   // Apply time rounding for entry/exit
   if(cat==='entry'||cat==='exit') rTime=applyRounding(rTime);
   return{id:Date.now()+Math.random().toString(36).slice(2),timestamp:new Date().toISOString(),
-    report_date:date,report_time:rTime,category:cat,description:desc,project:proj};
+    report_date:date,report_time:rTime,category:cat,description:desc,project:proj,
+    userId:store(K.userId)||''};
 }
 /* Legacy blocking send — used only by syncQ */
 async function send(rep,ep){
@@ -3444,6 +3641,7 @@ function openM(id){
     themeSettingsSync();
     wstdSyncStatusInline();
     aboutTabRender();
+    usersTabLoad();       // v4.0
     // Restore last settings tab
     const lastTab=_lastSettingsTab||(()=>{try{return sessionStorage.getItem('mwl_stab')||'ui';}catch{return'ui';}})();
     switchSettingsTab(lastTab);
@@ -3504,7 +3702,8 @@ async function syncFromSheet(){
     const headers={};
     const etag=store('mwl_etag_reports');
     if(etag)headers['If-None-Match']=etag;
-    const res=await fetch(ep+'?action=getReports',{headers,cache:'no-store'});
+    const uid=store(K.userId)||'';
+    const res=await fetch(ep+'?action=getReports'+(uid?'&userId='+encodeURIComponent(uid):''),{headers,cache:'no-store'});
     if(res.status===304)return;
     const newEtag=res.headers.get('ETag');
     if(newEtag)store('mwl_etag_reports',newEtag);
@@ -4158,6 +4357,301 @@ function wstdSyncStatusInline(){
   const ep=store(K.ep);
   if(!ep){el.textContent='⚠️ Endpoint לא הוגדר';return;}
   el.textContent=last?`✅ סנכרן: ${last} · ${count} ימים`:'לא סונכרן עדיין';
+}
+
+
+/* ═══════════════════════════════════════════════════════
+   AUTH  v4.0  — Login overlay + user identity
+   ═══════════════════════════════════════════════════════ */
+
+/* ── Login overlay UI ─────────────────────────────────── */
+function showLoginOverlay(){
+  const ep=store(K.ep);
+  $('login-overlay').classList.remove('hidden');
+  if(!ep){
+    $('login-pnl-name').style.display='none';
+    $('login-pnl-id').style.display='none';
+    $('login-no-ep').style.display='';
+  } else {
+    $('login-pnl-name').style.display='flex';
+    $('login-no-ep').style.display='none';
+  }
+}
+function hideLoginOverlay(){
+  $('login-overlay').classList.add('hidden');
+}
+
+function authInit(){
+  /* Tab switch */
+  $('login-tab-name')?.addEventListener('click',()=>{
+    $('login-tab-name').classList.add('active');
+    $('login-tab-id').classList.remove('active');
+    $('login-pnl-name').style.display='flex';
+    $('login-pnl-id').style.display='none';
+    $('login-name-error').textContent='';
+    $('login-id-error').textContent='';
+  });
+  $('login-tab-id')?.addEventListener('click',()=>{
+    $('login-tab-id').classList.add('active');
+    $('login-tab-name').classList.remove('active');
+    $('login-pnl-id').style.display='flex';
+    $('login-pnl-name').style.display='none';
+    $('login-name-error').textContent='';
+    $('login-id-error').textContent='';
+  });
+
+  /* Enter key support */
+  $('login-name-input')?.addEventListener('keydown',e=>{ if(e.key==='Enter') loginByName(); });
+  $('login-id-input')?.addEventListener('keydown',e=>{ if(e.key==='Enter') loginById(); });
+
+  /* Buttons */
+  $('btn-login-name')?.addEventListener('click', loginByName);
+  $('btn-login-id')?.addEventListener('click',   loginById);
+  $('btn-login-go-settings')?.addEventListener('click',()=>{
+    hideLoginOverlay();
+    $('app').classList.remove('hidden');
+    openM('modal-settings');
+    switchSettingsTab('connection');
+  });
+}
+
+/* ── First login: user enters their name ─────────────── */
+async function loginByName(){
+  const name=($('login-name-input')?.value||'').trim();
+  const errEl=$('login-name-error');
+  if(!name){ errEl.textContent='נא להזין שם.'; return; }
+  const ep=store(K.ep);
+  if(!ep){ errEl.textContent='Endpoint לא מוגדר.'; return; }
+  if(!navigator.onLine){ errEl.textContent='אין חיבור לאינטרנט.'; return; }
+
+  const btn=$('btn-login-name');
+  btn.disabled=true; btn.textContent='מחבר...';
+  errEl.textContent='';
+
+  try{
+    const res=await fetch(ep+'?action=claimUser&name='+encodeURIComponent(name)+'&t='+Date.now(),{cache:'no-store'});
+    const data=await res.json();
+    if(data.status==='ok'){
+      _applyUserSession(data.userId, data.userName, data.isAdmin);
+      hideLoginOverlay();
+      $('app').classList.remove('hidden');
+      applyLang(window._lang||'he');
+      summaryRender();
+      updateMenuSheetLink();
+      userChipUpdate();
+      setTimeout(()=>{ try{bgSync();}catch(_){} }, 1500);
+      toast('ברוך הבא, '+data.userName+'! 👋','success',4000);
+      buzz([20,20,60]);
+    } else {
+      errEl.textContent = data.message==='user already claimed'
+        ? 'שם זה כבר נדרש. השתמש ב"כניסה עם מזהה" אם זה המכשיר השני שלך.'
+        : data.message==='user not found or already claimed'
+        ? 'שם לא נמצא. בדוק עם מנהל המערכת שהשם הוזן בדיוק.'
+        : 'שגיאה: '+(data.message||'');
+    }
+  }catch(err){
+    errEl.textContent='שגיאת רשת: '+err.message;
+  }finally{
+    btn.disabled=false; btn.textContent='כניסה ←';
+  }
+}
+
+/* ── Re-login by UUID (new device) ──────────────────── */
+async function loginById(){
+  const id=($('login-id-input')?.value||'').trim();
+  const errEl=$('login-id-error');
+  if(!id){ errEl.textContent='נא להזין מזהה.'; return; }
+  const ep=store(K.ep);
+  if(!ep){ errEl.textContent='Endpoint לא מוגדר.'; return; }
+  if(!navigator.onLine){ errEl.textContent='אין חיבור.'; return; }
+
+  const btn=$('btn-login-id');
+  btn.disabled=true; btn.textContent='מחבר...';
+  errEl.textContent='';
+
+  try{
+    const res=await fetch(ep+'?action=loginById&id='+encodeURIComponent(id)+'&t='+Date.now(),{cache:'no-store'});
+    const data=await res.json();
+    if(data.status==='ok'){
+      _applyUserSession(data.userId, data.userName, data.isAdmin);
+      hideLoginOverlay();
+      $('app').classList.remove('hidden');
+      applyLang(window._lang||'he');
+      summaryRender();
+      updateMenuSheetLink();
+      userChipUpdate();
+      setTimeout(()=>{ try{bgSync();}catch(_){} }, 1500);
+      toast('ברוך הבא, '+data.userName+'! 👋','success',4000);
+      buzz([20,20,60]);
+    } else {
+      errEl.textContent='מזהה לא נמצא. בדוק שהמזהה הועתק בשלמותו.';
+    }
+  }catch(err){
+    errEl.textContent='שגיאת רשת: '+err.message;
+  }finally{
+    btn.disabled=false; btn.textContent='כניסה ←';
+  }
+}
+
+/* ── Persist user session ────────────────────────────── */
+function _applyUserSession(userId, userName, isAdmin){
+  store(K.userId, userId);
+  store(K.userName, userName);
+  store(K.isAdmin, !!isAdmin);
+  // Also sync to profile display
+  const p=store(K.profile)||{};
+  p.name=userName;
+  store(K.profile,p);
+  const nameEl=$('settings-username');
+  if(nameEl) nameEl.value=userName;
+  profileDisplayUpdate(p);
+}
+
+/* ── Header user chip ────────────────────────────────── */
+function userChipUpdate(){
+  const chip=$('user-chip');
+  if(!chip) return;
+  const name=store(K.userName)||'';
+  const uid=store(K.userId)||'';
+  if(!uid){ chip.classList.add('hidden'); return; }
+  chip.classList.remove('hidden');
+  chip.textContent=(name.charAt(0)||'?').toUpperCase();
+  chip.title=name||'המשתמש שלי';
+}
+
+/* ── Copy user UUID to clipboard ────────────────────── */
+function copyUserId(){
+  const id=store(K.userId)||'';
+  if(!id){ toast('אין מזהה','warn'); return; }
+  navigator.clipboard?.writeText(id).then(()=>toast('מזהה הועתק ✓','success')).catch(()=>{
+    // Fallback for non-https
+    const ta=document.createElement('textarea');
+    ta.value=id; document.body.appendChild(ta); ta.select();
+    document.execCommand('copy'); ta.remove();
+    toast('מזהה הועתק ✓','success');
+  });
+  buzz([20]);
+}
+
+/* ── Logout (clear userId → show login on next load) ─ */
+function logoutUser(){
+  if(!confirm('להחליף משתמש? תצטרך להיכנס מחדש.')) return;
+  localStorage.removeItem(K.userId);
+  localStorage.removeItem(K.userName);
+  localStorage.removeItem(K.isAdmin);
+  buzz([30,30,60]);
+  window.location.reload();
+}
+
+/* ═══════════════════════════════════════════════════════
+   USERS TAB  v4.0  — Admin user management
+   ═══════════════════════════════════════════════════════ */
+
+function usersTabInit(){
+  $('btn-logout-user')?.addEventListener('click', logoutUser);
+  $('btn-add-user')?.addEventListener('click', addUserFromSettings);
+}
+
+/* Called every time settings opens */
+function usersTabLoad(){
+  const uid=store(K.userId)||'';
+  const name=store(K.userName)||'—';
+  const isAdmin=store(K.isAdmin)||false;
+
+  /* Current-user card */
+  const av=$('user-tab-avatar');
+  if(av) av.textContent=(name.charAt(0)||'?').toUpperCase();
+  const nm=$('user-tab-name');
+  if(nm) nm.textContent=name;
+  const idEl=$('user-tab-id');
+  if(idEl) idEl.textContent=uid||'—';
+  const badge=$('user-tab-admin-badge');
+  if(badge) badge.style.display=isAdmin?'':'none';
+
+  /* Show admin section only for admins */
+  const adminSec=$('admin-users-section');
+  if(adminSec) adminSec.style.display=isAdmin?'':'none';
+  const stabBtn=$('stab-btn-users');
+  if(stabBtn) stabBtn.style.display='';   // always visible
+
+  if(isAdmin) loadUsersList();
+}
+
+async function loadUsersList(){
+  const el=$('users-list'); if(!el) return;
+  const ep=store(K.ep);
+  if(!ep){ el.innerHTML='<div style="color:var(--text3);font-size:.78rem;text-align:center;padding:8px">Endpoint לא מוגדר</div>'; return; }
+  if(!navigator.onLine){ el.innerHTML='<div style="color:var(--amber);font-size:.78rem;text-align:center;padding:8px">לא מקוון</div>'; return; }
+  el.innerHTML='<div style="color:var(--text3);font-size:.78rem;text-align:center;padding:8px">טוען...</div>';
+  try{
+    const res=await fetch(ep+'?action=getUsers&t='+Date.now(),{cache:'no-store'});
+    const data=await res.json();
+    const users=data.users||[];
+    if(!users.length){ el.innerHTML='<div style="color:var(--text3);font-size:.78rem;text-align:center;padding:8px">אין משתמשים</div>'; return; }
+    el.innerHTML=users.map(u=>`
+      <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-bottom:1px solid var(--border);last-child:no-border">
+        <div style="width:34px;height:34px;border-radius:10px;background:${u.status==='active'?'var(--limeDim)':'var(--glass)'};
+          color:${u.status==='active'?'var(--lime)':'var(--text3)'};font-weight:800;font-size:.9rem;
+          display:flex;align-items:center;justify-content:center;flex-shrink:0;font-family:var(--fui)">
+          ${(u.userName.charAt(0)||'?').toUpperCase()}
+        </div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:.87rem;font-weight:600;color:var(--text)">${u.userName}${u.isAdmin?' 🔑':''}</div>
+          <div style="font-size:.67rem;color:var(--text3);margin-top:1px">
+            ${u.status==='active'
+              ? '<span style="color:var(--lime)">● פעיל</span> · '+u.userId.substring(0,8)+'...'
+              : '<span style="color:var(--amber)">● ממתין לכניסה ראשונה</span>'}
+          </div>
+        </div>
+        ${u.userId!==store(K.userId) ? `<button onclick="removeUserFromSettings('${encodeURIComponent(u.userId||u.userName)}')" 
+          style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:.85rem;padding:4px 6px;border-radius:6px"
+          title="הסר משתמש">✕</button>` : ''}
+      </div>`).join('');
+  }catch(err){
+    el.innerHTML='<div style="color:var(--red);font-size:.78rem;text-align:center;padding:8px">שגיאה: '+err.message+'</div>';
+  }
+}
+
+async function addUserFromSettings(){
+  const nameEl=$('new-user-name');
+  const name=(nameEl?.value||'').trim();
+  const isAdm=$('new-user-admin')?.checked||false;
+  if(!name){ toast('נא להזין שם','warn'); return; }
+  const ep=store(K.ep);
+  if(!ep){ toast('Endpoint לא מוגדר','warn'); return; }
+  if(!navigator.onLine){ toast('לא מקוון','warn'); return; }
+  const btn=$('btn-add-user');
+  btn.disabled=true; btn.textContent='...';
+  try{
+    const res=await fetch(ep,{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({action:'addUser',name,isAdmin:isAdm}),mode:'cors'});
+    const data=await res.json();
+    if(data.status==='ok'){
+      toast('✅ משתמש נוסף: '+name,'success');
+      nameEl.value='';
+      $('new-user-admin').checked=false;
+      loadUsersList();
+      buzz([20,20,60]);
+    } else {
+      toast('שגיאה: '+(data.message||data.status),'warn',4000);
+    }
+  }catch(err){
+    toast('שגיאת רשת','error');
+  }finally{
+    btn.disabled=false; btn.textContent='+ הוסף משתמש';
+  }
+}
+
+async function removeUserFromSettings(encoded){
+  const id=decodeURIComponent(encoded);
+  if(!confirm('להסיר משתמש זה?')) return;
+  const ep=store(K.ep); if(!ep) return;
+  try{
+    await fetch(ep,{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({action:'removeUser',id}),mode:'cors'});
+    toast('🗑 משתמש הוסר','success');
+    loadUsersList();
+  }catch(err){ toast('שגיאה','error'); }
 }
 
 </script>

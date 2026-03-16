@@ -1,4 +1,4 @@
-//  MyWorkLog – Google Apps Script  v4.5
+//  MyWorkLog – Google Apps Script  v5.0
 //  הדבק קוד זה ב-Apps Script של הגיליון שלך
 //  לאחר מכן: Deploy > New deployment > Web App
 //  ✅ הרשאות: Anyone (אנונימי) / Execute as: Me
@@ -13,7 +13,9 @@ const SHEET_CLIENTS     = 'Clients';
 const SHEET_CLI_PROJ    = 'ClientProjects';
 const SHEET_TASK_DEF    = 'TaskDefinitions';
 
-const HEADERS           = ['Timestamp','Report_Date','Report_Time','Category','Description','Project','Record_ID'];
+const HEADERS           = ['Timestamp','Report_Date','Report_Time','Category','Description','Project','Record_ID','User_ID'];
+const SHEET_USERS       = 'Users';
+const USERS_HEADERS     = ['User_ID','User_Name','Status','Is_Admin','Created_At'];
 const TASK_LOG_HEADERS  = ['Report_Date','משך משימה','Project','Description'];
 const PROJECT_HEADERS   = ['Project_Name','Created_At'];
 const WSTANDARD_HEADERS = ['Date','WeekDay','Day_Standard_Hours','Notes'];
@@ -47,12 +49,14 @@ function doPost(e) {
     if (data.action === 'addTaskDef')           return ok(addTaskDef(data.id, data.name, data.billable));
     if (data.action === 'deleteTaskDef')        return ok(deleteTaskDef(data.id));
     if (data.action === 'delete')               { deleteById(data.id, data.category, data.report_date); return ok('נמחק'); }
+    if (data.action === 'addUser')              return jsonResp(addUser(data.name, data.isAdmin));
+    if (data.action === 'removeUser')           return jsonResp(removeUser(data.id));
 
     const ss   = SpreadsheetApp.getActiveSpreadsheet();
     const main = getOrCreateSheet(ss, SHEET_NAME, HEADERS);
     const ts   = new Date().toLocaleString('he-IL', { timeZone: 'Asia/Jerusalem' });
     main.appendRow([ts, data.report_date||'', data.report_time||'',
-      translateCategory(data.category)||'', data.description||'', data.project||'', data.id||'']);
+      translateCategory(data.category)||'', data.description||'', data.project||'', data.id||'', data.userId||'']);
     autoFormatLastRow(main, HEADERS.length);
 
     if (data.category === 'entry' || data.category === 'exit') rebuildDayAttendance(ss, data.report_date);
@@ -87,14 +91,17 @@ function doGet(e) {
   }
 
   if (action === 'getReports') {
-    const ss    = SpreadsheetApp.getActiveSpreadsheet();
-    const sheet = ss.getSheetByName(SHEET_NAME);
+    const ss      = SpreadsheetApp.getActiveSpreadsheet();
+    const sheet   = ss.getSheetByName(SHEET_NAME);
     if (!sheet) return jsonResp({ reports: [], projects: [] });
+    const filterUid = (e && e.parameter && e.parameter.userId) ? e.parameter.userId.trim() : '';
     const reports = sheet.getDataRange().getValues().slice(1).map(r=>({
       timestamp:fmtDateCell(r[0])||String(r[0]||''), report_date:fmtDateCell(r[1]),
       report_time:parseTimeCell(r[2]), category:reverseCategory(String(r[3]||'')),
-      description:String(r[4]||''), project:String(r[5]||''), id:String(r[6]||''), sent:true
-    })).filter(r=>r.id);
+      description:String(r[4]||''), project:String(r[5]||''), id:String(r[6]||''),
+      userId:String(r[7]||''), sent:true
+    })).filter(r=>r.id)
+      .filter(r => !filterUid || !r.userId || r.userId === filterUid);
     const pSheet   = ss.getSheetByName(SHEET_PROJECTS);
     const projects = pSheet ? pSheet.getDataRange().getValues().slice(1).map(r=>String(r[0]).trim()).filter(Boolean) : [];
     return jsonResp({ reports, projects });
@@ -116,12 +123,22 @@ function doGet(e) {
     return jsonResp({ clients, clientProjects, taskDefinitions });
   }
 
+  if (action === 'claimUser') {
+    return jsonResp(claimUser((e.parameter||{}).name||''));
+  }
+  if (action === 'loginById') {
+    return jsonResp(loginById((e.parameter||{}).id||''));
+  }
+  if (action === 'getUsers') {
+    return jsonResp({ users: getUsers() });
+  }
+
   if (action === 'rebuildAttendance') {
     rebuildAllAttendance();
     return ok('Attendance rebuilt');
   }
 
-  return jsonResp({ status:'ok', app:'MyWorkLog', version:'4.5' });
+  return jsonResp({ status:'ok', app:'MyWorkLog', version:'5.0' });
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -561,14 +578,151 @@ function setupSheets() {
   setup(SHEET_TASK_DEF,  TASK_DEF_HEADERS,  [180,220,100,200]);
   ss.getSheetByName(SHEET_WSTANDARD)?.getRange('A2:A1000').setNumberFormat('@STRING@');
   getOrCreateAttSheet(ss); // create / style Attendance with new headers
+
+  // Users sheet — create + seed default admin user if empty
+  const usersSheet = getOrCreateSheet(ss, SHEET_USERS, USERS_HEADERS);
+  usersSheet.setColumnWidths(1, USERS_HEADERS.length, 160);
+  if (usersSheet.getLastRow() <= 1) {
+    const ts0 = new Date().toLocaleString('he-IL', {timeZone:'Asia/Jerusalem'});
+    usersSheet.appendRow(['', 'אהוד ברלינר', 'pending', 'true', ts0]);
+    autoFormatLastRow(usersSheet, USERS_HEADERS.length);
+  }
+
   SpreadsheetApp.getUi().alert(
-    'MyWorkLog v4.0 — גיליונות מוכנים!\n\n' +
+    'MyWorkLog v5.0 — גיליונות מוכנים!\n\n' +
     'Attendance החדש: תאריך | כניסה | יציאה | משך | תקן יומי | עודף/חוסר\n\n' +
     'הרץ rebuildAllAttendance לבנות מחדש את ההיסטוריה.\n\n' +
     'Deploy → New deployment לאחר השמירה!'
   );
 }
 function setupWorkStandard() { setupSheets(); }
+
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  User Management  (v5.0)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Admin: add a new user (pending, not yet claimed). */
+function addUser(name, isAdmin) {
+  if (!name || !String(name).trim()) return { status:'error', message:'empty name' };
+  const cleanName = String(name).trim();
+  const ss    = SpreadsheetApp.getActiveSpreadsheet();
+  const sheet = getOrCreateSheet(ss, SHEET_USERS, USERS_HEADERS);
+  if (sheet.getLastRow() > 1) {
+    const existing = sheet.getRange(2, 2, sheet.getLastRow()-1, 1).getValues();
+    if (existing.some(r => String(r[0]).trim().toLowerCase() === cleanName.toLowerCase()))
+      return { status:'error', message:'user already exists' };
+  }
+  const ts = new Date().toLocaleString('he-IL', {timeZone:'Asia/Jerusalem'});
+  sheet.appendRow(['', cleanName, 'pending', isAdmin ? 'true' : 'false', ts]);
+  autoFormatLastRow(sheet, USERS_HEADERS.length);
+  return { status:'ok', message:'user added', userName: cleanName };
+}
+
+/**
+ * First login: user provides their name.
+ * Generates a UUID, marks the row as active, migrates orphan WorkLog records.
+ */
+function claimUser(name) {
+  if (!name || !String(name).trim()) return { status:'error', message:'empty name' };
+  const cleanName = String(name).trim();
+  const ss    = SpreadsheetApp.getActiveSpreadsheet();
+  const sheet = getOrCreateSheet(ss, SHEET_USERS, USERS_HEADERS);
+  if (sheet.getLastRow() <= 1) return { status:'error', message:'no users configured' };
+
+  const data = sheet.getRange(2, 1, sheet.getLastRow()-1, USERS_HEADERS.length).getValues();
+  for (let i = 0; i < data.length; i++) {
+    const rowUserId = String(data[i][0]).trim();
+    const rowName   = String(data[i][1]).trim();
+    const rowStatus = String(data[i][2]).trim();
+    if (rowName.toLowerCase() === cleanName.toLowerCase() && rowStatus === 'pending') {
+      const userId = Utilities.getUuid();
+      const ts     = new Date().toLocaleString('he-IL', {timeZone:'Asia/Jerusalem'});
+      sheet.getRange(i+2, 1, 1, USERS_HEADERS.length).setValues([[
+        userId, rowName, 'active', data[i][3], ts
+      ]]);
+      // Assign all existing WorkLog rows that have no User_ID to this user
+      migrateExistingRecords(userId);
+      return {
+        status: 'ok',
+        userId,
+        userName: rowName,
+        isAdmin:  data[i][3] === 'true'
+      };
+    }
+  }
+  return { status:'error', message:'user not found or already claimed' };
+}
+
+/** Re-login: user provides their UUID (e.g. on a new device). */
+function loginById(id) {
+  if (!id || !String(id).trim()) return { status:'error', message:'empty id' };
+  const cleanId = String(id).trim();
+  const ss    = SpreadsheetApp.getActiveSpreadsheet();
+  const sheet = ss.getSheetByName(SHEET_USERS);
+  if (!sheet || sheet.getLastRow() <= 1) return { status:'error', message:'no users' };
+  const data = sheet.getRange(2, 1, sheet.getLastRow()-1, USERS_HEADERS.length).getValues();
+  for (const row of data) {
+    if (String(row[0]).trim() === cleanId && String(row[2]).trim() === 'active') {
+      return {
+        status:   'ok',
+        userId:   String(row[0]).trim(),
+        userName: String(row[1]).trim(),
+        isAdmin:  String(row[3]).trim() === 'true'
+      };
+    }
+  }
+  return { status:'error', message:'user not found' };
+}
+
+/** Admin: list all users. */
+function getUsers() {
+  const ss    = SpreadsheetApp.getActiveSpreadsheet();
+  const sheet = ss.getSheetByName(SHEET_USERS);
+  if (!sheet || sheet.getLastRow() <= 1) return [];
+  return sheet.getRange(2, 1, sheet.getLastRow()-1, USERS_HEADERS.length).getValues().map(r => ({
+    userId:    String(r[0]).trim(),
+    userName:  String(r[1]).trim(),
+    status:    String(r[2]).trim(),
+    isAdmin:   String(r[3]).trim() === 'true',
+    createdAt: String(r[4]).trim()
+  }));
+}
+
+/** Admin: remove a user by UUID (or remove pending user by matching empty userId row). */
+function removeUser(id) {
+  if (!id) return { status:'error', message:'no id' };
+  const cleanId = String(id).trim();
+  const ss    = SpreadsheetApp.getActiveSpreadsheet();
+  const sheet = ss.getSheetByName(SHEET_USERS);
+  if (!sheet || sheet.getLastRow() <= 1) return { status:'error', message:'no users' };
+  const data = sheet.getRange(2, 1, sheet.getLastRow()-1, 1).getValues();
+  for (let i = data.length-1; i >= 0; i--) {
+    if (String(data[i][0]).trim() === cleanId) {
+      sheet.deleteRow(i+2);
+      return { status:'ok' };
+    }
+  }
+  // Also allow removing by name (for pending users with no UUID)
+  return { status:'error', message:'not found' };
+}
+
+/**
+ * Assign all WorkLog rows with an empty User_ID column to the given userId.
+ * Called once when a user claims their name for the first time.
+ */
+function migrateExistingRecords(userId) {
+  const ss   = SpreadsheetApp.getActiveSpreadsheet();
+  const main = ss.getSheetByName(SHEET_NAME);
+  if (!main || main.getLastRow() <= 1) return;
+  const lastRow = main.getLastRow();
+  // Ensure column 8 (User_ID) header exists
+  if (main.getLastColumn() < 8) main.getRange(1, 8).setValue('User_ID');
+  // Batch-update: set userId for every row where column 8 is empty
+  const col8 = main.getRange(2, 8, lastRow-1, 1).getValues();
+  const updates = col8.map(r => [String(r[0]).trim() ? r[0] : userId]);
+  main.getRange(2, 8, lastRow-1, 1).setValues(updates);
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  Generic helpers
