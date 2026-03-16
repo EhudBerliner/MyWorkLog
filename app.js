@@ -2,7 +2,7 @@
    MyWorkLog · App Core  v3.2.0
    ═══════════════════════════════════════════════════════ */
 
-const VER = '4.0.0';
+const VER = '3.6.0';
 
 /* ── Storage keys ── */
 const K = {
@@ -24,10 +24,6 @@ const K = {
   taskDefs:  'mwl_task_definitions',    // [{id,name,billable}]              — global task definitions
   settingsTab:'mwl_settings_tab',       // last open settings tab
   crmSync:   'mwl_crm_sync',           // last task-defs sync timestamp
-  // ── User identity (v4.0) ──
-  userId:    'mwl_user_id',             // UUID assigned on first login
-  userName:  'mwl_user_name',           // display name
-  isAdmin:   'mwl_is_admin',            // boolean — can manage users
 };
 
 /* ── Runtime state ── */
