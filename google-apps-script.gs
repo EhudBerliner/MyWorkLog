@@ -1,4 +1,4 @@
-//  MyWorkLog – Google Apps Script  v4.4
+//  MyWorkLog – Google Apps Script  v4.5
 //  הדבק קוד זה ב-Apps Script של הגיליון שלך
 //  לאחר מכן: Deploy > New deployment > Web App
 //  ✅ הרשאות: Anyone (אנונימי) / Execute as: Me
@@ -121,7 +121,7 @@ function doGet(e) {
     return ok('Attendance rebuilt');
   }
 
-  return jsonResp({ status:'ok', app:'MyWorkLog', version:'4.4' });
+  return jsonResp({ status:'ok', app:'MyWorkLog', version:'4.5' });
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -191,8 +191,10 @@ function getPairsForDate(ss, dateStr) {
     }
   }
   const pairedEntries = new Set(pairs.map(p=>p.entry));
-  const openEntry = entries.find(e=>!pairedEntries.has(e)) || null;
-  return { pairs, openEntry };
+  const pairedExits   = new Set(pairs.map(p=>p.exit));
+  const openEntry       = entries.find(e=>!pairedEntries.has(e)) || null;
+  const unmatchedExits  = exits.filter(x=>!pairedExits.has(x));
+  return { pairs, openEntry, unmatchedExits };
 }
 
 /**
@@ -206,7 +208,7 @@ function deleteAttendanceRowsForDate(sheet, dateStr) {
   // All rows for a date (single / summary / detail) now have col A = dateStr.
   // Delete every row whose col A matches.
   for (let i = vals.length-1; i >= 1; i--) {
-    if (String(vals[i][0]) === dateStr) sheet.deleteRow(i+1);
+    if (fmtDateCell(vals[i][0]) === dateStr) sheet.deleteRow(i+1);
   }
 }
 
@@ -225,8 +227,8 @@ function rebuildDayAttendance(ss, dateStr) {
   deleteAttendanceRowsForDate(sheet, dateStr);
   SpreadsheetApp.flush(); // commit deletions before reading getLastRow()
 
-  const { pairs, openEntry } = getPairsForDate(ss, dateStr);
-  if (pairs.length === 0 && !openEntry) return;
+  const { pairs, openEntry, unmatchedExits } = getPairsForDate(ss, dateStr);
+  if (pairs.length === 0 && !openEntry && unmatchedExits.length === 0) return;
 
   const { stdHours, stdStr } = getStdForDate(ss, dateStr);
   const stdMins   = Math.round(stdHours * 60);
@@ -255,6 +257,11 @@ function rebuildDayAttendance(ss, dateStr) {
     }
   }
 
+  // Orphan exits (exit with no matching entry) — shown with warning
+  unmatchedExits.forEach(ex => {
+    newRows.push([dateStr, '⚠️ חסרה כניסה', ex, '', stdStr, devStr, 'orphan']);
+  });
+
   // Find insertion point — scan only 'single' and 'summary' rows (col G) to avoid
   // confusion with 'detail' rows that share the same date.
   // We need the first anchor row whose date is strictly greater than dateStr.
@@ -262,9 +269,9 @@ function rebuildDayAttendance(ss, dateStr) {
   if (sheet.getLastRow() > 1) {
     const data = sheet.getRange(2, 1, sheet.getLastRow()-1, ATT_NCOLS).getValues();
     for (let i=0; i<data.length; i++) {
-      const rowDate = String(data[i][0]);
+      const rowDate = fmtDateCell(data[i][0]);
       const rowType = String(data[i][6]);
-      if ((rowType === 'single' || rowType === 'summary') && rowDate > dateStr) {
+      if ((rowType === 'single' || rowType === 'summary' || rowType === 'orphan') && rowDate > dateStr) {
         insertBefore = i + 2; // +1 for header, +1 because getRange is 1-based
         break;
       }
@@ -331,9 +338,11 @@ function rebuildAllAttendance() {
       if (ex) { usedExits.add(ex); const dur=toMins(ex)-toMins(en); if(dur>0) pairs.push({entry:en,exit:ex,durationMins:dur}); }
     });
     const pairedEntries = new Set(pairs.map(p=>p.entry));
-    const openEntry = entries.find(e=>!pairedEntries.has(e)) || null;
+    const pairedExits  = new Set(pairs.map(p=>p.exit));
+    const openEntry       = entries.find(e=>!pairedEntries.has(e)) || null;
+    const unmatchedExits  = exits.filter(x=>!pairedExits.has(x));
 
-    if (pairs.length === 0 && !openEntry) return;
+    if (pairs.length === 0 && !openEntry && unmatchedExits.length === 0) return;
 
     const std      = stdMap[dateStr] || { stdHours:0, stdStr:'' };
     const stdMins  = Math.round(std.stdHours * 60);
@@ -352,6 +361,7 @@ function rebuildAllAttendance() {
       allRows.push([dateStr, firstEntry, lastExit, fmtMins(totalMins), std.stdStr, devStr, 'summary']);
       pairs.forEach(p => allRows.push([dateStr, p.entry, p.exit, fmtMins(p.durationMins), '', '', 'detail']));
       if (openEntry) allRows.push([dateStr, openEntry, '⏳ פתוח', '', '', '', 'detail']);
+      unmatchedExits.forEach(ex => allRows.push([dateStr, '⚠️ חסרה כניסה', ex, '', std.stdStr, devStr, 'orphan']));
     }
   });
 
@@ -380,6 +390,7 @@ function getOrCreateAttSheet(ss) {
   hRange.setFontColor('#4ade80');
   [120, 90, 90, 90, 100, 110, 0].forEach((w,i) => { if(w>0) sh.setColumnWidth(i+1,w); });
   sh.hideColumns(ATT_NCOLS); // hide _row_type helper
+  sh.getRange('A2:A5000').setNumberFormat('@STRING@'); // keep dates as text, prevent auto-conversion
   return sh;
 }
 
@@ -397,6 +408,11 @@ function formatAttRows(sheet, startRow, rows) {
     } else if (type === 'detail') {
       range.setBackground('#f0f4f8');
       range.setFontColor('#555555');
+      range.setFontStyle('italic');
+      range.setFontWeight('normal');
+    } else if (type === 'orphan') {
+      range.setBackground('#fff3cd');
+      range.setFontColor('#856404');
       range.setFontStyle('italic');
       range.setFontWeight('normal');
     } else {
