@@ -2542,7 +2542,13 @@ function netQInit(){
 /* HISTORY */
 function histRender(){
   const now=new Date(),cutoff=new Date(now);cutoff.setDate(cutoff.getDate()-30);
-  const rs=(store(K.reps)||[]).filter(r=>{const d=new Date(r.timestamp||r.report_date);return d>=cutoff}).slice(0,200);
+  const rs=(store(K.reps)||[])
+    .filter(r=>{const d=new Date(r.timestamp||r.report_date);return d>=cutoff})
+    .sort((a,b)=>{
+      const da=new Date(a.timestamp||a.report_date),db=new Date(b.timestamp||b.report_date);
+      return db-da; // newest first
+    })
+    .slice(0,200);
   $('history-list').innerHTML=rs.length?rs.map(r=>hItem(r,true)).join(''):`<p class="empty">${t('historyEmpty')}</p>`;
 }
 /* Fix 10: delete report */
@@ -2968,6 +2974,21 @@ function renderDayWCStatus(ds,reports){
     mStd.textContent=t('wcStandardLabel')+' '+minsToHHMM(minMins);
     meter.style.display='';
   }else if(meter){meter.style.display='none';}
+  // Per-report action list for the day (edit / delete)
+  const dayReps=(store(K.reps)||[]).filter(r=>r.report_date===ds);
+  if(dayReps.length){
+    const repListId='day-rep-actions';
+    let repDiv=$(''+repListId);
+    if(!repDiv){
+      repDiv=document.createElement('div');
+      repDiv.id=repListId;
+      repDiv.style.cssText='margin-top:10px;border-top:1px solid var(--border);padding-top:8px;display:flex;flex-direction:column;gap:4px';
+      sec.appendChild(repDiv);
+    }
+    repDiv.innerHTML=dayReps
+      .sort((a,b)=>{const ta=a.report_time||'',tb=b.report_time||'';return ta<tb?-1:ta>tb?1:0;})
+      .map(r=>hItem(r,true)).join('');
+  }
   sec.style.display='';
   // achievement stat card
   const ac=$('stat-achievement-card');
@@ -3375,7 +3396,7 @@ function summaryRender(){
   });
   const hh=Math.floor(taskMins/60),mm=taskMins%60;
   $('stat-hours').textContent=mm>0?`${hh}:${pad(mm)}`:`${hh}`;
-  $('summary-list').innerHTML=fil.length?fil.map(r=>hItem(r,false)).join(''):`<p class="empty">${t('summaryEmpty')}</p>`;
+  $('summary-list').innerHTML=fil.length?fil.map(r=>hItem(r,true)).join(''):`<p class="empty">${t('summaryEmpty')}</p>`;
 }
 
 /* SETTINGS */
