@@ -1,5 +1,5 @@
 {
-  "version": "3.9.2",
+  "version": "4.0.0",
   "buildDate": "2026-03-19",
-  "changelog": "v3.9.2: fix duplicate report list in day view — hide summary-list, use day-rep-actions only"
+  "changelog": "v4.0.0: day name in daily report; sub-classification (description); workday settings; auto-classify non-workdays; weekend day type"
 }

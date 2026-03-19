@@ -46,7 +46,16 @@ html,body{height:100%;background:var(--bg0);color:var(--text);
 ::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
 :focus-visible{outline:2px solid var(--lime);outline-offset:2px;border-radius:4px}
 
-/* ── NOTIFICATION SYSTEM v3.9.2 ── */
+/* ── WORKDAY CHIPS ── */
+.workday-chip{display:inline-flex;align-items:center;gap:5px;
+  padding:6px 12px;border-radius:20px;cursor:pointer;
+  border:1.5px solid var(--border2);background:var(--glass);
+  font-size:.78rem;font-weight:700;color:var(--text2);
+  transition:background .15s,border-color .15s,color .15s;user-select:none}
+.workday-chip input{position:absolute;opacity:0;width:0;height:0}
+.workday-chip:has(input:checked){background:var(--limeDim);border-color:var(--lime);color:var(--lime)}
+
+/* ── NOTIFICATION SYSTEM v4.0.0 ── */
 .offline-banner{position:fixed;top:0;left:0;right:0;
   background:var(--red,#ef4444);color:#fff;text-align:center;
   padding:calc(var(--safeT,0px)+8px) 16px 8px;
@@ -818,7 +827,7 @@ details summary::-webkit-details-marker{display:none}
             <!-- Daily status (day view only) -->
       <div id="day-wc-section" class="card" style="display:none">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
-          <div class="wc-sect-lbl" style="margin:0">&#9200; &#1514;&#1511;&#1503; &#1497;&#1493;&#1501;</div>
+          <div style="display:flex;flex-direction:column;gap:2px"><div class="wc-sect-lbl" style="margin:0">&#9200; &#1514;&#1511;&#1503; &#1497;&#1493;&#1501;</div><div id="day-wc-day-label" style="font-size:.72rem;color:var(--text3);font-weight:500"></div></div>
           <button id="btn-edit-today-std" class="btn-g sm" onclick="editTodayStd()" style="font-size:.7rem;padding:4px 10px">&#9998; &#1506;&#1512;&#1493;&#1498; &#1514;&#1511;&#1503;</button>
         </div>
         <div id="day-wc-notes" style="display:none;font-size:.78rem;color:var(--amber);margin-bottom:6px;padding:5px 10px;background:var(--amberDim);border-radius:var(--rxs)"></div>
@@ -995,6 +1004,21 @@ details summary::-webkit-details-marker{display:none}
               </span>
               <input type="checkbox" id="pref-pull-refresh" class="ptog"/>
             </label>
+
+            <!-- Work Days -->
+            <div class="sset-row" style="border-top:1px solid var(--border);padding-top:11px;margin-top:4px">
+              <div class="sset-row-label">📅 ימי עבודה בשבוע</div>
+              <div class="sset-row-sub" style="margin-bottom:8px">ימים שלא יסומנו יסווגו אוטומטית כ"לא יום עבודה"</div>
+              <div style="display:flex;gap:6px;flex-wrap:wrap">
+                <label class="workday-chip"><input type="checkbox" class="pref-workday-cb" data-day="0" checked><span>א'</span></label>
+                <label class="workday-chip"><input type="checkbox" class="pref-workday-cb" data-day="1" checked><span>ב'</span></label>
+                <label class="workday-chip"><input type="checkbox" class="pref-workday-cb" data-day="2" checked><span>ג'</span></label>
+                <label class="workday-chip"><input type="checkbox" class="pref-workday-cb" data-day="3" checked><span>ד'</span></label>
+                <label class="workday-chip"><input type="checkbox" class="pref-workday-cb" data-day="4" checked><span>ה'</span></label>
+                <label class="workday-chip"><input type="checkbox" class="pref-workday-cb" data-day="5"><span>ו'</span></label>
+                <label class="workday-chip"><input type="checkbox" class="pref-workday-cb" data-day="6"><span>ש'</span></label>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -1675,12 +1699,12 @@ details summary::-webkit-details-marker{display:none}
 /* BOOT */
 
 /* ═══════════════════════════════════════════════════════
-   NOTIFICATION SYSTEM  v3.9.2
+   NOTIFICATION SYSTEM  v4.0.0
    Manages: Offline banner · PWA Install · Update Prompt · Toast
    ═══════════════════════════════════════════════════════ */
 const NotificationSystem = {
   settings: { showNetworkStatus: true },
-  currentVersion: '3.9.2',
+  currentVersion: '4.0.0',
   deferredInstallPrompt: null,
   _wasOffline: false,   // track previous state for auto-cleanup
 
@@ -1872,7 +1896,7 @@ document.addEventListener('DOMContentLoaded',()=>{
     fixStoredDates();
   netInit();netQInit();projLoad();histRender();
   importInit();
-    NotificationSystem.init(VER);  // v3.9.2
+    NotificationSystem.init(VER);  // v4.0.0
     updateSessionBanner();
     flushDeleteQueue();
     menuInit();vBadgeInit();swipeInit();ptrInit();swInit();installInit();scrollInit();
@@ -2118,8 +2142,20 @@ function langInit(){window._lang=localStorage.getItem('mwl_lang')||'he';applyLan
 
 /* PREFS */
 function prefsApply(){if(!getP().animations)document.body.classList.add('no-anim')}
-function prefsLoadUI(){const p=getP();$('pref-vibration').checked=p.vibration!==false;$('pref-animations').checked=p.animations!==false;$('pref-pull-refresh').checked=p.pullRefresh===true}
-function prefsSave(){const p={vibration:$('pref-vibration').checked,animations:$('pref-animations').checked,pullRefresh:$('pref-pull-refresh').checked};store(K.prefs,p);document.body.classList.toggle('no-anim',!p.animations)}
+function prefsLoadUI(){
+  const p=getP();
+  $('pref-vibration').checked=p.vibration!==false;
+  $('pref-animations').checked=p.animations!==false;
+  $('pref-pull-refresh').checked=p.pullRefresh===true;
+  const wd=p.workDays||[0,1,2,3,4];
+  document.querySelectorAll('.pref-workday-cb').forEach(cb=>{ cb.checked=wd.includes(Number(cb.dataset.day)); });
+}
+function prefsSave(){
+  const workDays=[];
+  document.querySelectorAll('.pref-workday-cb:checked').forEach(cb=>workDays.push(Number(cb.dataset.day)));
+  const p={vibration:$('pref-vibration').checked,animations:$('pref-animations').checked,pullRefresh:$('pref-pull-refresh').checked,workDays:workDays.length?workDays:[0,1,2,3,4]};
+  store(K.prefs,p);document.body.classList.toggle('no-anim',!p.animations);
+}
 
 /* DATE/TIME */
 function dtInit(){const n=new Date();$('report-date').value=isoD(n);$('report-time').value=applyRounding(timeS(n))}
@@ -2860,11 +2896,25 @@ function classifyNotes(notes){
 
 function getDayStd(ds){
   const row=getWStandard().find(r=>r.date===ds);
-  if(!row)return{stdHours:0,notes:'',description:'',isWorkDay:false,dayType:'normal'};
+  if(!row){
+    // No WorkStandard row — auto-classify by prefs.workDays
+    const dow=new Date(ds).getDay(); // 0=Sun…6=Sat
+    const workDays=getP().workDays||[0,1,2,3,4];
+    if(!workDays.includes(dow)){
+      return{stdHours:0,notes:'',description:'',isWorkDay:false,dayType:'weekend'};
+    }
+    return{stdHours:0,notes:'',description:'',isWorkDay:false,dayType:'normal'};
+  }
   const h=parseFloat(row.stdHours)||0;
   const notes=row.notes||'';
   const description=row.description||'';
-  const dayType=classifyNotes(notes);
+  // Manual row exists → use classifyNotes, then fall back to workDays auto-class
+  let dayType=classifyNotes(notes);
+  if(dayType==='normal' && h===0){
+    const dow=new Date(ds).getDay();
+    const workDays=getP().workDays||[0,1,2,3,4];
+    if(!workDays.includes(dow)) dayType='weekend';
+  }
   return{stdHours:h,notes,description,isWorkDay:h>0,dayType};
 }
 
@@ -2936,7 +2986,8 @@ function getDayStatus(ds,reports){
   const{mins:actualMins,fromTasks,pairs,hasOpen}=calcDayWorkMins(ds,reports);
   const wdStr=actualMins>0?`${pad(Math.floor(actualMins/60))}:${pad(actualMins%60)}`:'-';
   if(!isWorkDay){
-    return{status:dayType!=='normal'?dayType:'nostandard',actualMins,minMins:0,diffMins:actualMins,wdStr,notes,description,pct:null,fromTasks,dayType,pairs,hasOpen};
+    const st=dayType!=='normal'&&dayType!=='weekend'?dayType:(dayType==='weekend'?'weekend':'nostandard');
+    return{status:st,actualMins,minMins:0,diffMins:actualMins,wdStr,notes,description,pct:null,fromTasks,dayType,pairs,hasOpen};
   }
   const minMins=Math.round(stdHours*60);
   const diffMins=actualMins-minMins;
@@ -3072,10 +3123,13 @@ async function flushWStandardQueue(){
 function renderDayWCStatus(ds,reports){
   const sec=$('day-wc-section');if(!sec)return;
   const{status,actualMins,minMins,diffMins,wdStr,notes,description,pct,fromTasks,dayType,pairs,hasOpen}=getDayStatus(ds,reports);
+  // Show day name + date in section header
+  const dayHdr=$('day-wc-day-label');
+  if(dayHdr){const[y,m,d]=ds.split('-');dayHdr.textContent=`${hebDow(ds)} · ${d}/${m}/${y}`;}
   const notesEl=$('day-wc-notes');
-  const dayTypeLabels={vacation:t('statusVacation'),sick:t('statusSick'),holiday:t('statusHoliday'),sabbatical:'🌴 שבתון'};
-  const dayTypeColors={vacation:'var(--amber)',sick:'var(--purple)',holiday:'var(--blue)',sabbatical:'#63cab7'};
-  const dayTypeBg={vacation:'var(--amberDim)',sick:'var(--purpleDim)',holiday:'var(--blueDim)',sabbatical:'rgba(99,202,183,.12)'};
+  const dayTypeLabels={vacation:t('statusVacation'),sick:t('statusSick'),holiday:t('statusHoliday'),sabbatical:'🌴 שבתון',weekend:'🔅 לא יום עבודה'};
+  const dayTypeColors={vacation:'var(--amber)',sick:'var(--purple)',holiday:'var(--blue)',sabbatical:'#63cab7',weekend:'var(--text3)'};
+  const dayTypeBg={vacation:'var(--amberDim)',sick:'var(--purpleDim)',holiday:'var(--blueDim)',sabbatical:'rgba(99,202,183,.12)',weekend:'var(--bg3)'};
   if(notesEl){
     const displayText=[notes,description].filter(Boolean).join(' — ');
     notesEl.textContent=displayText;
@@ -3087,7 +3141,7 @@ function renderDayWCStatus(ds,reports){
   }
   $('day-wc-section').dataset.date=ds;
   let html='';
-  if(status==='vacation'||status==='sick'||status==='holiday'||status==='sabbatical'){
+  if(status==='vacation'||status==='sick'||status==='holiday'||status==='sabbatical'||status==='weekend'){
     const dtLabel=dayTypeLabels[status]||('📝 '+notes);
     const dtColor=dayTypeColors[status]||'var(--amber)';
     html+=`<span class="day-status-badge ${status}">${dtLabel}</span>`;
@@ -3211,7 +3265,7 @@ function renderMonthlyWCStats(year,month,reports){
     if(dayType==='vacation'||dayType==='holiday')vacDays++;
     if(dayType==='sick')sickDays++;
     if(dayType==='sabbatical')sabbDays++;
-    if(status==='nostandard'||status==='vacation'||status==='sick'||status==='holiday'||status==='sabbatical')continue;
+    if(status==='nostandard'||status==='vacation'||status==='sick'||status==='holiday'||status==='sabbatical'||status==='weekend')continue;
     workDays++;
     if(ds<=todayStr){
       pastDays++;reqMins+=minMins;actualMins+=am;
@@ -3366,7 +3420,7 @@ function renderAnnualStats(year, reports){
       if(dayType==='vacation'||dayType==='holiday')vac++;
       if(dayType==='sick')sick++;
       if(dayType==='sabbatical')vac++; // count sabbatical with special days
-      if(status==='nostandard'||status==='vacation'||status==='sick'||status==='holiday'||status==='sabbatical')continue;
+      if(status==='nostandard'||status==='vacation'||status==='sick'||status==='holiday'||status==='sabbatical'||status==='weekend')continue;
       wDays++;req+=minMins;act+=am;
       const diff=am-minMins;
       if(diff>=0){surplus+=diff;okD++;}else{deficit+=Math.abs(diff);defD++;}

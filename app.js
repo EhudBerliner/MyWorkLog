@@ -2,7 +2,7 @@
    MyWorkLog · App Core  v3.2.0
    ═══════════════════════════════════════════════════════ */
 
-const VER = '3.9.2';
+const VER = '4.0.0';
 
 /* ── Storage keys ── */
 const K = {
@@ -47,7 +47,7 @@ function store(key, val) {
   localStorage.setItem(key, JSON.stringify(val));
 }
 
-const getP   = () => store(K.prefs) || { vibration: true, animations: true, pullRefresh: false };
+const getP   = () => { const p = store(K.prefs) || {}; return { vibration:true, animations:true, pullRefresh:false, workDays:[0,1,2,3,4], ...p }; };
 const buzz   = (p = [30]) => { if (getP().vibration && navigator.vibrate) navigator.vibrate(p); };
 const fmtD   = d => { const [y,m,day] = d.split('-'); return `${day}/${m}/${y}`; };
 const fmtT   = tt => {
