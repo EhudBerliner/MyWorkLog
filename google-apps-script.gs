@@ -1,4 +1,4 @@
-//  MyWorkLog – Google Apps Script  v4.5
+//  MyWorkLog – Google Apps Script  v6.0
 //  הדבק קוד זה ב-Apps Script של הגיליון שלך
 //  לאחר מכן: Deploy > New deployment > Web App
 //  ✅ הרשאות: Anyone (אנונימי) / Execute as: Me
@@ -16,7 +16,7 @@ const SHEET_TASK_DEF    = 'TaskDefinitions';
 const HEADERS           = ['Timestamp','Report_Date','Report_Time','Category','Description','Project','Record_ID'];
 const TASK_LOG_HEADERS  = ['Report_Date','משך משימה','Project','Description'];
 const PROJECT_HEADERS   = ['Project_Name','Created_At'];
-const WSTANDARD_HEADERS = ['Date','WeekDay','Day_Standard_Hours','Notes'];
+const WSTANDARD_HEADERS = ['Date','WeekDay','Day_Standard_Hours','Notes','Description'];
 const CLIENTS_HEADERS   = ['Client_ID','Client_Name','Created_At'];
 const CLI_PROJ_HEADERS  = ['Project_ID','Client_ID','Project_Name','Created_At'];
 const TASK_DEF_HEADERS  = ['Task_ID','Task_Name','Billable','Created_At'];
@@ -28,7 +28,7 @@ const TASK_DEF_HEADERS  = ['Task_ID','Task_Name','Billable','Created_At'];
 //     'single'  – יום עם זוג אחד
 //     'summary' – שורת סיכום יומי (>1 זוג): כניסה ראשונה | יציאה אחרונה | סה"כ
 //     'detail'  – שורת פירוט (col A = dateStr, Std/Dev ריקות, italic)
-const ATT_HEADERS = ['Date','Entry','Exit','Duration','Daily Standard','Deviation','_row_type'];
+const ATT_HEADERS = ['Date','Entry','Exit','Duration','Daily Standard','Deviation','Classification','_row_type'];
 const ATT_NCOLS   = ATT_HEADERS.length;
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -37,7 +37,7 @@ const ATT_NCOLS   = ATT_HEADERS.length;
 function doPost(e) {
   try {
     const data = JSON.parse(e.postData.contents);
-    if (data.action === 'setDayStandard')      return ok(updateWorkStandard(data.date, data.weekDay, data.stdHours, data.notes||''));
+    if (data.action === 'setDayStandard')      return ok(updateWorkStandard(data.date, data.weekDay, data.stdHours, data.notes||'', data.description||''));
     if (data.action === 'addProject')           return ok(addProject(data.project));
     if (data.action === 'deleteProject')        return ok(deleteProject(data.project));
     if (data.action === 'addClient')            return ok(addClient(data.id, data.name));
@@ -72,10 +72,11 @@ function doGet(e) {
     const sheet = getOrCreateSheet(ss, SHEET_WSTANDARD, WSTANDARD_HEADERS);
     const lastRow = sheet.getLastRow();
     if (lastRow <= 1) return jsonResp({ workStandard: [] });
-    const rows = sheet.getRange(2, 1, lastRow-1, 4).getValues();
+    const rows = sheet.getRange(2, 1, lastRow-1, 5).getValues();
     return jsonResp({ workStandard: rows.map(r=>({
       date:fmtDateCell(r[0]), weekDay:String(r[1]||'').trim(),
-      stdHours:parseFloat(r[2])||0, notes:String(r[3]||'').trim()
+      stdHours:parseFloat(r[2])||0, notes:String(r[3]||'').trim(),
+      description:String(r[4]||'').trim()
     })).filter(r=>r.date) });
   }
 
@@ -121,7 +122,7 @@ function doGet(e) {
     return ok('Attendance rebuilt');
   }
 
-  return jsonResp({ status:'ok', app:'MyWorkLog', version:'4.5' });
+  return jsonResp({ status:'ok', app:'MyWorkLog', version:'6.0' });
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -230,7 +231,7 @@ function rebuildDayAttendance(ss, dateStr) {
   const { pairs, openEntry, unmatchedExits } = getPairsForDate(ss, dateStr);
   if (pairs.length === 0 && !openEntry && unmatchedExits.length === 0) return;
 
-  const { stdHours, stdStr } = getStdForDate(ss, dateStr);
+  const { stdHours, stdStr, classification } = getStdForDate(ss, dateStr);
   const stdMins   = Math.round(stdHours * 60);
   const totalMins = pairs.reduce((s,p)=>s+p.durationMins, 0);
   const devMins   = stdMins > 0 ? totalMins - stdMins : null;
@@ -259,7 +260,7 @@ function rebuildDayAttendance(ss, dateStr) {
 
   // Orphan exits (exit with no matching entry) — shown with warning
   unmatchedExits.forEach(ex => {
-    newRows.push([dateStr, '⚠️ חסרה כניסה', ex, '', stdStr, devStr, 'orphan']);
+    newRows.push([dateStr, '⚠️ חסרה כניסה', ex, '', stdStr, devStr, classification, 'orphan']);
   });
 
   // Find insertion point — scan only 'single' and 'summary' rows (col G) to avoid
@@ -317,11 +318,17 @@ function rebuildAllAttendance() {
   const wss = ss.getSheetByName(SHEET_WSTANDARD);
   const stdMap = {}; // date -> { stdHours, stdStr }
   if (wss && wss.getLastRow() > 1) {
-    wss.getRange(2, 1, wss.getLastRow()-1, 3).getValues().forEach(r => {
+    wss.getRange(2, 1, wss.getLastRow()-1, 5).getValues().forEach(r => {
       const d = fmtDateCell(r[0]);
       if (!d) return;
-      const h = parseFloat(r[2]) || 0;
-      stdMap[d] = { stdHours:h, stdStr: h>0 ? pad(Math.floor(h))+':'+pad(Math.round((h%1)*60)) : '' };
+      const h    = parseFloat(r[2]) || 0;
+      const notes = String(r[3]||'').trim();
+      const desc  = String(r[4]||'').trim();
+      stdMap[d] = {
+        stdHours:h,
+        stdStr: h>0 ? pad(Math.floor(h))+':'+pad(Math.round((h%1)*60)) : '',
+        classification: [notes, desc].filter(Boolean).join(' — ')
+      };
     });
   }
 
@@ -353,15 +360,15 @@ function rebuildAllAttendance() {
     if (pairs.length <= 1 && !openEntry) {
       // Single
       const p = pairs[0];
-      allRows.push([dateStr, p.entry, p.exit, fmtMins(p.durationMins), std.stdStr, devStr, 'single']);
+      allRows.push([dateStr, p.entry, p.exit, fmtMins(p.durationMins), std.stdStr, devStr, std.classification||'', 'single']);
     } else {
       // Summary + details
       const firstEntry = pairs.length>0 ? pairs[0].entry : openEntry;
       const lastExit   = pairs.length>0 ? pairs[pairs.length-1].exit : '';
-      allRows.push([dateStr, firstEntry, lastExit, fmtMins(totalMins), std.stdStr, devStr, 'summary']);
-      pairs.forEach(p => allRows.push([dateStr, p.entry, p.exit, fmtMins(p.durationMins), '', '', 'detail']));
-      if (openEntry) allRows.push([dateStr, openEntry, '⏳ פתוח', '', '', '', 'detail']);
-      unmatchedExits.forEach(ex => allRows.push([dateStr, '⚠️ חסרה כניסה', ex, '', std.stdStr, devStr, 'orphan']));
+      allRows.push([dateStr, firstEntry, lastExit, fmtMins(totalMins), std.stdStr, devStr, std.classification||'', 'summary']);
+      pairs.forEach(p => allRows.push([dateStr, p.entry, p.exit, fmtMins(p.durationMins), '', '', '', 'detail']));
+      if (openEntry) allRows.push([dateStr, openEntry, '⏳ פתוח', '', '', '', '', 'detail']);
+      unmatchedExits.forEach(ex => allRows.push([dateStr, '⚠️ חסרה כניסה', ex, '', std.stdStr, devStr, std.classification||'', 'orphan']));
     }
   });
 
@@ -388,8 +395,8 @@ function getOrCreateAttSheet(ss) {
   hRange.setFontWeight('bold');
   hRange.setBackground('#1a1d27');
   hRange.setFontColor('#4ade80');
-  [120, 90, 90, 90, 100, 110, 0].forEach((w,i) => { if(w>0) sh.setColumnWidth(i+1,w); });
-  sh.hideColumns(ATT_NCOLS); // hide _row_type helper
+  [120, 90, 90, 90, 100, 110, 160, 0].forEach((w,i) => { if(w>0) sh.setColumnWidth(i+1,w); });
+  sh.hideColumns(ATT_NCOLS); // hide _row_type helper (col H)
   sh.getRange('A2:A5000').setNumberFormat('@STRING@'); // keep dates as text, prevent auto-conversion
   return sh;
 }
@@ -449,7 +456,7 @@ function deleteById(id, category, report_date) {
 // ─────────────────────────────────────────────────────────────────────────────
 //  updateWorkStandard  (v4.0 — also refreshes Attendance deviation column)
 // ─────────────────────────────────────────────────────────────────────────────
-function updateWorkStandard(date, weekDay, stdHours, notes) {
+function updateWorkStandard(date, weekDay, stdHours, notes, description) {
   if (!date) return 'no date';
   const dateStr = String(date).trim();
   const ss      = SpreadsheetApp.getActiveSpreadsheet();
@@ -459,7 +466,7 @@ function updateWorkStandard(date, weekDay, stdHours, notes) {
     const col = sheet.getRange(2, 1, lastRow-1, 1).getValues();
     for (let i=0; i<col.length; i++) {
       if (fmtDateCell(col[i][0]) === dateStr) {
-        sheet.getRange(i+2, 1, 1, 4).setValues([[dateStr, weekDay||'', Number(stdHours)||0, notes||'']]);
+        sheet.getRange(i+2, 1, 1, 5).setValues([[dateStr, weekDay||'', Number(stdHours)||0, notes||'', description||'']]);
         rebuildDayAttendance(ss, dateStr);
         return 'updated';
       }
@@ -555,14 +562,14 @@ function setupSheets() {
     const sh=getOrCreateSheet(ss,name,headers);
     widths.forEach((w,i)=>sh.setColumnWidth(i+1,w));return sh;
   };
-  setup(SHEET_WSTANDARD, WSTANDARD_HEADERS, [120,100,170,260]);
+  setup(SHEET_WSTANDARD, WSTANDARD_HEADERS, [120,100,170,200,220]);
   setup(SHEET_CLIENTS,   CLIENTS_HEADERS,   [180,220,200]);
   setup(SHEET_CLI_PROJ,  CLI_PROJ_HEADERS,  [180,180,220,200]);
   setup(SHEET_TASK_DEF,  TASK_DEF_HEADERS,  [180,220,100,200]);
   ss.getSheetByName(SHEET_WSTANDARD)?.getRange('A2:A1000').setNumberFormat('@STRING@');
   getOrCreateAttSheet(ss); // create / style Attendance with new headers
   SpreadsheetApp.getUi().alert(
-    'MyWorkLog v4.0 — גיליונות מוכנים!\n\n' +
+    'MyWorkLog v6.0 — גיליונות מוכנים!\n\n' +
     'Attendance החדש: תאריך | כניסה | יציאה | משך | תקן יומי | עודף/חוסר\n\n' +
     'הרץ rebuildAllAttendance לבנות מחדש את ההיסטוריה.\n\n' +
     'Deploy → New deployment לאחר השמירה!'
@@ -679,7 +686,7 @@ function debugAttendanceData() {
 
 /*
   ═══════════════════════════════════════════════════════
-  SETUP & MIGRATION (v4.0)
+  SETUP & MIGRATION (v6.0)
   ═══════════════════════════════════════════════════════
   1. Extensions → Apps Script → הדבק → שמור (Ctrl+S)
   2. בחר setupSheets     → Run   (מקים/מעדכן גיליונות)
