@@ -2545,8 +2545,10 @@ function histRender(){
   const rs=(store(K.reps)||[])
     .filter(r=>{const d=new Date(r.timestamp||r.report_date);return d>=cutoff})
     .sort((a,b)=>{
-      const da=new Date(a.timestamp||a.report_date),db=new Date(b.timestamp||b.report_date);
-      return db-da; // newest first
+      // Sort by actual report date+time, not submission timestamp
+      const keyA=(a.report_date||'')+'T'+(a.report_time&&!a.report_time.includes('-')?a.report_time:'00:00');
+      const keyB=(b.report_date||'')+'T'+(b.report_time&&!b.report_time.includes('-')?b.report_time:'00:00');
+      return keyB>keyA?1:keyB<keyA?-1:0; // newest first
     })
     .slice(0,200);
   $('history-list').innerHTML=rs.length?rs.map(r=>hItem(r,true)).join(''):`<p class="empty">${t('historyEmpty')}</p>`;
