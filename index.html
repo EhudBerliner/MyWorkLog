@@ -362,7 +362,7 @@ textarea.fi{resize:vertical;min-height:72px}
 .upd-acts{display:flex;gap:8px;flex-shrink:0}
 
 /* ─ INSTALL BANNER ─ */
-.install-banner{position:fixed;bottom:-140px;left:0;right:0;
+.install-banner{position:fixed;bottom:-160px;left:0;right:0;
   background:var(--bg1);border-top:2px solid var(--blue,#4dabff);
   padding:16px 18px calc(var(--safeB,0px)+16px);z-index:7000;
   transition:bottom .4s ease;display:flex;align-items:center;gap:12px;
@@ -561,11 +561,40 @@ details summary::-webkit-details-marker{display:none}
 </style>
 </head>
 <body>
+<!-- ═══════════════════════════════════════════
+     NOTIFICATION SYSTEM — all banners here
+     ═══════════════════════════════════════════ -->
 
-<!-- OFFLINE BANNER -->
-<div id="offline-banner" class="hidden" aria-live="polite">
-  <span data-i18n="offlineBanner">אין חיבור לאינטרנט</span>
+<!-- 1. Offline Banner (z:9000, slides down from top) -->
+<div class="offline-banner" id="offlineBanner" role="alert" aria-live="assertive">
+  ⚠️ אין חיבור לאינטרנט
 </div>
+
+<!-- 2. Update Prompt (z:8500, drops from top) -->
+<div class="update-prompt" id="updatePrompt" role="status">
+  <span>🆕 גרסה חדשה זמינה!</span>
+  <button class="update-now-btn" id="updateNowBtn" data-i18n="btnUpdate">עדכן עכשיו</button>
+</div>
+
+<!-- 3. Toast Container (z:8000, bottom centre) -->
+<div class="toast-container" id="toastContainer" aria-live="polite"></div>
+
+<!-- 4. Install Banner (z:7000, slides up from bottom) -->
+<div class="install-banner" id="installBanner">
+  <img src="icon-512.png" alt="MyWorkLog" onerror="this.style.display='none'">
+  <div class="install-banner-text">
+    <strong data-i18n="installTitle">התקן את האפליקציה</strong>
+    <span data-i18n="installBody">גישה מהירה ישירות ממסך הבית, ללא דפדפן</span>
+  </div>
+  <div class="install-banner-btns">
+    <button class="install-btn primary"   id="installAcceptBtn"  data-i18n="btnInstall">✓ התקן</button>
+    <button class="install-btn secondary" id="installDismissBtn" data-i18n="btnInstallDismiss">אחר כך</button>
+  </div>
+</div>
+
+
+
+
 
 <!-- SPLASH -->
 <div id="splash">
@@ -1247,28 +1276,6 @@ details summary::-webkit-details-marker{display:none}
   </div>
 </div>
 
-<!-- OFFLINE BANNER -->
-<div class="offline-banner" id="offlineBanner">⚠️ No internet connection</div>
-
-<!-- UPDATE PROMPT -->
-<div class="update-prompt hidden" id="updatePrompt">
-  <span>🆕 גרסה חדשה זמינה!</span>
-  <button class="update-now-btn" id="updateNowBtn" data-i18n="btnUpdate">עדכן עכשיו</button>
-</div>
-
-<!-- INSTALL BANNER -->
-<div class="install-banner" id="installBanner" style="display:none">
-  <img src="icon-512.png" alt="App Icon" onerror="this.style.display='none'">
-  <div class="install-banner-text">
-    <strong data-i18n="installTitle">התקן את האפליקציה</strong>
-    <span data-i18n="installBody">גישה מהירה ישירות ממסך הבית, ללא דפדפן</span>
-  </div>
-  <div class="install-banner-btns">
-    <button class="install-btn primary" id="installAcceptBtn" data-i18n="btnInstall">✓ התקן</button>
-    <button class="install-btn secondary" id="installDismissBtn" data-i18n="btnInstallDismiss">אחר כך</button>
-  </div>
-</div>
-
 <!-- WORK STANDARD SYNC MODAL -->
 <div id="modal-workcal" class="moverlay hidden" role="dialog" aria-modal="true">
   <div class="mbox sm">
@@ -1484,7 +1491,6 @@ details summary::-webkit-details-marker{display:none}
   </div>
 </div>
 
-<div class="toast-container" id="toastContainer" aria-live="polite"></div>
 <!-- HELP MODAL -->
 <div id="modal-help" class="moverlay hidden" role="dialog" aria-modal="true" style="z-index:650" lang="he">
   <div class="mbox" style="max-height:92dvh;display:flex;flex-direction:column">
@@ -1677,6 +1683,7 @@ const NotificationSystem = {
   settings: { showNetworkStatus: true },
   currentVersion: '3.8.0',
   deferredInstallPrompt: null,
+  _wasOffline: false,   // track previous state for auto-cleanup
 
   init(appVersion) {
     if (appVersion) this.currentVersion = appVersion;
@@ -1685,7 +1692,8 @@ const NotificationSystem = {
     this.checkRemoteVersion();
   },
 
-  /* ── Toast ── */
+  /* ── 1. TOAST ─────────────────────────────────────────────────
+     Dynamic toasts with auto-remove after duration.             */
   showToast(message, type = 'info', duration = 3000) {
     const container = document.getElementById('toastContainer');
     if (!container) return;
@@ -1693,42 +1701,63 @@ const NotificationSystem = {
     el.className = `toast ${type}`;
     el.textContent = message;
     container.appendChild(el);
+    // Double rAF ensures transition fires after paint
     requestAnimationFrame(() => requestAnimationFrame(() => el.classList.add('show')));
+    // Auto-remove
     setTimeout(() => {
       el.classList.remove('show');
       setTimeout(() => el.remove(), 320);
     }, duration);
   },
 
-  /* ── Offline banner ── */
+  /* ── 2. OFFLINE BANNER ────────────────────────────────────────
+     Shows on offline, auto-hides + shows toast on reconnect.
+     Guards against duplicate events with _wasOffline flag.      */
   initNetworkMonitor() {
     const banner = document.getElementById('offlineBanner');
     if (!banner) return;
-    const update = (online) => {
+
+    const updateStatus = (online) => {
       if (!this.settings.showNetworkStatus) return;
-      if (!online) {
+
+      if (!online && !this._wasOffline) {
+        // Just went offline
+        this._wasOffline = true;
         banner.classList.add('visible');
         this.showToast('⚠️ אין חיבור לאינטרנט', 'error', 4000);
-      } else {
+
+      } else if (online && this._wasOffline) {
+        // Just came back online — auto-cleanup banner
+        this._wasOffline = false;
         banner.classList.remove('visible');
-        this.showToast('✅ חיבור לאינטרנט חודש', 'success');
+        this.showToast('✅ חיבור לאינטרנט חודש', 'success', 3000);
       }
     };
-    window.addEventListener('online',  () => update(true));
-    window.addEventListener('offline', () => update(false));
-    if (!navigator.onLine) update(false);
+
+    window.addEventListener('online',  () => updateStatus(true));
+    window.addEventListener('offline', () => updateStatus(false));
+
+    // Set initial state without showing "restored" toast
+    if (!navigator.onLine) {
+      this._wasOffline = true;
+      banner.classList.add('visible');
+    }
   },
 
-  /* ── PWA Install Banner ── */
+  /* ── 3. PWA INSTALL BANNER ────────────────────────────────────
+     Slides up from bottom. Dismissed state saved in localStorage.
+     Auto-hides after install or dismiss.                        */
   initInstallPrompt() {
     const banner = document.getElementById('installBanner');
     if (!banner) return;
     if (localStorage.getItem('pwa_install_dismissed')) return;
+
     window.addEventListener('beforeinstallprompt', (e) => {
       e.preventDefault();
       this.deferredInstallPrompt = e;
-      setTimeout(() => { banner.style.display = ''; setTimeout(() => banner.classList.add('visible'), 50); }, 2000);
+      setTimeout(() => banner.classList.add('visible'), 2000);
     });
+
     document.getElementById('installAcceptBtn')?.addEventListener('click', async () => {
       banner.classList.remove('visible');
       if (this.deferredInstallPrompt) {
@@ -1738,40 +1767,52 @@ const NotificationSystem = {
         this.deferredInstallPrompt = null;
       }
     });
+
     document.getElementById('installDismissBtn')?.addEventListener('click', () => {
       banner.classList.remove('visible');
       localStorage.setItem('pwa_install_dismissed', '1');
     });
+
     window.addEventListener('appinstalled', () => {
       banner.classList.remove('visible');
       this.showToast('🎉 האפליקציה הותקנה בהצלחה!', 'success', 4000);
     });
   },
 
-  /* ── Update Prompt ── */
+  /* ── 4. UPDATE PROMPT ─────────────────────────────────────────
+     Drops from top. Triggered by version.json check or SW event.
+     "Update Now" clears caches and reloads. Auto-hides on dismiss. */
   async checkRemoteVersion() {
     if (!navigator.onLine) return;
     try {
-      const res = await fetch('./version.json?t=' + Date.now(), { cache: 'no-store', signal: AbortSignal.timeout(3000) });
+      const res = await fetch('./version.json?t=' + Date.now(), {
+        cache: 'no-store',
+        signal: AbortSignal.timeout(3000)
+      });
       if (!res.ok) return;
       const data = await res.json();
-      if (data.version && data.version !== this.currentVersion) this.showUpdatePrompt(data.version);
-    } catch (e) { /* silent */ }
+      if (data.version && data.version !== this.currentVersion)
+        this.showUpdatePrompt(data.version);
+    } catch (_) { /* silent — offline or missing */ }
   },
 
   showUpdatePrompt(newVer, onUpdate) {
     const el = document.getElementById('updatePrompt');
     if (!el) return;
-    el.classList.remove('hidden');
     el.classList.add('visible');
+
     document.getElementById('updateNowBtn').onclick = async () => {
       el.classList.remove('visible');
       if (onUpdate) onUpdate();
-      if ('caches' in window) { const ks = await caches.keys(); await Promise.all(ks.map(k => caches.delete(k))); }
+      // Clear SW caches then force-reload
+      if ('caches' in window) {
+        const keys = await caches.keys();
+        await Promise.all(keys.map(k => caches.delete(k)));
+      }
       location.reload(true);
     };
   }
-};
+}
 window.NotificationSystem = NotificationSystem;
 
 /* ── toast() — bridge to NotificationSystem (keeps existing call-sites working) ── */
@@ -2630,13 +2671,12 @@ async function syncQ(){
 
 /* NETWORK */
 function netInit(){
-  // Network sync side-effects (independent of notification UI)
+  // Network sync side-effects only — UI handled by NotificationSystem
   window.addEventListener('online', ()=>{
     localStorage.removeItem('mwl_last_full_sync');
     syncQ().then(()=>bgSync());
   });
   pendUI();
-  // Notification UI handled by NotificationSystem
 }
 function netQInit(){
   const c=navigator.connection||navigator.mozConnection||navigator.webkitConnection;if(!c)return;
