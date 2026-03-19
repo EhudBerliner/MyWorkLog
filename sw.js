@@ -1,6 +1,6 @@
-// MyWorkLog Service Worker v3.6.0
+// MyWorkLog Service Worker v3.9.0
 // Strategy: Cache-First for app shell, Network-First for GAS API calls
-const APP_VERSION = '3.6.0';
+const APP_VERSION = '3.9.0';
 const CACHE_SHELL = `mwl-shell-${APP_VERSION}`;
 const CACHE_DATA  = `mwl-data-${APP_VERSION}`;
 
@@ -49,7 +49,12 @@ self.addEventListener('fetch', e => {
   }
 
   // Same-origin app assets — Cache first, fallback to network
+  // EXCEPT version.json — always network so update check is accurate
   if (url.origin === self.location.origin) {
+    if (url.pathname.endsWith('version.json')) {
+      e.respondWith(networkFirstStrategy(e.request, CACHE_DATA));
+      return;
+    }
     e.respondWith(cacheFirstStrategy(e.request));
     return;
   }

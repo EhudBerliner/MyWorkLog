@@ -1785,6 +1785,7 @@ const NotificationSystem = {
      "Update Now" clears caches and reloads. Auto-hides on dismiss. */
   async checkRemoteVersion() {
     if (!navigator.onLine) return;
+    if (this._updateShown) return; // already prompted this session
     try {
       const res = await fetch('./version.json?t=' + Date.now(), {
         cache: 'no-store',
@@ -1792,8 +1793,10 @@ const NotificationSystem = {
       });
       if (!res.ok) return;
       const data = await res.json();
-      if (data.version && data.version !== this.currentVersion)
+      if (data.version && data.version !== this.currentVersion) {
+        this._updateShown = true;
         this.showUpdatePrompt(data.version);
+      }
     } catch (_) { /* silent — offline or missing */ }
   },
 
@@ -1805,7 +1808,12 @@ const NotificationSystem = {
     document.getElementById('updateNowBtn').onclick = async () => {
       el.classList.remove('visible');
       if (onUpdate) onUpdate();
-      // Clear SW caches then force-reload
+      // Unregister SW so fresh install happens on reload
+      if ('serviceWorker' in navigator) {
+        const regs = await navigator.serviceWorker.getRegistrations();
+        await Promise.all(regs.map(r => r.unregister()));
+      }
+      // Clear all caches
       if ('caches' in window) {
         const keys = await caches.keys();
         await Promise.all(keys.map(k => caches.delete(k)));
