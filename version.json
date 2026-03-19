@@ -1,5 +1,5 @@
 {
-  "version": "4.0.2",
+  "version": "4.0.1",
   "buildDate": "2026-03-19",
-  "changelog": "v4.0.2: fix syncCRM — res.ok check + text→JSON with actionable error; fix toast on no-cors callbacks"
+  "changelog": "v4.0.1: fix task-def sync — async missing on syncCRM/_crmPost; merge logic; tab refresh; id collision"
 }
