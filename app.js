@@ -2,7 +2,7 @@
    MyWorkLog · App Core  v3.2.0
    ═══════════════════════════════════════════════════════ */
 
-const VER = '3.6.0';
+const VER = '3.8.0';
 
 /* ── Storage keys ── */
 const K = {
@@ -58,13 +58,7 @@ const fmtT   = tt => {
 };
 const catLbl = cat => t({ entry:'catEntry', exit:'catExit', task:'catTask' }[cat]) || cat;
 
-function toast(msg, type = 'success', ms = 2800) {
-  const el = $('toast');
-  el.textContent = msg;
-  el.className = `toast ${type}`;
-  clearTimeout(el._t);
-  el._t = setTimeout(() => el.classList.add('hidden'), ms);
-}
+/* toast() moved to index.html — bridges to NotificationSystem v3.8.0 */
 
 /* ── BOOT ── */
 

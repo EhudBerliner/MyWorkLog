@@ -47,13 +47,13 @@ html,body{height:100%;background:var(--bg0);color:var(--text);
 :focus-visible{outline:2px solid var(--lime);outline-offset:2px;border-radius:4px}
 
 /* ─ OFFLINE BANNER ─ */
-#offline-banner{position:fixed;top:0;left:0;right:0;z-index:3000;
-  background:linear-gradient(90deg,#c0392b,#e74c3c);
-  color:#fff;text-align:center;font-size:.78rem;font-weight:700;
-  letter-spacing:.5px;padding:calc(var(--safeT)+5px) 16px 5px;
+#/* ── NOTIFICATION SYSTEM v3.8.0 ── */
+.offline-banner{position:fixed;top:0;left:0;right:0;
+  background:var(--red,#ef4444);color:#fff;text-align:center;
+  padding:calc(var(--safeT,0px)+8px) 16px 8px;
+  font-size:13px;font-weight:600;z-index:9000;
   transform:translateY(-100%);transition:transform .3s ease}
-#offline-banner:not(.hidden){transform:translateY(0)}
-#offline-banner.hidden{display:none}
+.offline-banner.visible{transform:translateY(0)}
 
 /* ─ SPLASH ─ */
 #splash{position:fixed;inset:0;z-index:2000;background:var(--bg0);
@@ -346,12 +346,14 @@ textarea.fi{resize:vertical;min-height:72px}
   border-radius:6px;padding:8px 10px;font-size:.72rem;color:var(--amber);line-height:1.6}
 
 /* ─ UPDATE PROMPT ─ */
-#update-prompt{position:fixed;bottom:calc(var(--safeB)+16px);left:50%;transform:translateX(-50%);
-  background:var(--bg1);border:1.5px solid var(--blue);border-radius:var(--r);
-  width:calc(100% - 28px);max-width:452px;padding:14px 16px;
-  display:flex;justify-content:space-between;align-items:center;gap:12px;
-  box-shadow:var(--shadowLg);z-index:700;animation:slideUp .3s ease}
-#update-prompt.hidden{display:none}
+.update-prompt{position:fixed;top:60px;left:50%;
+  transform:translateX(-50%) translateY(-140px);
+  background:var(--bg1);border:2px solid var(--blue,#4dabff);
+  border-radius:var(--r);padding:12px 20px;z-index:8500;
+  transition:transform .3s ease;display:flex;align-items:center;gap:12px;
+  box-shadow:var(--shadowLg);white-space:nowrap}
+.update-prompt.visible{transform:translateX(-50%) translateY(0)}
+.update-prompt.hidden{display:none}
 .upd-body{display:flex;align-items:center;gap:10px;flex:1}
 .upd-icon{font-size:1.4rem;flex-shrink:0}
 .upd-text{display:flex;flex-direction:column;gap:1px}
@@ -360,18 +362,20 @@ textarea.fi{resize:vertical;min-height:72px}
 .upd-acts{display:flex;gap:8px;flex-shrink:0}
 
 /* ─ INSTALL BANNER ─ */
-#install-banner{position:fixed;bottom:0;left:50%;transform:translateX(-50%);
-  background:var(--bg1);border:1px solid var(--border);border-top:2px solid var(--lime);
-  border-radius:var(--r) var(--r) 0 0;width:100%;max-width:480px;
-  padding:16px 18px calc(var(--safeB)+16px);box-shadow:var(--shadowLg);z-index:700;animation:slideUp .4s ease}
-#install-banner.hidden{display:none}
-.inst-inner{display:flex;align-items:center;gap:14px}
-.inst-icon{width:44px;height:44px;border-radius:12px;background:var(--limeDim);
-  display:flex;align-items:center;justify-content:center;font-size:1.4rem;flex-shrink:0}
-.inst-txt{display:flex;flex-direction:column;gap:3px;flex:1}
-.inst-txt strong{font-size:.93rem;font-weight:700}
-.inst-txt span{font-size:.76rem;color:var(--text3)}
-.inst-acts{display:flex;gap:8px;justify-content:flex-end;margin-top:14px}
+.install-banner{position:fixed;bottom:-140px;left:0;right:0;
+  background:var(--bg1);border-top:2px solid var(--blue,#4dabff);
+  padding:16px 18px calc(var(--safeB,0px)+16px);z-index:7000;
+  transition:bottom .4s ease;display:flex;align-items:center;gap:12px;
+  box-shadow:0 -4px 20px rgba(0,0,0,.25)}
+.install-banner.visible{bottom:0}
+.install-banner img{width:48px;height:48px;border-radius:12px;flex-shrink:0}
+.install-banner-text{flex:1;display:flex;flex-direction:column;gap:3px}
+.install-banner-text strong{font-size:.93rem;font-weight:700;color:var(--text)}
+.install-banner-text span{font-size:.76rem;color:var(--text3)}
+.install-banner-btns{display:flex;gap:8px}
+.install-btn{padding:8px 16px;border:none;border-radius:8px;font-size:.8rem;font-weight:700;cursor:pointer}
+.install-btn.primary{background:var(--blue,#4dabff);color:var(--bg0,#0d0f1a)}
+.install-btn.secondary{background:var(--bg3);color:var(--text2)}
 
 /* ─ PENDING PILL ─ */
 .pending-pill{display:flex;align-items:center;gap:10px;
@@ -383,15 +387,18 @@ textarea.fi{resize:vertical;min-height:72px}
 .pending-pill-text b{color:var(--amber)}
 
 /* ─ TOAST ─ */
-#toast{position:fixed;bottom:calc(var(--safeB)+24px);left:50%;transform:translateX(-50%);
-  background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);
-  color:var(--text);padding:11px 20px;font-size:.82rem;font-weight:600;
-  box-shadow:var(--shadowLg);z-index:9999;white-space:nowrap;
-  transition:opacity .3s,transform .3s;pointer-events:none}
-#toast.hidden{opacity:0;transform:translateX(-50%) translateY(16px)}
-#toast.success{border-color:var(--lime);color:var(--lime)}
-#toast.error{border-color:var(--red);color:var(--red)}
-#toast.warn{border-color:var(--amber);color:var(--amber)}
+.toast-container{position:fixed;bottom:calc(var(--safeB,0px)+80px);left:50%;
+  transform:translateX(-50%);z-index:8000;
+  display:flex;flex-direction:column;align-items:center;gap:8px;pointer-events:none}
+.toast{padding:10px 20px;border-radius:24px;font-size:.86rem;font-weight:600;
+  color:#fff;opacity:0;transform:translateY(20px);
+  transition:opacity .3s ease,transform .3s ease;
+  white-space:nowrap;pointer-events:none;max-width:90vw}
+.toast.show{opacity:1;transform:translateY(0)}
+.toast.success{background:var(--lime,#10b981);color:var(--bg0,#0d0f1a)}
+.toast.error{background:var(--red,#ef4444)}
+.toast.warn,.toast.warning{background:var(--amber,#f59e0b);color:var(--bg0,#0d0f1a)}
+.toast.info{background:var(--blue,#4dabff)}
 
 /* ─ CLOCK UI ─ */
 .clock-ui{display:flex;flex-direction:column;align-items:center;gap:12px;padding:8px 0}
@@ -1240,33 +1247,25 @@ details summary::-webkit-details-marker{display:none}
   </div>
 </div>
 
+<!-- OFFLINE BANNER -->
+<div class="offline-banner" id="offlineBanner">⚠️ No internet connection</div>
+
 <!-- UPDATE PROMPT -->
-<div id="update-prompt" class="hidden">
-  <div class="upd-body">
-    <span class="upd-icon">🔄</span>
-    <div class="upd-text">
-      <span class="upd-title" data-i18n="updateAvailable">גרסה חדשה זמינה</span>
-      <span class="upd-ver" id="upd-ver-label"></span>
-    </div>
-  </div>
-  <div class="upd-acts">
-    <button class="btn-g sm" id="btn-update-dismiss" data-i18n="btnUpdateDismiss">אחר כך</button>
-    <button class="btn-p sm" id="btn-update-now"     data-i18n="btnUpdate">עדכן עכשיו</button>
-  </div>
+<div class="update-prompt hidden" id="updatePrompt">
+  <span>🆕 גרסה חדשה זמינה!</span>
+  <button class="update-now-btn" id="updateNowBtn" data-i18n="btnUpdate">עדכן עכשיו</button>
 </div>
 
 <!-- INSTALL BANNER -->
-<div id="install-banner" class="hidden">
-  <div class="inst-inner">
-    <div class="inst-icon">📲</div>
-    <div class="inst-txt">
-      <strong data-i18n="installTitle">התקן את האפליקציה</strong>
-      <span data-i18n="installBody">גישה מהירה ישירות ממסך הבית, ללא דפדפן</span>
-    </div>
+<div class="install-banner" id="installBanner" style="display:none">
+  <img src="icon-512.png" alt="App Icon" onerror="this.style.display='none'">
+  <div class="install-banner-text">
+    <strong data-i18n="installTitle">התקן את האפליקציה</strong>
+    <span data-i18n="installBody">גישה מהירה ישירות ממסך הבית, ללא דפדפן</span>
   </div>
-  <div class="inst-acts">
-    <button class="btn-g sm" id="btn-install-dismiss" data-i18n="btnInstallDismiss">אחר כך</button>
-    <button class="btn-p sm" id="btn-install-confirm" data-i18n="btnInstall">✓ התקן</button>
+  <div class="install-banner-btns">
+    <button class="install-btn primary" id="installAcceptBtn" data-i18n="btnInstall">✓ התקן</button>
+    <button class="install-btn secondary" id="installDismissBtn" data-i18n="btnInstallDismiss">אחר כך</button>
   </div>
 </div>
 
@@ -1485,7 +1484,7 @@ details summary::-webkit-details-marker{display:none}
   </div>
 </div>
 
-<div id="toast" class="hidden" role="status" aria-live="polite"></div>
+<div class="toast-container" id="toastContainer" aria-live="polite"></div>
 <!-- HELP MODAL -->
 <div id="modal-help" class="moverlay hidden" role="dialog" aria-modal="true" style="z-index:650" lang="he">
   <div class="mbox" style="max-height:92dvh;display:flex;flex-direction:column">
@@ -1669,6 +1668,119 @@ details summary::-webkit-details-marker{display:none}
 ───────────────────────────────────────────────────── */
 
 /* BOOT */
+
+/* ═══════════════════════════════════════════════════════
+   NOTIFICATION SYSTEM  v3.8.0
+   Manages: Offline banner · PWA Install · Update Prompt · Toast
+   ═══════════════════════════════════════════════════════ */
+const NotificationSystem = {
+  settings: { showNetworkStatus: true },
+  currentVersion: '3.8.0',
+  deferredInstallPrompt: null,
+
+  init(appVersion) {
+    if (appVersion) this.currentVersion = appVersion;
+    this.initNetworkMonitor();
+    this.initInstallPrompt();
+    this.checkRemoteVersion();
+  },
+
+  /* ── Toast ── */
+  showToast(message, type = 'info', duration = 3000) {
+    const container = document.getElementById('toastContainer');
+    if (!container) return;
+    const el = document.createElement('div');
+    el.className = `toast ${type}`;
+    el.textContent = message;
+    container.appendChild(el);
+    requestAnimationFrame(() => requestAnimationFrame(() => el.classList.add('show')));
+    setTimeout(() => {
+      el.classList.remove('show');
+      setTimeout(() => el.remove(), 320);
+    }, duration);
+  },
+
+  /* ── Offline banner ── */
+  initNetworkMonitor() {
+    const banner = document.getElementById('offlineBanner');
+    if (!banner) return;
+    const update = (online) => {
+      if (!this.settings.showNetworkStatus) return;
+      if (!online) {
+        banner.classList.add('visible');
+        this.showToast('⚠️ אין חיבור לאינטרנט', 'error', 4000);
+      } else {
+        banner.classList.remove('visible');
+        this.showToast('✅ חיבור לאינטרנט חודש', 'success');
+      }
+    };
+    window.addEventListener('online',  () => update(true));
+    window.addEventListener('offline', () => update(false));
+    if (!navigator.onLine) update(false);
+  },
+
+  /* ── PWA Install Banner ── */
+  initInstallPrompt() {
+    const banner = document.getElementById('installBanner');
+    if (!banner) return;
+    if (localStorage.getItem('pwa_install_dismissed')) return;
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      this.deferredInstallPrompt = e;
+      setTimeout(() => { banner.style.display = ''; setTimeout(() => banner.classList.add('visible'), 50); }, 2000);
+    });
+    document.getElementById('installAcceptBtn')?.addEventListener('click', async () => {
+      banner.classList.remove('visible');
+      if (this.deferredInstallPrompt) {
+        this.deferredInstallPrompt.prompt();
+        const { outcome } = await this.deferredInstallPrompt.userChoice;
+        if (outcome === 'accepted') this.showToast('✅ האפליקציה הותקנה!', 'success');
+        this.deferredInstallPrompt = null;
+      }
+    });
+    document.getElementById('installDismissBtn')?.addEventListener('click', () => {
+      banner.classList.remove('visible');
+      localStorage.setItem('pwa_install_dismissed', '1');
+    });
+    window.addEventListener('appinstalled', () => {
+      banner.classList.remove('visible');
+      this.showToast('🎉 האפליקציה הותקנה בהצלחה!', 'success', 4000);
+    });
+  },
+
+  /* ── Update Prompt ── */
+  async checkRemoteVersion() {
+    if (!navigator.onLine) return;
+    try {
+      const res = await fetch('./version.json?t=' + Date.now(), { cache: 'no-store', signal: AbortSignal.timeout(3000) });
+      if (!res.ok) return;
+      const data = await res.json();
+      if (data.version && data.version !== this.currentVersion) this.showUpdatePrompt(data.version);
+    } catch (e) { /* silent */ }
+  },
+
+  showUpdatePrompt(newVer, onUpdate) {
+    const el = document.getElementById('updatePrompt');
+    if (!el) return;
+    el.classList.remove('hidden');
+    el.classList.add('visible');
+    document.getElementById('updateNowBtn').onclick = async () => {
+      el.classList.remove('visible');
+      if (onUpdate) onUpdate();
+      if ('caches' in window) { const ks = await caches.keys(); await Promise.all(ks.map(k => caches.delete(k))); }
+      location.reload(true);
+    };
+  }
+};
+window.NotificationSystem = NotificationSystem;
+
+/* ── toast() — bridge to NotificationSystem (keeps existing call-sites working) ── */
+function toast(msg, type = 'success', ms = 2800) {
+  // Map legacy type names to NotificationSystem types
+  const typeMap = { warn: 'warn', success: 'success', error: 'error', info: 'info' };
+  NotificationSystem.showToast(msg, typeMap[type] || type, ms);
+}
+
 document.addEventListener('DOMContentLoaded',()=>{
   // Failsafe: always show app after 3s no matter what
   const _failsafe=window.setTimeout(()=>{
@@ -1710,6 +1822,7 @@ document.addEventListener('DOMContentLoaded',()=>{
     fixStoredDates();
   netInit();netQInit();projLoad();histRender();
   importInit();
+    NotificationSystem.init(VER);  // v3.8.0
     updateSessionBanner();
     flushDeleteQueue();
     menuInit();vBadgeInit();swipeInit();ptrInit();swInit();installInit();scrollInit();
@@ -2517,21 +2630,13 @@ async function syncQ(){
 
 /* NETWORK */
 function netInit(){
-  const onOnline=()=>{
-    $('offline-banner').classList.add('hidden');
-    toast(t('toastOnlineBack'),'success',2000);
-    // Clear throttle so we sync immediately when back online
+  // Network sync side-effects (independent of notification UI)
+  window.addEventListener('online', ()=>{
     localStorage.removeItem('mwl_last_full_sync');
     syncQ().then(()=>bgSync());
-  };
-  const onOffline=()=>{
-    $('offline-banner').classList.remove('hidden');
-    toast(t('toastOfflineSave'),'warn',3000);
-  };
-  window.addEventListener('online', onOnline);
-  window.addEventListener('offline', onOffline);
-  $('offline-banner').classList.toggle('hidden',navigator.onLine);
+  });
   pendUI();
+  // Notification UI handled by NotificationSystem
 }
 function netQInit(){
   const c=navigator.connection||navigator.mozConnection||navigator.webkitConnection;if(!c)return;
@@ -3640,36 +3745,20 @@ function swInit(){
   });
 }
 function showUpd(newVer){
-  const prompt=$('update-prompt');if(!prompt)return;
-  if(newVer){
-    const lbl=$('upd-ver-label');
-    if(lbl)lbl.textContent=t('annualYear',newVer)+' '+t('updateAvailable').split('!')[0];
-  }
-  prompt.classList.remove('hidden');buzz([30,30,60]);
-  $('btn-update-now').onclick=()=>{
-    prompt.classList.add('hidden');
+  // Delegate to NotificationSystem; also handle SW waiting
+  NotificationSystem.showUpdatePrompt(newVer, ()=>{
+    buzz([30,30,60]);
     if(ST.swReg?.waiting){
-      // Tell SW to skip waiting; controllerchange listener above will reload
       ST.swReg.waiting.postMessage({type:'SKIP_WAITING'});
-    } else {
-      window.location.reload(true);
     }
-  };
-  $('btn-update-dismiss').onclick=()=>prompt.classList.add('hidden');
+  });
 }
 
 /* INSTALL PROMPT */
 function installInit(){
-  if(store(K.inst))return;
-  window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();ST.install=e;setTimeout(()=>$('install-banner').classList.remove('hidden'),3000)});
-  window.addEventListener('appinstalled',()=>{$('install-banner').classList.add('hidden');store(K.inst,true)});
-  $('btn-install-confirm')?.addEventListener('click',async()=>{
-    if(!ST.install)return;
-    ST.install.prompt();const{outcome}=await ST.install.userChoice;
-    ST.install=null;$('install-banner').classList.add('hidden');
-    if(outcome==='dismissed')store(K.inst,true);buzz([30,20,60]);
-  });
-  $('btn-install-dismiss')?.addEventListener('click',()=>{$('install-banner').classList.add('hidden');store(K.inst,true)});
+  // Handled by NotificationSystem.initInstallPrompt()
+  // Keep buzz on install confirm
+  document.getElementById('installAcceptBtn')?.addEventListener('click',()=>buzz([30,20,60]));
 }
 
 /* SWIPE */
