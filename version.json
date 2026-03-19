@@ -1,1 +1,1 @@
-{"version": "3.8.0", "buildDate": "2026-03-19", "changelog": "v3.8.0: NotificationSystem — offline banner, PWA install, update prompt, toast container"}
+{"version": "3.9.0", "buildDate": "2026-03-19", "changelog": "v3.9.0: fix offline banner CSS broken selector (stray # from old #offline-banner rule)"}
