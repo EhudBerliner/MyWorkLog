@@ -609,13 +609,19 @@ function ok(msg)      { return ContentService.createTextOutput(JSON.stringify({s
 function errResp(msg) { return ContentService.createTextOutput(JSON.stringify({status:'error',message:msg})).setMimeType(ContentService.MimeType.JSON); }
 function jsonResp(o)  { return ContentService.createTextOutput(JSON.stringify(o)).setMimeType(ContentService.MimeType.JSON); }
 function getOrCreateSheet(ss, name, headers) {
-  let sheet=ss.getSheetByName(name);
-  if(!sheet){
-    sheet=ss.insertSheet(name);
-    const hRow=sheet.getRange(1,1,1,headers.length);
-    hRow.setValues([headers]);hRow.setFontWeight('bold');hRow.setBackground('#1a1d27');hRow.setFontColor('#4ade80');
-    sheet.setFrozenRows(1);headers.forEach((_,i)=>sheet.setColumnWidth(i+1,i>=2?200:130));
+  let sheet = ss.getSheetByName(name);
+  if (!sheet) {
+    sheet = ss.insertSheet(name);
+    sheet.setFrozenRows(1);
+    headers.forEach((_,i) => sheet.setColumnWidth(i+1, i>=2 ? 200 : 130));
   }
+  // Always re-apply headers (idempotent — ensures new columns appear on re-run)
+  const hRow = sheet.getRange(1, 1, 1, headers.length);
+  hRow.setValues([headers]);
+  hRow.setFontWeight('bold');
+  hRow.setBackground('#1a1d27');
+  hRow.setFontColor('#4ade80');
+  sheet.setFrozenRows(1);
   return sheet;
 }
 function autoFormatLastRow(sheet, colCount) {
