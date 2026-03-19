@@ -1,5 +1,5 @@
 {
-  "version": "3.9.0",
+  "version": "3.9.1",
   "buildDate": "2026-03-19",
-  "changelog": "v3.9.0: fix update loop — sw.js versioned correctly, version.json never cached, SW unregistered on update"
+  "changelog": "v3.9.1: fix day view stale report list when navigating to empty day"
 }

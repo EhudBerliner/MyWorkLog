@@ -46,7 +46,7 @@ html,body{height:100%;background:var(--bg0);color:var(--text);
 ::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
 :focus-visible{outline:2px solid var(--lime);outline-offset:2px;border-radius:4px}
 
-/* ── NOTIFICATION SYSTEM v3.9.0 ── */
+/* ── NOTIFICATION SYSTEM v3.9.1 ── */
 .offline-banner{position:fixed;top:0;left:0;right:0;
   background:var(--red,#ef4444);color:#fff;text-align:center;
   padding:calc(var(--safeT,0px)+8px) 16px 8px;
@@ -1675,12 +1675,12 @@ details summary::-webkit-details-marker{display:none}
 /* BOOT */
 
 /* ═══════════════════════════════════════════════════════
-   NOTIFICATION SYSTEM  v3.9.0
+   NOTIFICATION SYSTEM  v3.9.1
    Manages: Offline banner · PWA Install · Update Prompt · Toast
    ═══════════════════════════════════════════════════════ */
 const NotificationSystem = {
   settings: { showNetworkStatus: true },
-  currentVersion: '3.9.0',
+  currentVersion: '3.9.1',
   deferredInstallPrompt: null,
   _wasOffline: false,   // track previous state for auto-cleanup
 
@@ -1872,7 +1872,7 @@ document.addEventListener('DOMContentLoaded',()=>{
     fixStoredDates();
   netInit();netQInit();projLoad();histRender();
   importInit();
-    NotificationSystem.init(VER);  // v3.9.0
+    NotificationSystem.init(VER);  // v3.9.1
     updateSessionBanner();
     flushDeleteQueue();
     menuInit();vBadgeInit();swipeInit();ptrInit();swInit();installInit();scrollInit();
@@ -3131,19 +3131,24 @@ function renderDayWCStatus(ds,reports){
     meter.style.display='';
   }else if(meter){meter.style.display='none';}
   // Per-report action list for the day (edit / delete)
+  // Always get-or-create the container so it can be cleared on empty days
+  let repDiv=$('day-rep-actions');
+  if(!repDiv){
+    repDiv=document.createElement('div');
+    repDiv.id='day-rep-actions';
+    repDiv.style.cssText='margin-top:10px;border-top:1px solid var(--border);padding-top:8px;display:flex;flex-direction:column;gap:4px';
+    sec.appendChild(repDiv);
+  }
   const dayReps=(store(K.reps)||[]).filter(r=>r.report_date===ds);
   if(dayReps.length){
-    const repListId='day-rep-actions';
-    let repDiv=$(''+repListId);
-    if(!repDiv){
-      repDiv=document.createElement('div');
-      repDiv.id=repListId;
-      repDiv.style.cssText='margin-top:10px;border-top:1px solid var(--border);padding-top:8px;display:flex;flex-direction:column;gap:4px';
-      sec.appendChild(repDiv);
-    }
+    repDiv.style.display='';
     repDiv.innerHTML=dayReps
       .sort((a,b)=>{const ta=a.report_time||'',tb=b.report_time||'';return ta<tb?-1:ta>tb?1:0;})
       .map(r=>hItem(r,true)).join('');
+  } else {
+    // No reports for this day — clear and hide
+    repDiv.innerHTML='';
+    repDiv.style.display='none';
   }
   sec.style.display='';
   // achievement stat card
