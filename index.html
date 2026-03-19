@@ -46,7 +46,7 @@ html,body{height:100%;background:var(--bg0);color:var(--text);
 ::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
 :focus-visible{outline:2px solid var(--lime);outline-offset:2px;border-radius:4px}
 
-/* ── NOTIFICATION SYSTEM v3.9.1 ── */
+/* ── NOTIFICATION SYSTEM v3.9.2 ── */
 .offline-banner{position:fixed;top:0;left:0;right:0;
   background:var(--red,#ef4444);color:#fff;text-align:center;
   padding:calc(var(--safeT,0px)+8px) 16px 8px;
@@ -1675,12 +1675,12 @@ details summary::-webkit-details-marker{display:none}
 /* BOOT */
 
 /* ═══════════════════════════════════════════════════════
-   NOTIFICATION SYSTEM  v3.9.1
+   NOTIFICATION SYSTEM  v3.9.2
    Manages: Offline banner · PWA Install · Update Prompt · Toast
    ═══════════════════════════════════════════════════════ */
 const NotificationSystem = {
   settings: { showNetworkStatus: true },
-  currentVersion: '3.9.1',
+  currentVersion: '3.9.2',
   deferredInstallPrompt: null,
   _wasOffline: false,   // track previous state for auto-cleanup
 
@@ -1872,7 +1872,7 @@ document.addEventListener('DOMContentLoaded',()=>{
     fixStoredDates();
   netInit();netQInit();projLoad();histRender();
   importInit();
-    NotificationSystem.init(VER);  // v3.9.1
+    NotificationSystem.init(VER);  // v3.9.2
     updateSessionBanner();
     flushDeleteQueue();
     menuInit();vBadgeInit();swipeInit();ptrInit();swInit();installInit();scrollInit();
@@ -3489,6 +3489,9 @@ function summaryRender(){
     const mwcSec=$('monthly-wc-section');if(mwcSec)mwcSec.style.display='none';
     const annSec2=$('annual-section');if(annSec2)annSec2.style.display='none';
     const riSec=$('range-period-inputs');if(riSec)riSec.style.display='none';
+    const expBtn=$('btn-export-range');if(expBtn)expBtn.style.display='none';
+    // day-rep-actions inside renderDayWCStatus replaces summary-list in day view
+    const sumCard=$('summary-list')?.closest('.card');if(sumCard)sumCard.style.display='none';
     renderDayWCStatus(ds,rs);
     $('sum-prev').disabled=false;
     $('sum-next').disabled=false;
@@ -3504,6 +3507,7 @@ function summaryRender(){
     const dCard=$('stat-days-card');
     if(dCard){dCard.style.display='';const dDays=new Set(fil.map(r=>r.report_date)).size;const dEl=$('stat-days');if(dEl)dEl.textContent=dDays;}
     const dwcSec=$('day-wc-section');if(dwcSec)dwcSec.style.display='none';
+    const sumCardM=$('summary-list')?.closest('.card');if(sumCardM)sumCardM.style.display='';
     const annSec=$('annual-section');if(annSec)annSec.style.display='none';
     const mwcSec=$('monthly-wc-section');if(mwcSec)mwcSec.style.display='';
     $('range-period-inputs').style.display='none';
@@ -3518,6 +3522,7 @@ function summaryRender(){
     lbl=t('annualYear',y);
     [$('stat-workday-card'),$('stat-days-card'),$('stat-achievement-card')].forEach(el=>{if(el)el.style.display='none';});
     [$('day-wc-section'),$('monthly-wc-section')].forEach(el=>{if(el)el.style.display='none';});
+    const sumCardY=$('summary-list')?.closest('.card');if(sumCardY)sumCardY.style.display='';
     $('range-period-inputs').style.display='none';
     const annSec=$('annual-section');if(annSec){annSec.style.display='';renderAnnualStats(y,rs);}
     const todayBtn=$('btn-today');if(todayBtn)todayBtn.style.display=ST.sumOff===0?'none':'';
@@ -3532,6 +3537,7 @@ function summaryRender(){
     }else{fil=[];}
     [$('stat-workday-card')].forEach(el=>{if(el)el.style.display='none';});
     [$('day-wc-section'),$('monthly-wc-section')].forEach(el=>{if(el)el.style.display='none';});
+    const sumCardY=$('summary-list')?.closest('.card');if(sumCardY)sumCardY.style.display='';
     const annSec=$('annual-section');if(annSec){annSec.style.display='';renderRangeStats(from,to,rs);}
     const todayBtn=$('btn-today');if(todayBtn)todayBtn.style.display='none';
     const dCard=$('stat-days-card');
@@ -3557,6 +3563,10 @@ function summaryRender(){
   });
   const hh=Math.floor(taskMins/60),mm=taskMins%60;
   $('stat-hours').textContent=mm>0?`${hh}:${pad(mm)}`:`${hh}`;
+  // Ensure summary-list card is visible (was hidden in day view)
+  if(ST.sumPer!=='day'){
+    const sumCard=$('summary-list')?.closest('.card');if(sumCard)sumCard.style.display='';
+  }
   $('summary-list').innerHTML=fil.length?fil.map(r=>hItem(r,true)).join(''):`<p class="empty">${t('summaryEmpty')}</p>`;
 }
 

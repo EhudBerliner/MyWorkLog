@@ -1,5 +1,5 @@
 {
-  "version": "3.9.1",
+  "version": "3.9.2",
   "buildDate": "2026-03-19",
-  "changelog": "v3.9.1: fix day view stale report list when navigating to empty day"
+  "changelog": "v3.9.2: fix duplicate report list in day view — hide summary-list, use day-rep-actions only"
 }
