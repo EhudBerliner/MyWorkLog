@@ -55,7 +55,7 @@ html,body{height:100%;background:var(--bg0);color:var(--text);
 .workday-chip input{position:absolute;opacity:0;width:0;height:0}
 .workday-chip:has(input:checked){background:var(--limeDim);border-color:var(--lime);color:var(--lime)}
 
-/* ── NOTIFICATION SYSTEM v4.3.6 ── */
+/* ── NOTIFICATION SYSTEM v4.3.7 ── */
 .offline-banner{position:fixed;top:0;left:0;right:0;
   background:var(--red,#ef4444);color:#fff;text-align:center;
   padding:calc(var(--safeT,0px)+8px) 16px 8px;
@@ -1607,12 +1607,12 @@ details summary::-webkit-details-marker{display:none}
 /* BOOT */
 
 /* ═══════════════════════════════════════════════════════
-   NOTIFICATION SYSTEM  v4.3.6
+   NOTIFICATION SYSTEM  v4.3.7
    Manages: Offline banner · PWA Install · Update Prompt · Toast
    ═══════════════════════════════════════════════════════ */
 const NotificationSystem = {
   settings: { showNetworkStatus: true },
-  currentVersion: '4.3.6',
+  currentVersion: '4.3.7',
   deferredInstallPrompt: null,
   _wasOffline: false,   // track previous state for auto-cleanup
 
@@ -1797,7 +1797,7 @@ document.addEventListener('DOMContentLoaded',()=>{
     fixStoredDates();
   netInit();netQInit();projLoad();histRender();
   importInit();
-    NotificationSystem.init(VER);  // v4.3.6
+    NotificationSystem.init(VER);  // v4.3.7
     updateSessionBanner();
     flushDeleteQueue();
     menuInit();vBadgeInit();swipeInit();ptrInit();swInit();installInit();scrollInit();
@@ -4135,28 +4135,33 @@ async function shareReport(){
   if(!fromDate||!toDate){toast('⚠️ בחר תאריך התחלה וסיום','warn',3000);return;}
   if(fromDate>toDate){toast('⚠️ תאריך התחלה חייב להיות לפני תאריך הסיום','warn',3000);return;}
 
-  // Ensure blob is ready — prepareShareBlob() was called on "הצג"
-  // If not ready yet, build synchronously before deciding what to do
   if(!_shareBlob){
+    // Blob not ready → download and cache for next tap
     toast('⏳ מכין קובץ...','info',1500);
-    await prepareShareBlob();
+    try{
+      await loadSheetJS();
+      const{wb,filename}=await buildReportWorkbook(fromDate,toDate);
+      const buf=XLSX.write(wb,{type:'array',bookType:'xlsx'});
+      _shareBlob=new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+      _shareFilename=filename;
+    }catch(e){
+      toast(e.message==='no_data'?'⚠️ אין דיווחים בתקופה הנבחרת':'❌ שגיאה: '+e.message,'warn',3000);
+      return;
+    }
+    _triggerDownload(_shareBlob,_shareFilename);
+    toast('📊 הקובץ הורד — לחץ שוב לשיתוף','info',3000);
+    return;
   }
-  if(!_shareBlob){toast('⚠️ אין דיווחים בתקופה הנבחרת','warn',3000);return;}
 
+  // Blob pre-built → share immediately (no await before navigator.share)
   const blob=_shareBlob, filename=_shareFilename;
 
-  // Desktop or unsupported browser — always download
   if(!navigator.share){
     _triggerDownload(blob,filename);
     toast('📊 הקובץ הורד','success',2000);
     return;
   }
 
-  // Mobile — native share sheet
-  // navigator.share() is called HERE, inside the click handler.
-  // prepareShareBlob() ran earlier (on "הצג") so no await before share.
-  // If blob was just built above (edge case) → transient activation may
-  // be expired → catch NotAllowedError → fallback to download.
   try{
     const file=new File([blob],filename,{type:blob.type});
     const shareData=navigator.canShare&&navigator.canShare({files:[file]})
@@ -4166,7 +4171,6 @@ async function shareReport(){
     toast('✅ דוח שותף','success',2000);
   }catch(e){
     if(e.name==='AbortError') return;
-    // NotAllowedError or other → download as fallback
     _triggerDownload(blob,filename);
     toast('📊 הקובץ הורד','success',2000);
   }
