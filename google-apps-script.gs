@@ -1,4 +1,4 @@
-//  MyWorkLog – Google Apps Script  v6.1
+//  MyWorkLog – Google Apps Script  v6.2
 //  הדבק קוד זה ב-Apps Script של הגיליון שלך
 //  לאחר מכן: Deploy > New deployment > Web App
 //  ✅ הרשאות: Anyone (אנונימי) / Execute as: Me
@@ -104,7 +104,7 @@ function doGet(e) {
     return ok('Attendance rebuilt');
   }
 
-  return jsonResp({ status:'ok', app:'MyWorkLog', version:'6.0' });
+  return jsonResp({ status:'ok', app:'MyWorkLog', version:'6.3' });
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -448,13 +448,17 @@ function updateWorkStandard(date, weekDay, stdHours, notes, description) {
     const col = sheet.getRange(2, 1, lastRow-1, 1).getValues();
     for (let i=0; i<col.length; i++) {
       if (fmtDateCell(col[i][0]) === dateStr) {
+        sheet.getRange(i+2, 1).setNumberFormat('@STRING@');
         sheet.getRange(i+2, 1, 1, 5).setValues([[dateStr, weekDay||'', Number(stdHours)||0, notes||'', description||'']]);
         rebuildDayAttendance(ss, dateStr);
         return 'updated';
       }
     }
   }
-  sheet.appendRow([dateStr, weekDay||'', Number(stdHours)||0, notes||'', description||'']);
+  // Force col A as text BEFORE writing to prevent Sheets auto-converting to Date
+  const newRow = sheet.getLastRow() + 1;
+  sheet.getRange(newRow, 1).setNumberFormat('@STRING@');
+  sheet.getRange(newRow, 1, 1, 5).setValues([[dateStr, weekDay||'', Number(stdHours)||0, notes||'', description||'']]);
   autoFormatLastRow(sheet, WSTANDARD_HEADERS.length);
   rebuildDayAttendance(ss, dateStr);
   return 'added';
@@ -538,10 +542,21 @@ function setupSheets() {
   setup(SHEET_WSTANDARD, WSTANDARD_HEADERS, [120,100,170,200,220]);
   setup(SHEET_CLIENTS,   CLIENTS_HEADERS,   [180,220,200]);
   setup(SHEET_CLI_PROJ,  CLI_PROJ_HEADERS,  [180,180,220,200]);
-  ss.getSheetByName(SHEET_WSTANDARD)?.getRange('A2:A1000').setNumberFormat('@STRING@');
+  // Force WorkStandard date column as plain text to prevent locale-based auto-conversion
+  const wsSheet = ss.getSheetByName(SHEET_WSTANDARD);
+  if (wsSheet) {
+    wsSheet.getRange('A2:A5000').setNumberFormat('@STRING@');
+    // Normalise any existing date cells to YYYY-MM-DD strings
+    const lastR = wsSheet.getLastRow();
+    if (lastR > 1) {
+      const dateCol = wsSheet.getRange(2, 1, lastR-1, 1).getValues();
+      const fixed = dateCol.map(r => [fmtDateCell(r[0]) || r[0]]);
+      wsSheet.getRange(2, 1, lastR-1, 1).setNumberFormat('@STRING@').setValues(fixed);
+    }
+  }
   getOrCreateAttSheet(ss); // create / style Attendance with new headers
   SpreadsheetApp.getUi().alert(
-    'MyWorkLog v6.1 — גיליונות מוכנים!\n\n' +
+    'MyWorkLog v6.3 — גיליונות מוכנים!\n\n' +
     'Attendance החדש: תאריך | כניסה | יציאה | משך | תקן יומי | עודף/חוסר\n\n' +
     'הרץ rebuildAllAttendance לבנות מחדש את ההיסטוריה.\n\n' +
     'Deploy → New deployment לאחר השמירה!'
@@ -558,14 +573,59 @@ function deleteRowById(ss, sheetName, id, col) {
   const rows=sheet.getRange(2,1,sheet.getLastRow()-1,col+1).getValues();
   for(let i=rows.length-1;i>=0;i--)if(String(rows[i][col]).trim()===id)sheet.deleteRow(i+2);
 }
+/**
+ * Normalise any date representation → 'YYYY-MM-DD' string.
+ * Handles: Date objects, YYYY-MM-DD, ISO-8601, dd/mm/yyyy, mm/dd/yyyy.
+ * Ambiguous slash dates (both parts ≤12) → prefer dd/mm (Israeli convention).
+ */
 function fmtDateCell(v) {
-  if(!v)return'';
-  if(v instanceof Date)return v.getFullYear()+'-'+String(v.getMonth()+1).padStart(2,'0')+'-'+String(v.getDate()).padStart(2,'0');
-  const s=String(v).trim();
-  if(/^\d{4}-\d{2}-\d{2}/.test(s))return s.substring(0,10);
-  const m=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
-  if(m)return`${m[3]}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`;
-  return s;
+  if (!v) return '';
+
+  // Date object — format in Israel timezone to avoid UTC midnight shift
+  if (v instanceof Date) {
+    if (isNaN(v.getTime())) return '';
+    // Use Intl to extract local date in Israel timezone
+    const parts = new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'Asia/Jerusalem',
+      year: 'numeric', month: '2-digit', day: '2-digit'
+    }).formatToParts(v);
+    const yp = parts.find(p=>p.type==='year').value;
+    const mp = parts.find(p=>p.type==='month').value;
+    const dp = parts.find(p=>p.type==='day').value;
+    return `${yp}-${mp}-${dp}`;
+  }
+
+  const s = String(v).trim();
+  if (!s) return '';
+
+  // YYYY-MM-DD or YYYY-MM-DDT... (ISO) — already normalised
+  const iso = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (iso) return `${iso[1]}-${iso[2]}-${iso[3]}`;
+
+  // Slash formats: always treat as DD/MM/YYYY (Israeli convention)
+  // Only switch to MM/DD if p1 is unambiguously a month (p1<=12 && p2>12 is still DD/MM)
+  const slash = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);
+  if (slash) {
+    let p1 = parseInt(slash[1], 10);
+    let p2 = parseInt(slash[2], 10);
+    let yr = parseInt(slash[3], 10);
+    if (yr < 100) yr += (yr < 50 ? 2000 : 1900);
+    let day, mon;
+    if (p1 > 12 && p2 <= 12) { day = p1; mon = p2; }      // unambiguous: p1 is day
+    else if (p2 > 12 && p1 <= 12) { day = p2; mon = p1; } // unambiguous: p2 is day
+    else { day = p1; mon = p2; }                           // ambiguous → DD/MM (Israeli)
+    return `${yr}-${String(mon).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+  }
+
+  // Dot formats: D.M.YYYY (European/Israeli) — always DD.MM.YYYY
+  const dot = s.match(/^(\d{1,2})\.(\d{1,2})\.(\d{2,4})$/);
+  if (dot) {
+    let day = parseInt(dot[1],10), mon = parseInt(dot[2],10), yr = parseInt(dot[3],10);
+    if (yr < 100) yr += (yr < 50 ? 2000 : 1900);
+    return `${yr}-${String(mon).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+  }
+
+  return s; // unrecognised — return as-is
 }
 function parseTimeCell(v) {
   if(!v)return'';
@@ -660,6 +720,36 @@ function debugAttendanceData() {
   else dbgSheet.clearContents();
   dbgSheet.getRange(1,1,log.length,4).setValues(log);
   SpreadsheetApp.getUi().alert('Debug complete — see sheet: Debug_Attendance');
+}
+
+
+/**
+ * One-time repair: convert ALL WorkStandard date cells to YYYY-MM-DD strings.
+ * Run manually from the editor if dates appear in wrong format (mm/dd vs dd/mm).
+ */
+function normalizeWorkStandardDates() {
+  const ss    = SpreadsheetApp.getActiveSpreadsheet();
+  const sheet = ss.getSheetByName(SHEET_WSTANDARD);
+  if (!sheet || sheet.getLastRow() <= 1) {
+    SpreadsheetApp.getUi().alert('WorkStandard sheet is empty or missing.');
+    return;
+  }
+  const lastRow = sheet.getLastRow();
+  const colA    = sheet.getRange(2, 1, lastRow-1, 1).getValues();
+  let fixed = 0;
+  const normalized = colA.map(r => {
+    const raw = r[0];
+    const fmt = fmtDateCell(raw);
+    if (fmt && fmt !== String(raw)) fixed++;
+    return [fmt || raw];
+  });
+  // Apply text format first, then write normalised values
+  sheet.getRange(2, 1, lastRow-1, 1).setNumberFormat('@STRING@').setValues(normalized);
+  rebuildAllAttendance();
+  SpreadsheetApp.getUi().alert(
+    `✅ Normalised ${fixed} date(s) in WorkStandard.\n` +
+    `Attendance rebuilt.`
+  );
 }
 
 /*
