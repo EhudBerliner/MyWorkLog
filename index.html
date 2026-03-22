@@ -55,7 +55,7 @@ html,body{height:100%;background:var(--bg0);color:var(--text);
 .workday-chip input{position:absolute;opacity:0;width:0;height:0}
 .workday-chip:has(input:checked){background:var(--limeDim);border-color:var(--lime);color:var(--lime)}
 
-/* ── NOTIFICATION SYSTEM v4.3.0 ── */
+/* ── NOTIFICATION SYSTEM v4.3.1 ── */
 .offline-banner{position:fixed;top:0;left:0;right:0;
   background:var(--red,#ef4444);color:#fff;text-align:center;
   padding:calc(var(--safeT,0px)+8px) 16px 8px;
@@ -1607,12 +1607,12 @@ details summary::-webkit-details-marker{display:none}
 /* BOOT */
 
 /* ═══════════════════════════════════════════════════════
-   NOTIFICATION SYSTEM  v4.3.0
+   NOTIFICATION SYSTEM  v4.3.1
    Manages: Offline banner · PWA Install · Update Prompt · Toast
    ═══════════════════════════════════════════════════════ */
 const NotificationSystem = {
   settings: { showNetworkStatus: true },
-  currentVersion: '4.3.0',
+  currentVersion: '4.3.1',
   deferredInstallPrompt: null,
   _wasOffline: false,   // track previous state for auto-cleanup
 
@@ -1833,7 +1833,7 @@ document.addEventListener('DOMContentLoaded',()=>{
     fixStoredDates();
   netInit();netQInit();projLoad();histRender();
   importInit();
-    NotificationSystem.init(VER);  // v4.3.0
+    NotificationSystem.init(VER);  // v4.3.1
     updateSessionBanner();
     flushDeleteQueue();
     menuInit();vBadgeInit();swipeInit();ptrInit();swInit();installInit();scrollInit();
@@ -4151,35 +4151,68 @@ async function exportPeriodXLSX(){
 }
 
 /* Share via Web Share API (mobile) — fallback to save */
+/* Pre-built blob ready for sharing — built on "הצג" click, not on share click.
+   Web Share API requires transient user activation which expires in ~1s.
+   Any async work BEFORE navigator.share() risks losing the activation window.
+   Solution: build the workbook eagerly when the range is shown, cache it,
+   then share synchronously (within the same click event). */
+let _shareBlob = null, _shareFilename = null;
+
+async function prepareShareBlob(){
+  // Called after "הצג" — builds the workbook in the background
+  const fromDate=($('range-from')?.value||'').trim();
+  const toDate=($('range-to')?.value||'').trim();
+  _shareBlob=null; _shareFilename=null;
+  if(!fromDate||!toDate||fromDate>toDate) return;
+  try{
+    await loadSheetJS();
+    const{wb,filename}=await buildReportWorkbook(fromDate,toDate);
+    const buf=XLSX.write(wb,{type:'array',bookType:'xlsx'});
+    _shareBlob=new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+    _shareFilename=filename;
+  }catch(_){ _shareBlob=null; }
+}
+
 async function shareReport(){
   const fromDate=($('range-from')?.value||'').trim();
   const toDate=($('range-to')?.value||'').trim();
   if(!fromDate||!toDate){toast('⚠️ בחר תאריך התחלה וסיום','warn',3000);return;}
   if(fromDate>toDate){toast('⚠️ תאריך התחלה חייב להיות לפני תאריך הסיום','warn',3000);return;}
+
+  // If blob not ready yet (e.g. user clicked share immediately), build now
+  if(!_shareBlob){
+    toast('⏳ מכין קובץ...','info',1500);
+    await prepareShareBlob();
+    if(!_shareBlob){toast('⚠️ אין דיווחים בתקופה הנבחרת','warn',3000);return;}
+  }
+
+  const blob=_shareBlob;
+  const filename=_shareFilename;
+
+  // ── Web Share API — must be called in direct click handler ──
+  // At this point we are still inside the click event (no awaits yet)
   try{
-    const{wb,attRows,taskRows,wlRows,filename}=await buildReportWorkbook(fromDate,toDate);
-    const buf=XLSX.write(wb,{type:'array',bookType:'xlsx'});
-    const blob=new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
     const file=new File([blob],filename,{type:blob.type});
 
-    // Web Share API level 2 — share files
     if(navigator.canShare&&navigator.canShare({files:[file]})){
+      // Level 2: share the actual Excel file
       await navigator.share({
         title:'MyWorkLog דוח',
         text:`דוח נוכחות ${fromDate} — ${toDate}`,
         files:[file]
       });
       toast('✅ דוח שותף','success',2000);
+
     } else if(navigator.share){
-      // Level 1 — share text only (no file support on this browser)
+      // Level 1: share as text summary (no file support)
       await navigator.share({
         title:'MyWorkLog דוח',
-        text:`דוח נוכחות ${fromDate} — ${toDate}
-${attRows.length} ימי נוכחות, ${taskRows.length} משימות`
+        text:`דוח נוכחות ${fromDate} — ${toDate}`
       });
-      toast('✅ קישור שותף','success',2000);
+      toast('✅ שותף','success',2000);
+
     } else {
-      // Fallback — trigger download (desktop browsers)
+      // Fallback: download
       const a=document.createElement('a');a.href=URL.createObjectURL(blob);
       a.download=filename;
       document.body.appendChild(a);a.click();
@@ -4187,10 +4220,14 @@ ${attRows.length} ימי נוכחות, ${taskRows.length} משימות`
       toast('📊 שיתוף לא נתמך — הקובץ הורד','info',3000);
     }
   }catch(e){
-    if(e.name==='AbortError') return; // user cancelled share sheet
-    if(e.message==='no_data'){toast('⚠️ אין דיווחים בתקופה הנבחרת','warn',3000);return;}
+    if(e.name==='AbortError'||e.name==='NotAllowedError') return;
     console.error('[shareReport]',e);
-    toast('❌ שגיאה בשיתוף: '+e.message,'error',4000);
+    // Fallback to download on any error
+    const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+    a.download=filename;
+    document.body.appendChild(a);a.click();
+    setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1000);
+    toast('📊 הקובץ הורד','info',2000);
   }
 }
 
@@ -4200,10 +4237,16 @@ function exportInit(){
   $('btn-export-range')?.addEventListener('click',exportPeriodXLSX);
   $('btn-share-range')?.addEventListener('click',shareReport);
   $('btn-open-import-from-settings')?.addEventListener('click',()=>{closeM('modal-settings');openImportModal();});
+  // Invalidate pre-built blob when range dates change
+  const invalidateBlob=()=>{_shareBlob=null;_shareFilename=null;};
+  $('range-from')?.addEventListener('change',invalidateBlob);
+  $('range-to')?.addEventListener('change',invalidateBlob);
   // Show export + share buttons after "הצג" is clicked in range view
+  // Also pre-build the share blob so share() can fire synchronously
   $('btn-range-go')?.addEventListener('click',()=>{
     const expBtn=$('btn-export-range');if(expBtn) expBtn.style.display='';
     const shrBtn=$('btn-share-range');if(shrBtn) shrBtn.style.display='';
+    prepareShareBlob(); // fire-and-forget: ready by the time user taps share
   });
 }
 
