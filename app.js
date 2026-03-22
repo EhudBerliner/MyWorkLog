@@ -2,7 +2,7 @@
    MyWorkLog · App Core  v3.2.0
    ═══════════════════════════════════════════════════════ */
 
-const VER = '4.1.0';
+const VER = '4.2.0';
 
 /* ── Storage keys ── */
 const K = {
@@ -19,8 +19,6 @@ const K = {
   wstandard: 'mwl_wstandard',           // WorkStandard local cache
   profile:   'mwl_profile',             // {name, role}
   rounding:  'mwl_rounding',            // 0 | 5 | 10 | 15
-  taskDefs:  'mwl_task_definitions',    // [{id,name,billable}]              — global task definitions       // last open settings tab
-  crmSync:   'mwl_crm_sync',           // last task-defs sync timestamp
 };
 
 /* ── Runtime state ── */

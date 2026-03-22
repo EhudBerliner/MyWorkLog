@@ -11,7 +11,6 @@ const SHEET_PROJECTS    = 'Projects';
 const SHEET_WSTANDARD   = 'WorkStandard';
 const SHEET_CLIENTS     = 'Clients';
 const SHEET_CLI_PROJ    = 'ClientProjects';
-const SHEET_TASK_DEF    = 'TaskDefinitions';
 
 const HEADERS           = ['Timestamp','Report_Date','Report_Time','Category','Description','Project','Record_ID'];
 const TASK_LOG_HEADERS  = ['Report_Date','משך משימה','Project','Description'];
@@ -19,7 +18,6 @@ const PROJECT_HEADERS   = ['Project_Name','Created_At'];
 const WSTANDARD_HEADERS = ['Date','WeekDay','Day_Standard_Hours','Notes','Description'];
 const CLIENTS_HEADERS   = ['Client_ID','Client_Name','Created_At'];
 const CLI_PROJ_HEADERS  = ['Project_ID','Client_ID','Project_Name','Created_At'];
-const TASK_DEF_HEADERS  = ['Task_ID','Task_Name','Billable','Created_At'];
 
 // ── Attendance sheet columns (v4.0) ──────────────────────────────────────────
 //   A=Date   B=Entry  C=Exit   D=Duration  E=Daily Standard  F=Deviation  G=_row_type(hidden)
@@ -44,8 +42,6 @@ function doPost(e) {
     if (data.action === 'deleteClient')         return ok(deleteClient(data.id));
     if (data.action === 'addClientProject')     return ok(addClientProject(data.id, data.clientId, data.name));
     if (data.action === 'deleteClientProject')  return ok(deleteClientProject(data.id));
-    if (data.action === 'addTaskDef')           return ok(addTaskDef(data.id, data.name, data.billable));
-    if (data.action === 'deleteTaskDef')        return ok(deleteTaskDef(data.id));
     if (data.action === 'delete')               { deleteById(data.id, data.category, data.report_date); return ok('נמחק'); }
 
     const ss   = SpreadsheetApp.getActiveSpreadsheet();
@@ -101,21 +97,7 @@ function doGet(e) {
     return jsonResp({ reports, projects });
   }
 
-  if (action === 'getCRM') {
-    const ss = SpreadsheetApp.getActiveSpreadsheet();
-    const readSheet = (name, cols, mapper) => {
-      const sh = ss.getSheetByName(name);
-      if (!sh || sh.getLastRow() <= 1) return [];
-      return sh.getRange(2,1,sh.getLastRow()-1,cols).getValues().map(mapper).filter(Boolean);
-    };
-    const clients         = readSheet(SHEET_CLIENTS, 3,
-      r=>{const id=String(r[0]).trim(),name=String(r[1]).trim();return(id&&name)?{id,name,createdAt:String(r[2]||'')}:null;});
-    const clientProjects  = readSheet(SHEET_CLI_PROJ, 4,
-      r=>{const id=String(r[0]).trim(),cId=String(r[1]).trim(),name=String(r[2]).trim();return(id&&cId&&name)?{id,clientId:cId,name,createdAt:String(r[3]||'')}:null;});
-    const taskDefinitions = readSheet(SHEET_TASK_DEF, 4,
-      r=>{const id=String(r[0]).trim(),name=String(r[1]).trim();return(id&&name)?{id,name,billable:String(r[2]).trim().toLowerCase()==='true',createdAt:String(r[3]||'')}:null;});
-    return jsonResp({ clients, clientProjects, taskDefinitions });
-  }
+
 
   if (action === 'rebuildAttendance') {
     rebuildAllAttendance();
@@ -541,17 +523,8 @@ function deleteClientProject(id){
   if(!id)return'no id';
   deleteRowById(SpreadsheetApp.getActiveSpreadsheet(),SHEET_CLI_PROJ,id,0);return'deleted';
 }
-function addTaskDef(id,name,billable){
-  if(!id||!name||!name.trim())return'empty';
-  const ss=SpreadsheetApp.getActiveSpreadsheet(),sheet=getOrCreateSheet(ss,SHEET_TASK_DEF,TASK_DEF_HEADERS);
-  if(sheet.getLastRow()>1&&sheet.getRange(2,1,sheet.getLastRow()-1,1).getValues().some(r=>String(r[0]).trim()===id))return'exists';
-  sheet.appendRow([id,name.trim(),billable?'true':'false',new Date().toLocaleString('he-IL',{timeZone:'Asia/Jerusalem'})]);
-  autoFormatLastRow(sheet,TASK_DEF_HEADERS.length);return'added';
-}
-function deleteTaskDef(id){
-  if(!id)return'no id';
-  deleteRowById(SpreadsheetApp.getActiveSpreadsheet(),SHEET_TASK_DEF,id,0);return'deleted';
-}
+
+
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  Setup
@@ -565,7 +538,6 @@ function setupSheets() {
   setup(SHEET_WSTANDARD, WSTANDARD_HEADERS, [120,100,170,200,220]);
   setup(SHEET_CLIENTS,   CLIENTS_HEADERS,   [180,220,200]);
   setup(SHEET_CLI_PROJ,  CLI_PROJ_HEADERS,  [180,180,220,200]);
-  setup(SHEET_TASK_DEF,  TASK_DEF_HEADERS,  [180,220,100,200]);
   ss.getSheetByName(SHEET_WSTANDARD)?.getRange('A2:A1000').setNumberFormat('@STRING@');
   getOrCreateAttSheet(ss); // create / style Attendance with new headers
   SpreadsheetApp.getUi().alert(

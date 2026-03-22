@@ -1,5 +1,5 @@
 {
-  "version": "4.1.0",
+  "version": "4.2.0",
   "buildDate": "2026-03-22",
-  "changelog": "v4.1.0: code review — removed 29 unused CSS rules, 2 dead functions (processOfflineDeleteQueue, queueDelete), 3 unused K constants (inst, syncToken, settingsTab)"
+  "changelog": "v4.2.0: removed Task Definition system entirely — stab-tasks, syncCRM, _crmPost, TaskDef HTML/CSS/JS/GAS"
 }

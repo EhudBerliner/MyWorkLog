@@ -55,7 +55,7 @@ html,body{height:100%;background:var(--bg0);color:var(--text);
 .workday-chip input{position:absolute;opacity:0;width:0;height:0}
 .workday-chip:has(input:checked){background:var(--limeDim);border-color:var(--lime);color:var(--lime)}
 
-/* ── NOTIFICATION SYSTEM v4.1.0 ── */
+/* ── NOTIFICATION SYSTEM v4.2.0 ── */
 .offline-banner{position:fixed;top:0;left:0;right:0;
   background:var(--red,#ef4444);color:#fff;text-align:center;
   padding:calc(var(--safeT,0px)+8px) 16px 8px;
@@ -486,28 +486,24 @@ details summary::-webkit-details-marker{display:none}
 .stab-pnl.active{display:flex;animation:fadeUp .18s ease both}
 
 /* ─ CLIENT/PROJECT TREE ─ */
-.billable-badge{font-size:.6rem;font-weight:800;letter-spacing:.6px;padding:2px 7px;border-radius:10px;flex-shrink:0}
-.billable-badge.yes{background:var(--limeDim);color:var(--lime)}
-.billable-badge.no{background:var(--glass);color:var(--text3)}
+
+
+
 .add-row{display:flex;gap:7px;margin-top:6px}
 .add-row .fi{flex:1;font-size:.8rem;padding:8px 10px}
 .add-row .btn-g{padding:8px 12px;font-size:.8rem}
 
 /* ─ CRM TASKS TAB ─ */
-.task-def-item{display:flex;align-items:center;gap:8px;padding:8px 11px;
-  background:var(--bg3);border:1px solid var(--border);border-radius:var(--rs);
-  transition:border-color .15s}
-.task-def-item:hover{border-color:var(--border2)}
-.task-def-name{flex:1;font-size:.84rem;font-weight:600;color:var(--text)}
-.task-def-list{display:flex;flex-direction:column;gap:5px}
-.crm-sync-bar{display:flex;align-items:center;gap:10px;padding:9px 13px;
-  background:var(--bg3);border:1px solid var(--border);border-radius:var(--rs);
-  font-size:.75rem;color:var(--text3)}
-.crm-sync-dot{width:7px;height:7px;border-radius:50%;background:var(--text3);flex-shrink:0;transition:background .3s}
-.crm-sync-dot.ok{background:var(--lime)}
-.crm-sync-dot.syncing{background:var(--amber);animation:pulse 1s ease infinite}
-.crm-sync-dot.err{background:var(--red)}
-.crm-sync-label{flex:1}
+
+
+
+
+
+
+
+
+
+
 
 /* ─ PROFILE SECTION ─ */
 .profile-avatar{width:56px;height:56px;border-radius:14px;background:var(--limeDim);
@@ -865,7 +861,6 @@ details summary::-webkit-details-marker{display:none}
         <button class="stab-btn active" data-stab="ui">🎨 תצוגה</button>
         <button class="stab-btn"        data-stab="connection">🔗 חיבור</button>
         <button class="stab-btn"        data-stab="data">📦 נתונים</button>
-        <button class="stab-btn"        data-stab="tasks">📋 משימות</button>
         <button class="stab-btn"        data-stab="about">ℹ️ אודות</button>
       </div>
     </div>
@@ -1122,52 +1117,7 @@ details summary::-webkit-details-marker{display:none}
 
       </div><!-- /stab-data -->
 
-      <!-- ══ TAB: TASKS ══ -->
-      <div class="stab-pnl" id="stab-tasks">
-
-        <!-- CRM SYNC STATUS (shared) -->
-        <div class="crm-sync-bar" id="crm-sync-bar-tasks" style="margin-bottom:2px">
-          <div class="crm-sync-dot" id="crm-sync-dot-tasks"></div>
-          <span class="crm-sync-label" id="crm-sync-label-tasks">טוען...</span>
-          <button class="btn-g sm" id="btn-sync-crm-tasks" style="padding:5px 10px;font-size:.72rem">↻ סנכרן</button>
-        </div>
-
-        <!-- ADD TASK DEFINITION -->
-        <div class="sset-group">
-          <div class="sset-label">➕ הגדרת משימה חדשה</div>
-          <div class="sset-block">
-            <div class="sset-row">
-              <div style="font-size:.76rem;color:var(--text3);margin-bottom:8px;line-height:1.6">
-                המשימות משותפות לכל הלקוחות. ניתן להוסיף אותה משימה פעמיים — פעם כבר-חיוב ופעם ללא חיוב.
-              </div>
-              <div class="add-row" style="flex-wrap:wrap;gap:6px">
-                <input type="text" id="new-task-def-name" class="fi" placeholder="שם המשימה..." style="min-width:140px"/>
-                <div class="seg" style="width:190px;flex-shrink:0">
-                  <button class="seg-btn active" data-billable="true">💰 בר-חיוב</button>
-                  <button class="seg-btn"        data-billable="false">🆓 ללא חיוב</button>
-                </div>
-                <button class="btn-g" id="btn-add-task-def" style="padding:8px 14px">+ הוסף</button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- TASK DEFINITIONS LIST -->
-        <div class="sset-group">
-          <div class="sset-label">📋 משימות מוגדרות</div>
-          <div class="sset-block">
-            <div class="sset-row" id="task-def-list-wrap">
-              <div id="task-def-list" class="task-def-list"></div>
-              <div id="task-def-empty" style="text-align:center;color:var(--text3);font-size:.82rem;padding:10px 0">
-                אין משימות מוגדרות עדיין
-              </div>
-            </div>
-          </div>
-        </div>
-
-      </div><!-- /stab-tasks -->
-
-      <!-- ══ TAB: ABOUT ══ -->
+            <!-- ══ TAB: ABOUT ══ -->
       <div class="stab-pnl" id="stab-about">
 
         <!-- APP INFO -->
@@ -1669,12 +1619,12 @@ details summary::-webkit-details-marker{display:none}
 /* BOOT */
 
 /* ═══════════════════════════════════════════════════════
-   NOTIFICATION SYSTEM  v4.1.0
+   NOTIFICATION SYSTEM  v4.2.0
    Manages: Offline banner · PWA Install · Update Prompt · Toast
    ═══════════════════════════════════════════════════════ */
 const NotificationSystem = {
   settings: { showNetworkStatus: true },
-  currentVersion: '4.1.0',
+  currentVersion: '4.2.0',
   deferredInstallPrompt: null,
   _wasOffline: false,   // track previous state for auto-cleanup
 
@@ -1846,7 +1796,6 @@ document.addEventListener('DOMContentLoaded',()=>{
     settingsTabsInit();   // v3.7.0
     profileInit();        // v3.7.0
     roundingInit();       // v3.7.0
-    clientsInit();        // v3.7.0
     exportInit();         // v3.7.0
     editReportInit();     // v3.7.0
     changelogInit();      // v3.7.0
@@ -1873,7 +1822,7 @@ document.addEventListener('DOMContentLoaded',()=>{
     fixStoredDates();
   netInit();netQInit();projLoad();histRender();
   importInit();
-    NotificationSystem.init(VER);  // v4.1.0
+    NotificationSystem.init(VER);  // v4.2.0
     updateSessionBanner();
     flushDeleteQueue();
     menuInit();vBadgeInit();swipeInit();ptrInit();swInit();installInit();scrollInit();
@@ -3662,8 +3611,6 @@ function openM(id){
     // v3.7.0 additions
     profileLoad();
     roundingLoad();
-    taskDefsRender();       // v3.7.0
-    crmSyncStatus();        // v3.7.0
     themeSettingsSync();
     wstdSyncStatusInline();
     aboutTabRender();
@@ -3780,10 +3727,7 @@ async function syncFromSheet(){
     const lastSync=store('mwl_wstandard_sync');
     const staleMins=lastSync?Math.floor((Date.now()-new Date(lastSync.replace(/(\d+)\/(\d+)\/(\d+)/,'$3-$2-$1')).getTime())/60000):999;
     if(staleMins>10) await syncWStandard(true);
-    // CRM: only if >30 min since last sync
-    const lastCRM=store(K.crmSync);
-    const staleCRM=lastCRM?Math.floor((Date.now()-new Date(lastCRM.replace(/(\d+)\/(\d+)\/(\d+)/,'$3-$2-$1')).getTime())/60000):999;
-    if(staleCRM>30) syncCRM(true);
+
   }
 }
 
@@ -3932,11 +3876,6 @@ function switchSettingsTab(id){
   document.querySelectorAll('.stab-pnl').forEach(p=>p.classList.toggle('active',p.id===`stab-${id}`));
   _lastSettingsTab=id;
   try{sessionStorage.setItem('mwl_stab',id);}catch(_){}
-  // Refresh tasks tab on every open
-  if(id==='tasks'){
-    taskDefsRender();
-    crmSyncStatus();
-  }
 }
 
 /* ═══════════════════════════════════════════════════════
@@ -4015,153 +3954,21 @@ function applyRounding(timeStr){
 /* ═══════════════════════════════════════════════════════
    CLIENTS / PROJECTS / TASKS  v3.7.0
    ═══════════════════════════════════════════════════════ */
-/* ═══════════════════════════════════════════════════════
-   CRM — Projects · Task Definitions  v3.7.0
-   ═══════════════════════════════════════════════════════
-   K.taskDefs = [{id, name, billable}]
-     • משימות גלובליות — משותפות לכל הפרויקטים
-     • אותה משימה יכולה להופיע פעמיים: billable + non-billable
-   סנכרון פרויקטים: דרך הלשונית "נתונים" (legacy flat list)
-   ═══════════════════════════════════════════════════════ */
+
 
 /* ── Accessors ────────────────────────────────────────── */
-function getTaskDefs()     { return store(K.taskDefs) || []; }
-function saveTaskDefs(arr) { store(K.taskDefs, arr); }
 
 /* ── CRM Sync (Task Definitions only) ────────────────── */
-async function syncCRM(silent=false){
-  const ep=store(K.ep);
-  if(!ep||!navigator.onLine){ crmSyncUI('err','אין חיבור'); return; }
-  crmSyncUI('syncing','מסנכרן...');
-  try{
-    const res=await fetch(ep+'?action=getCRM&t='+Date.now(),{cache:'no-store'});
-    if(!res.ok) throw new Error('HTTP '+res.status);
-    const text=await res.text();
-    let data;
-    try{ data=JSON.parse(text); }
-    catch(e){ throw new Error('תגובה לא תקינה מהשרת — בדוק שה-GAS מעודכן לגרסה v6.0 ו-Deploy נעשה'); }
 
-    if(Array.isArray(data.taskDefinitions)){
-      const local     = getTaskDefs();
-      const serverIds = new Set(data.taskDefinitions.map(td=>td.id));
-      // Server is source of truth; keep local-only items not yet on server
-      const merged = [
-        ...data.taskDefinitions,
-        ...local.filter(td=>!serverIds.has(td.id))
-      ];
-      saveTaskDefs(merged);
-    }
 
-    const ts=new Date().toLocaleString('he-IL',{timeZone:'Asia/Jerusalem'});
-    store(K.crmSync,ts);
-    crmSyncUI('ok','סונכרן: '+ts);
-    taskDefsRender();
-    if(!silent) toast('✅ משימות סונכרנו','success',2000);
-  }catch(err){
-    crmSyncUI('err','שגיאת סנכרון');
-    console.warn('[syncCRM]',err.message||err);
-    if(!silent) toast('❌ '+( err.message||'שגיאת CRM Sync'),'error',4000);
-  }
-}
 
-async function _crmPost(payload){
-  const ep=store(K.ep); if(!ep||!navigator.onLine) return;
-  try{ await fetch(ep,{method:'POST',headers:{'Content-Type':'application/json'},
-    body:JSON.stringify(payload),mode:'no-cors'}); }catch(_){}
-}
 
-function crmSyncUI(state,msg){
-  const dot=$('crm-sync-dot-tasks'), lbl=$('crm-sync-label-tasks');
-  if(dot) dot.className='crm-sync-dot'+(state==='ok'?' ok':state==='syncing'?' syncing':state==='err'?' err':'');
-  if(lbl) lbl.textContent=msg;
-}
-function crmSyncStatus(){
-  const ts=store(K.crmSync), ep=store(K.ep);
-  if(!ep)  { crmSyncUI('err','Endpoint לא הוגדר'); return; }
-  if(!ts)  { crmSyncUI('','טרם סונכרן'); return; }
-  crmSyncUI('ok','סונכרן: '+ts);
-}
 
-/* ═══════════════════════════════════════════════════════
-   TASK DEFINITIONS  v3.7.0
-   ═══════════════════════════════════════════════════════
-   משימות גלובליות — לא שייכות לפרויקט ספציפי.
-   אותה משימה יכולה להופיע פעמיים: billable + non-billable.
-   ═══════════════════════════════════════════════════════ */
 
-let _newTaskBillable = true;
 
-function taskDefsRender(){
-  const list=$('task-def-list');
-  const empty=$('task-def-empty');
-  if(!list) return;
-  const tasks=getTaskDefs();
-  if(!tasks.length){
-    list.innerHTML='';
-    if(empty) empty.style.display='';
-    return;
-  }
-  if(empty) empty.style.display='none';
-  list.innerHTML=tasks.map(tk=>`
-    <div class="task-def-item" id="task-def-item-${tk.id}">
-      <span class="task-def-name">${esc(tk.name)}</span>
-      <span class="billable-badge ${tk.billable?'yes':'no'}">${tk.billable?'💰 בר-חיוב':'🆓 ללא חיוב'}</span>
-      <button class="ibtn" style="font-size:.7rem;padding:3px 7px;color:var(--red)"
-        onclick="removeTaskDef('${tk.id}')">🗑</button>
-    </div>`).join('');
-}
 
-function addTaskDef(){
-  const inp=$('new-task-def-name');
-  const name=(inp?.value||'').trim();
-  if(!name){ if(inp) inp.focus(); return; }
-  const billable=_newTaskBillable;
-  const tasks=getTaskDefs();
-  if(tasks.some(td=>td.name.toLowerCase()===name.toLowerCase()&&td.billable===billable)){
-    toast('⚠️ משימה זו כבר קיימת עם אותה הגדרת חיוב','warn',3000); return;
-  }
-  const id='td'+Date.now();
-  tasks.push({id, name, billable});
-  saveTaskDefs(tasks);
-  if(inp) inp.value='';
-  taskDefsRender();
-  buzz([10]);
-  // Push to GAS — no-cors so no confirmation, but sync will reconcile
-  toast('✅ משימה נוספה','success',1500);
-  _crmPost({action:'addTaskDef', id, name, billable});
-}
-
-function removeTaskDef(id){
-  if(!confirm('למחוק משימה זו?')) return;
-  saveTaskDefs(getTaskDefs().filter(td=>td.id!==id));
-  taskDefsRender();
-  buzz([30,20]);
-  toast('🗑 משימה נמחקה','success',1500);
-  _crmPost({action:'deleteTaskDef', id});
-}
 
 /* ── CRM Init ─────────────────────────────────────────── */
-function clientsInit(){
-  // Tasks tab
-  const btnAddTask=$('btn-add-task-def');
-  const inpTaskName=$('new-task-def-name');
-  if(btnAddTask) btnAddTask.addEventListener('click', addTaskDef);
-  if(inpTaskName) inpTaskName.addEventListener('keydown', e=>{ if(e.key==='Enter') addTaskDef(); });
-
-  // Billable segment control
-  document.querySelectorAll('.seg-btn[data-billable]').forEach(btn=>{
-    btn.addEventListener('click', ()=>{
-      document.querySelectorAll('.seg-btn[data-billable]').forEach(b=>b.classList.remove('active'));
-      btn.classList.add('active');
-      _newTaskBillable = (btn.dataset.billable==='true');
-      buzz([10]);
-    });
-  });
-
-  // CRM sync button
-  const btnSyncCRM=$('btn-sync-crm-tasks');
-  if(btnSyncCRM) btnSyncCRM.addEventListener('click', ()=>syncCRM(false));
-}
 
 /* ═══════════════════════════════════════════════════════
    EXPORT  v3.7.0
