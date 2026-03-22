@@ -1,5 +1,5 @@
 {
-  "version": "4.3.2",
+  "version": "4.3.3",
   "buildDate": "2026-03-22",
-  "changelog": "v4.3.2: revert update mechanism to original working state — skipWaiting in install, simple clear+reload"
+  "changelog": "v4.3.3: fix share — Path A (pre-built blob → native share), Path B (no blob → download+cache for next tap)"
 }
