@@ -1,5 +1,5 @@
 {
-  "version": "4.3.5",
+  "version": "4.3.6",
   "buildDate": "2026-03-22",
-  "changelog": "v4.3.5: fix session banner loading state; fix share — desktop downloads, mobile native share with fallback"
+  "changelog": "v4.3.6: revert update mechanism to original — remove controllerchange, simple clear+reload"
 }
