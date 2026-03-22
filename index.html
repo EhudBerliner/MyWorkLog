@@ -55,7 +55,7 @@ html,body{height:100%;background:var(--bg0);color:var(--text);
 .workday-chip input{position:absolute;opacity:0;width:0;height:0}
 .workday-chip:has(input:checked){background:var(--limeDim);border-color:var(--lime);color:var(--lime)}
 
-/* ── NOTIFICATION SYSTEM v4.2.1 ── */
+/* ── NOTIFICATION SYSTEM v4.2.2 ── */
 .offline-banner{position:fixed;top:0;left:0;right:0;
   background:var(--red,#ef4444);color:#fff;text-align:center;
   padding:calc(var(--safeT,0px)+8px) 16px 8px;
@@ -779,6 +779,7 @@ details summary::-webkit-details-marker{display:none}
           <span style="color:var(--text3);font-size:.8rem" data-i18n="labelRangeSep">עד</span>
           <input type="date" id="range-to" class="fi" data-i18n-attr="title" data-i18n="rangeTo" title="עד-"/>
           <button class="btn-p sm" id="btn-range-go" style="font-size:.75rem"data-i18n="btnRangeGo">הצג</button>
+          <button class="btn-g sm" id="btn-export-range" style="font-size:.75rem;display:none" title="ייצא לאקסל">📊 Excel</button>
         </div>
       </div>
       <div class="stats-grid">
@@ -1071,21 +1072,7 @@ details summary::-webkit-details-marker{display:none}
                 <button class="btn-g sm" id="btn-export-xlsx">📊 ייצא Excel</button>
               </div>
             </div>
-            <div class="sset-row" style="border-top:1px solid var(--border);padding-top:11px">
-              <div class="sset-row-label">📅 ייצוא לתקופה</div>
-              <div class="sset-row-sub" style="margin-bottom:10px">נוכחות + משימות לטווח תאריכים נבחר — שני Sheets</div>
-              <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
-                <div style="display:flex;flex-direction:column;gap:3px">
-                  <label style="font-size:.68rem;color:var(--text3)">מתאריך</label>
-                  <input type="date" id="export-from-date" class="fi" style="width:140px;padding:7px 10px;font-size:.8rem"/>
-                </div>
-                <div style="display:flex;flex-direction:column;gap:3px">
-                  <label style="font-size:.68rem;color:var(--text3)">עד תאריך</label>
-                  <input type="date" id="export-to-date" class="fi" style="width:140px;padding:7px 10px;font-size:.8rem"/>
-                </div>
-              </div>
-              <button class="btn-p sm" id="btn-export-period" style="margin-top:10px;width:100%">📊 ייצא לאקסל</button>
-            </div>
+
           </div>
         </div>
 
@@ -1619,12 +1606,12 @@ details summary::-webkit-details-marker{display:none}
 /* BOOT */
 
 /* ═══════════════════════════════════════════════════════
-   NOTIFICATION SYSTEM  v4.2.1
+   NOTIFICATION SYSTEM  v4.2.2
    Manages: Offline banner · PWA Install · Update Prompt · Toast
    ═══════════════════════════════════════════════════════ */
 const NotificationSystem = {
   settings: { showNetworkStatus: true },
-  currentVersion: '4.2.1',
+  currentVersion: '4.2.2',
   deferredInstallPrompt: null,
   _wasOffline: false,   // track previous state for auto-cleanup
 
@@ -1822,7 +1809,7 @@ document.addEventListener('DOMContentLoaded',()=>{
     fixStoredDates();
   netInit();netQInit();projLoad();histRender();
   importInit();
-    NotificationSystem.init(VER);  // v4.2.1
+    NotificationSystem.init(VER);  // v4.2.2
     updateSessionBanner();
     flushDeleteQueue();
     menuInit();vBadgeInit();swipeInit();ptrInit();swInit();installInit();scrollInit();
@@ -4023,8 +4010,8 @@ async function exportXLSX(){
 
 /* ─ Period Excel Export (2 sheets: Attendance + Tasks)  v3.7.0 ─ */
 async function exportPeriodXLSX(){
-  const fromDate=($('export-from-date')?.value||'').trim();
-  const toDate=($('export-to-date')?.value||'').trim();
+  const fromDate=($('range-from')?.value||'').trim();
+  const toDate=($('range-to')?.value||'').trim();
   if(!fromDate||!toDate){toast('⚠️ בחר תאריך התחלה וסיום','warn',3000);return;}
   if(fromDate>toDate){toast('⚠️ תאריך התחלה חייב להיות לפני תאריך הסיום','warn',3000);return;}
 
@@ -4035,76 +4022,69 @@ async function exportPeriodXLSX(){
   try{
     await loadSheetJS();
 
-    /* ── Sheet 1: Attendance ─────────────────────────────── */
-    // Get all unique dates in range that have entry/exit/task activity
-    const dates=[...new Set(periodReps.map(r=>r.report_date))].sort();
-    const attendanceRows=[];
+    /* ── Sheet 1: Attendance ─────────────────────────────────
+       Columns: Date | Entry | Exit | Duration | Daily Standard | Deviation
+       Matches GAS Attendance sheet structure (v4)
+    ────────────────────────────────────────────────────────── */
+    const ATT_COLS=['Date','Entry','Exit','Duration','Daily Standard','Deviation'];
+    const attDates=[...new Set(periodReps
+      .filter(r=>r.category==='entry'||r.category==='exit')
+      .map(r=>r.report_date))].sort();
+    const attRows=[];
 
-    for(const ds of dates){
-      const{stdHours,notes,description}=getDayStd(ds);
+    for(const ds of attDates){
+      const{stdHours}=getDayStd(ds);
       const stdMins=Math.round(stdHours*60);
       const stdStr=stdMins>0?minsToHHMM(stdMins):'';
-      const notesLabel=[notes,description].filter(Boolean).join(' — ');
-      const{pairs,mins:totalMins,hasOpen}=calcDayWorkMins(ds,periodReps);
-
-      if(pairs.length>0){
-        pairs.forEach((pair,i)=>{
-          const dur=minsToHHMM(pair.mins);
-          const diff=i===0?minsToHHMM(totalMins-stdMins):''; // deviation only on first row
-          attendanceRows.push({
-            'תאריך': i===0?ds:'',
-            'כניסה': pair.entry||'',
-            'יציאה': pair.exit||'',
-            'משך': dur,
-            'זמן תקן': i===0?stdStr:'',
-            'Notes תקן': i===0?notesLabel:'',
-            'חריגה (+/-)': diff
-          });
-        });
+      const{pairs,mins:totalMins}=calcDayWorkMins(ds,periodReps);
+      if(!pairs.length) continue;
+      const devMins=stdMins>0?totalMins-stdMins:null;
+      const devStr=devMins!==null?(devMins>=0?'+':'')+minsToHHMM(Math.abs(devMins)):'';
+      if(pairs.length===1){
+        attRows.push([ds,pairs[0].entry,pairs[0].exit,minsToHHMM(pairs[0].mins),stdStr,devStr]);
       } else {
-        // Day with no entry/exit pairs (tasks only or open session)
-        const dr=periodReps.filter(r=>r.report_date===ds);
-        const hasAny=dr.some(r=>r.category==='entry'||r.category==='exit'||r.category==='task');
-        if(!hasAny) continue;
-        const entryRec=dr.find(r=>r.category==='entry');
-        const exitRec=dr.find(r=>r.category==='exit');
-        attendanceRows.push({
-          'תאריך': ds,
-          'כניסה': entryRec?.report_time||'',
-          'יציאה': exitRec?.report_time||(hasOpen?'פתוח':''),
-          'משך': '',
-          'זמן תקן': stdStr,
-          'Notes תקן': notesLabel,
-          'חריגה (+/-)': ''
-        });
+        // Summary row
+        attRows.push([ds,pairs[0].entry,pairs[pairs.length-1].exit,minsToHHMM(totalMins),stdStr,devStr]);
+        // Detail rows — std/dev blank
+        pairs.forEach(p=>attRows.push([ds,p.entry,p.exit,minsToHHMM(p.mins),'','']));
       }
     }
 
-    /* ── Sheet 2: Tasks ──────────────────────────────────── */
-    const taskReps=periodReps.filter(r=>r.category==='task');
-    const taskRows=taskReps.map(r=>({
-      'תאריך': r.report_date||'',
-      'משך': r.report_time||'',
-      'פרויקט': r.project||'',
-      'תיאור': r.description||''
-    }));
+    /* ── Sheet 2: Tasks ─────────────────────────────────────── */
+    const TASK_COLS=['Date','Duration','Project','Description'];
+    const taskRows=periodReps
+      .filter(r=>r.category==='task')
+      .map(r=>[r.report_date||'',r.report_time||'',r.project||'',r.description||'']);
 
-    /* ── Build workbook ──────────────────────────────────── */
+    /* ── Sheet 3: WorkStandard ──────────────────────────────
+       All WorkStandard entries that fall within the period
+    ────────────────────────────────────────────────────────── */
+    const WS_COLS=['Date','Day','Standard Hours','Notes','Description'];
+    const wsRows=getWStandard()
+      .filter(r=>r.date>=fromDate&&r.date<=toDate)
+      .sort((a,b)=>a.date<b.date?-1:1)
+      .map(r=>[
+        r.date||'',
+        r.weekDay||'',
+        r.stdHours||0,
+        r.notes||'',
+        r.description||''
+      ]);
+
+    /* ── Build workbook ──────────────────────────────────────── */
     const wb=XLSX.utils.book_new();
 
-    const ws1=XLSX.utils.json_to_sheet(attendanceRows,{
-      header:['תאריך','כניסה','יציאה','משך','זמן תקן','Notes תקן','חריגה (+/-)']
-    });
-    ws1['!cols']=[{wch:13},{wch:9},{wch:9},{wch:9},{wch:10},{wch:28},{wch:12}];
-    ws1['!rtl']=true;
-    XLSX.utils.book_append_sheet(wb,ws1,'נוכחות');
+    const ws1=XLSX.utils.aoa_to_sheet([ATT_COLS,...attRows]);
+    ws1['!cols']=[{wch:13},{wch:9},{wch:9},{wch:10},{wch:16},{wch:12}];
+    XLSX.utils.book_append_sheet(wb,ws1,'Attendance');
 
-    const ws2=taskRows.length>0
-      ? XLSX.utils.json_to_sheet(taskRows,{header:['תאריך','משך','פרויקט','תיאור']})
-      : XLSX.utils.aoa_to_sheet([['תאריך','משך','פרויקט','תיאור'],['אין משימות בתקופה זו']]);
-    if(ws2['!cols']===undefined) ws2['!cols']=[{wch:13},{wch:11},{wch:20},{wch:36}];
-    ws2['!rtl']=true;
-    XLSX.utils.book_append_sheet(wb,ws2,'משימות');
+    const ws2=XLSX.utils.aoa_to_sheet([TASK_COLS,...(taskRows.length?taskRows:[['אין משימות בתקופה זו']])]);
+    ws2['!cols']=[{wch:13},{wch:10},{wch:22},{wch:36}];
+    XLSX.utils.book_append_sheet(wb,ws2,'Tasks');
+
+    const ws3=XLSX.utils.aoa_to_sheet([WS_COLS,...(wsRows.length?wsRows:[['אין נתוני תקן בתקופה זו']])]);
+    ws3['!cols']=[{wch:13},{wch:12},{wch:16},{wch:22},{wch:22}];
+    XLSX.utils.book_append_sheet(wb,ws3,'WorkStandard');
 
     const buf=XLSX.write(wb,{type:'array',bookType:'xlsx'});
     const b=new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
@@ -4112,7 +4092,7 @@ async function exportPeriodXLSX(){
     a.download=`worklog-${fromDate}_${toDate}.xlsx`;
     document.body.appendChild(a);a.click();
     setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1000);
-    toast(`📊 Excel יוצא — ${attendanceRows.length} שורות נוכחות, ${taskRows.length} משימות`,'success',3000);
+    toast(`📊 ייוצא — ${attRows.length} שורות נוכחות, ${taskRows.length} משימות, ${wsRows.length} ימי תקן`,'success',3500);
     buzz([20,40]);
   }catch(e){
     console.error('[exportPeriod]',e);
@@ -4123,15 +4103,13 @@ async function exportPeriodXLSX(){
 function exportInit(){
   $('btn-export-csv')?.addEventListener('click',exportCSV);
   $('btn-export-xlsx')?.addEventListener('click',exportXLSX);
-  $('btn-export-period')?.addEventListener('click',exportPeriodXLSX);
+  $('btn-export-range')?.addEventListener('click',exportPeriodXLSX);
   $('btn-open-import-from-settings')?.addEventListener('click',()=>{closeM('modal-settings');openImportModal();});
-  // Default period: current month
-  const now=new Date();
-  const y=now.getFullYear(),m=String(now.getMonth()+1).padStart(2,'0');
-  const lastDay=new Date(now.getFullYear(),now.getMonth()+1,0).getDate();
-  const fromEl=$('export-from-date'),toEl=$('export-to-date');
-  if(fromEl&&!fromEl.value) fromEl.value=`${y}-${m}-01`;
-  if(toEl&&!toEl.value) toEl.value=`${y}-${m}-${lastDay}`;
+  // Show export button after "הצג" is clicked in range view
+  $('btn-range-go')?.addEventListener('click',()=>{
+    const btn=$('btn-export-range');
+    if(btn) btn.style.display='';
+  });
 }
 
 /* ═══════════════════════════════════════════════════════

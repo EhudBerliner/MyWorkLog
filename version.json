@@ -1,5 +1,5 @@
 {
-  "version": "4.2.1",
+  "version": "4.2.2",
   "buildDate": "2026-03-22",
-  "changelog": "v4.2.1: fix WorkStandard date parsing — Israel timezone for Date objects, DD/MM-first for ambiguous slash dates"
+  "changelog": "v4.2.2: period export moved to range view; 3 sheets — Attendance, Tasks, WorkStandard"
 }
