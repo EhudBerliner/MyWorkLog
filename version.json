@@ -1,5 +1,5 @@
 {
-  "version": "4.2.4",
+  "version": "4.2.7",
   "buildDate": "2026-03-22",
-  "changelog": "v4.2.4: fix update 404 — use location.replace(pathname+#fragment) instead of ?query on static hosts"
+  "changelog": "v4.2.7: fix update — force reg.update() then wait for SW install state → SKIP_WAITING → controllerchange reload"
 }
