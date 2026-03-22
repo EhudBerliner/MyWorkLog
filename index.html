@@ -55,7 +55,7 @@ html,body{height:100%;background:var(--bg0);color:var(--text);
 .workday-chip input{position:absolute;opacity:0;width:0;height:0}
 .workday-chip:has(input:checked){background:var(--limeDim);border-color:var(--lime);color:var(--lime)}
 
-/* ── NOTIFICATION SYSTEM v4.2.7 ── */
+/* ── NOTIFICATION SYSTEM v4.3.0 ── */
 .offline-banner{position:fixed;top:0;left:0;right:0;
   background:var(--red,#ef4444);color:#fff;text-align:center;
   padding:calc(var(--safeT,0px)+8px) 16px 8px;
@@ -1607,12 +1607,12 @@ details summary::-webkit-details-marker{display:none}
 /* BOOT */
 
 /* ═══════════════════════════════════════════════════════
-   NOTIFICATION SYSTEM  v4.2.7
+   NOTIFICATION SYSTEM  v4.3.0
    Manages: Offline banner · PWA Install · Update Prompt · Toast
    ═══════════════════════════════════════════════════════ */
 const NotificationSystem = {
   settings: { showNetworkStatus: true },
-  currentVersion: '4.2.7',
+  currentVersion: '4.3.0',
   deferredInstallPrompt: null,
   _wasOffline: false,   // track previous state for auto-cleanup
 
@@ -1742,48 +1742,44 @@ const NotificationSystem = {
       if (onUpdate) onUpdate();
 
       const reg = ST.swReg || (await navigator.serviceWorker?.getRegistration?.());
-      if (!reg) { location.replace(location.pathname); return; }
 
-      const activate = (sw) => {
-        ST._reloading = false;
+      // Helper: tell a SW to skip waiting, reload follows via controllerchange
+      const doActivate = (sw) => {
+        ST._reloading = false; // allow controllerchange to reload
         sw.postMessage({ type: 'SKIP_WAITING' });
-        // controllerchange in swInit will call location.reload()
-        // Safety fallback if it doesn't fire
-        setTimeout(() => location.replace(location.pathname), 4000);
+        setTimeout(() => location.replace(location.pathname), 5000); // safety
       };
 
-      if (reg.waiting) {
-        // New SW already waiting — activate immediately
-        activate(reg.waiting);
+      if (reg?.waiting) {
+        doActivate(reg.waiting);
 
-      } else if (reg.installing) {
-        // SW mid-install — wait for it to reach 'installed' state
-        reg.installing.addEventListener('statechange', function h(e){
+      } else if (reg?.installing) {
+        // Still installing — wait for it
+        reg.installing.addEventListener('statechange', function h(e) {
           if (e.target.state === 'installed') {
             e.target.removeEventListener('statechange', h);
-            activate(e.target);
+            doActivate(e.target);
           }
         });
 
-      } else {
-        // No new SW yet — force a check then wait for install
-        if (onUpdate) onUpdate = null; // prevent double-call
+      } else if (reg) {
+        // No SW update found yet — force check, wait, then activate
         reg.addEventListener('updatefound', () => {
-          const sw = reg.installing;
-          if (!sw) return;
-          sw.addEventListener('statechange', function h(e){
+          const sw = reg.installing; if (!sw) return;
+          sw.addEventListener('statechange', function h(e) {
             if (e.target.state === 'installed') {
               e.target.removeEventListener('statechange', h);
-              activate(e.target);
+              doActivate(e.target);
             }
           });
         });
-        // Force SW update check — this will download new sw.js if available
         reg.update().catch(() => {});
-        // If no new SW found within 8s (server not updated yet), just reload
-        setTimeout(() => {
-          if (!ST._reloading) location.replace(location.pathname);
-        }, 8000);
+        // Fallback: if no new SW in 10s, reload anyway
+        setTimeout(() => { if (!ST._reloading) location.replace(location.pathname); }, 10000);
+
+      } else {
+        // No SW at all — plain reload
+        location.replace(location.pathname);
       }
     };
   }
@@ -1837,7 +1833,7 @@ document.addEventListener('DOMContentLoaded',()=>{
     fixStoredDates();
   netInit();netQInit();projLoad();histRender();
   importInit();
-    NotificationSystem.init(VER);  // v4.2.7
+    NotificationSystem.init(VER);  // v4.3.0
     updateSessionBanner();
     flushDeleteQueue();
     menuInit();vBadgeInit();swipeInit();ptrInit();swInit();installInit();scrollInit();
