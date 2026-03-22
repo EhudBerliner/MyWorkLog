@@ -55,7 +55,7 @@ html,body{height:100%;background:var(--bg0);color:var(--text);
 .workday-chip input{position:absolute;opacity:0;width:0;height:0}
 .workday-chip:has(input:checked){background:var(--limeDim);border-color:var(--lime);color:var(--lime)}
 
-/* ── NOTIFICATION SYSTEM v4.3.3 ── */
+/* ── NOTIFICATION SYSTEM v4.3.4 ── */
 .offline-banner{position:fixed;top:0;left:0;right:0;
   background:var(--red,#ef4444);color:#fff;text-align:center;
   padding:calc(var(--safeT,0px)+8px) 16px 8px;
@@ -1607,12 +1607,12 @@ details summary::-webkit-details-marker{display:none}
 /* BOOT */
 
 /* ═══════════════════════════════════════════════════════
-   NOTIFICATION SYSTEM  v4.3.3
+   NOTIFICATION SYSTEM  v4.3.4
    Manages: Offline banner · PWA Install · Update Prompt · Toast
    ═══════════════════════════════════════════════════════ */
 const NotificationSystem = {
   settings: { showNetworkStatus: true },
-  currentVersion: '4.3.3',
+  currentVersion: '4.3.4',
   deferredInstallPrompt: null,
   _wasOffline: false,   // track previous state for auto-cleanup
 
@@ -1740,12 +1740,19 @@ const NotificationSystem = {
     document.getElementById('updateNowBtn').onclick = async () => {
       el.classList.remove('visible');
       if (onUpdate) onUpdate();
-      // Clear all SW caches then reload — SW re-installs with fresh assets
+      // Clear SW caches
       if ('caches' in window) {
         const keys = await caches.keys();
         await Promise.all(keys.map(k => caches.delete(k)));
       }
-      window.location.reload();
+      // If a new SW is waiting, activate it — controllerchange will reload
+      const reg = ST.swReg;
+      if (reg?.waiting) {
+        reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+        // controllerchange listener in swInit handles reload
+      } else {
+        window.location.reload();
+      }
     };
   }
 }
@@ -1798,7 +1805,7 @@ document.addEventListener('DOMContentLoaded',()=>{
     fixStoredDates();
   netInit();netQInit();projLoad();histRender();
   importInit();
-    NotificationSystem.init(VER);  // v4.3.3
+    NotificationSystem.init(VER);  // v4.3.4
     updateSessionBanner();
     flushDeleteQueue();
     menuInit();vBadgeInit();swipeInit();ptrInit();swInit();installInit();scrollInit();
@@ -3755,7 +3762,10 @@ function swInit(){
   navigator.serviceWorker.addEventListener('message',e=>{
     if(e.data?.type==='UPDATE_AVAILABLE') showUpd(e.data.version);
   });
-
+  // When a new SW takes control, reload to get fresh assets from new cache
+  navigator.serviceWorker.addEventListener('controllerchange',()=>{
+    window.location.reload();
+  });
 }
 function showUpd(newVer){
   // Delegate to NotificationSystem; also handle SW waiting

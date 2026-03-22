@@ -1,5 +1,5 @@
 {
-  "version": "4.3.3",
+  "version": "4.3.4",
   "buildDate": "2026-03-22",
-  "changelog": "v4.3.3: fix share — Path A (pre-built blob → native share), Path B (no blob → download+cache for next tap)"
+  "changelog": "v4.3.4: fix update — restore controllerchange reload; SKIP_WAITING on waiting SW; cache app.js+i18n.js"
 }
