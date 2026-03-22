@@ -1,5 +1,5 @@
 {
-  "version": "4.3.4",
+  "version": "4.3.5",
   "buildDate": "2026-03-22",
-  "changelog": "v4.3.4: fix update — restore controllerchange reload; SKIP_WAITING on waiting SW; cache app.js+i18n.js"
+  "changelog": "v4.3.5: fix session banner loading state; fix share — desktop downloads, mobile native share with fallback"
 }

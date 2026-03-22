@@ -55,7 +55,7 @@ html,body{height:100%;background:var(--bg0);color:var(--text);
 .workday-chip input{position:absolute;opacity:0;width:0;height:0}
 .workday-chip:has(input:checked){background:var(--limeDim);border-color:var(--lime);color:var(--lime)}
 
-/* ── NOTIFICATION SYSTEM v4.3.4 ── */
+/* ── NOTIFICATION SYSTEM v4.3.5 ── */
 .offline-banner{position:fixed;top:0;left:0;right:0;
   background:var(--red,#ef4444);color:#fff;text-align:center;
   padding:calc(var(--safeT,0px)+8px) 16px 8px;
@@ -1607,12 +1607,12 @@ details summary::-webkit-details-marker{display:none}
 /* BOOT */
 
 /* ═══════════════════════════════════════════════════════
-   NOTIFICATION SYSTEM  v4.3.4
+   NOTIFICATION SYSTEM  v4.3.5
    Manages: Offline banner · PWA Install · Update Prompt · Toast
    ═══════════════════════════════════════════════════════ */
 const NotificationSystem = {
   settings: { showNetworkStatus: true },
-  currentVersion: '4.3.4',
+  currentVersion: '4.3.5',
   deferredInstallPrompt: null,
   _wasOffline: false,   // track previous state for auto-cleanup
 
@@ -1805,7 +1805,7 @@ document.addEventListener('DOMContentLoaded',()=>{
     fixStoredDates();
   netInit();netQInit();projLoad();histRender();
   importInit();
-    NotificationSystem.init(VER);  // v4.3.4
+    NotificationSystem.init(VER);  // v4.3.5
     updateSessionBanner();
     flushDeleteQueue();
     menuInit();vBadgeInit();swipeInit();ptrInit();swInit();installInit();scrollInit();
@@ -2457,6 +2457,7 @@ function catInit(){
     buzz([15]);
   }));
   $('task-fields').style.display='none';
+  updateSessionBanner(); // show current session state immediately on boot
 }
 
 /* DURATION */
@@ -4149,47 +4150,40 @@ async function shareReport(){
   if(!fromDate||!toDate){toast('⚠️ בחר תאריך התחלה וסיום','warn',3000);return;}
   if(fromDate>toDate){toast('⚠️ תאריך התחלה חייב להיות לפני תאריך הסיום','warn',3000);return;}
 
-  // ── Path A: blob pre-built → try native share (synchronous activation) ──
-  if(_shareBlob){
-    const blob=_shareBlob;
-    const filename=_shareFilename;
-    try{
-      const file=new File([blob],filename,{type:blob.type});
-      if(navigator.canShare&&navigator.canShare({files:[file]})){
-        await navigator.share({title:'MyWorkLog דוח',text:`דוח נוכחות ${fromDate} — ${toDate}`,files:[file]});
-        toast('✅ דוח שותף','success',2000);
-        return;
-      }
-      if(navigator.share){
-        await navigator.share({title:'MyWorkLog דוח',text:`דוח נוכחות ${fromDate} — ${toDate}`});
-        toast('✅ שותף','success',2000);
-        return;
-      }
-    }catch(e){
-      if(e.name==='AbortError') return; // user cancelled — do nothing
-      // Any other error → fall through to download
-    }
-    // No share support or error → download
-    _triggerDownload(_shareBlob, _shareFilename);
-    toast('📊 הקובץ הורד','info',2000);
+  // Ensure blob is ready — prepareShareBlob() was called on "הצג"
+  // If not ready yet, build synchronously before deciding what to do
+  if(!_shareBlob){
+    toast('⏳ מכין קובץ...','info',1500);
+    await prepareShareBlob();
+  }
+  if(!_shareBlob){toast('⚠️ אין דיווחים בתקופה הנבחרת','warn',3000);return;}
+
+  const blob=_shareBlob, filename=_shareFilename;
+
+  // Desktop or unsupported browser — always download
+  if(!navigator.share){
+    _triggerDownload(blob,filename);
+    toast('📊 הקובץ הורד','success',2000);
     return;
   }
 
-  // ── Path B: blob not ready → build + download (no share, preserves activation) ──
-  // We can't await and then share() — transient activation would be lost.
-  toast('⏳ מכין קובץ לשמירה...','info',1500);
+  // Mobile — native share sheet
+  // navigator.share() is called HERE, inside the click handler.
+  // prepareShareBlob() ran earlier (on "הצג") so no await before share.
+  // If blob was just built above (edge case) → transient activation may
+  // be expired → catch NotAllowedError → fallback to download.
   try{
-    await loadSheetJS();
-    const{wb,filename}=await buildReportWorkbook(fromDate,toDate);
-    const buf=XLSX.write(wb,{type:'array',bookType:'xlsx'});
-    const blob=new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
-    // Cache for next time
-    _shareBlob=blob; _shareFilename=filename;
-    _triggerDownload(blob,filename);
-    toast('📊 הקובץ הורד — לחץ שוב לשיתוף','success',3000);
+    const file=new File([blob],filename,{type:blob.type});
+    const shareData=navigator.canShare&&navigator.canShare({files:[file]})
+      ? {title:'MyWorkLog דוח',text:`${fromDate} — ${toDate}`,files:[file]}
+      : {title:'MyWorkLog דוח',text:`דוח נוכחות ${fromDate} — ${toDate}`};
+    await navigator.share(shareData);
+    toast('✅ דוח שותף','success',2000);
   }catch(e){
-    if(e.message==='no_data'){toast('⚠️ אין דיווחים בתקופה הנבחרת','warn',3000);return;}
-    toast('❌ שגיאה: '+e.message,'error',3000);
+    if(e.name==='AbortError') return;
+    // NotAllowedError or other → download as fallback
+    _triggerDownload(blob,filename);
+    toast('📊 הקובץ הורד','success',2000);
   }
 }
 
