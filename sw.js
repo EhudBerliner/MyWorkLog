@@ -1,6 +1,6 @@
-// MyWorkLog Service Worker v4.3.1
+// MyWorkLog Service Worker v4.3.2
 // Strategy: Cache-First for app shell, Network-First for GAS API calls
-const APP_VERSION = '4.3.1';
+const APP_VERSION = '4.3.2';
 const CACHE_SHELL = `mwl-shell-${APP_VERSION}`;
 const CACHE_DATA  = `mwl-data-${APP_VERSION}`;
 
@@ -13,14 +13,12 @@ const SHELL_ASSETS = [
 
 // ── Install: pre-cache app shell ──────────────────────────────
 self.addEventListener('install', e => {
-  // Pre-cache shell assets.
-  // Do NOT call skipWaiting() here — let the app control when to activate.
-  // The app sends SKIP_WAITING explicitly when user confirms the update.
   e.waitUntil(
     caches.open(CACHE_SHELL)
       .then(c => Promise.allSettled(
         SHELL_ASSETS.map(u => c.add(u).catch(() => {}))
       ))
+      .then(() => self.skipWaiting())
   );
 });
 

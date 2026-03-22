@@ -55,7 +55,7 @@ html,body{height:100%;background:var(--bg0);color:var(--text);
 .workday-chip input{position:absolute;opacity:0;width:0;height:0}
 .workday-chip:has(input:checked){background:var(--limeDim);border-color:var(--lime);color:var(--lime)}
 
-/* ── NOTIFICATION SYSTEM v4.3.1 ── */
+/* ── NOTIFICATION SYSTEM v4.3.2 ── */
 .offline-banner{position:fixed;top:0;left:0;right:0;
   background:var(--red,#ef4444);color:#fff;text-align:center;
   padding:calc(var(--safeT,0px)+8px) 16px 8px;
@@ -1607,12 +1607,12 @@ details summary::-webkit-details-marker{display:none}
 /* BOOT */
 
 /* ═══════════════════════════════════════════════════════
-   NOTIFICATION SYSTEM  v4.3.1
+   NOTIFICATION SYSTEM  v4.3.2
    Manages: Offline banner · PWA Install · Update Prompt · Toast
    ═══════════════════════════════════════════════════════ */
 const NotificationSystem = {
   settings: { showNetworkStatus: true },
-  currentVersion: '4.3.1',
+  currentVersion: '4.3.2',
   deferredInstallPrompt: null,
   _wasOffline: false,   // track previous state for auto-cleanup
 
@@ -1740,47 +1740,12 @@ const NotificationSystem = {
     document.getElementById('updateNowBtn').onclick = async () => {
       el.classList.remove('visible');
       if (onUpdate) onUpdate();
-
-      const reg = ST.swReg || (await navigator.serviceWorker?.getRegistration?.());
-
-      // Helper: tell a SW to skip waiting, reload follows via controllerchange
-      const doActivate = (sw) => {
-        ST._reloading = false; // allow controllerchange to reload
-        sw.postMessage({ type: 'SKIP_WAITING' });
-        setTimeout(() => location.replace(location.pathname), 5000); // safety
-      };
-
-      if (reg?.waiting) {
-        doActivate(reg.waiting);
-
-      } else if (reg?.installing) {
-        // Still installing — wait for it
-        reg.installing.addEventListener('statechange', function h(e) {
-          if (e.target.state === 'installed') {
-            e.target.removeEventListener('statechange', h);
-            doActivate(e.target);
-          }
-        });
-
-      } else if (reg) {
-        // No SW update found yet — force check, wait, then activate
-        reg.addEventListener('updatefound', () => {
-          const sw = reg.installing; if (!sw) return;
-          sw.addEventListener('statechange', function h(e) {
-            if (e.target.state === 'installed') {
-              e.target.removeEventListener('statechange', h);
-              doActivate(e.target);
-            }
-          });
-        });
-        reg.update().catch(() => {});
-        // Fallback: if no new SW in 10s, reload anyway
-        setTimeout(() => { if (!ST._reloading) location.replace(location.pathname); }, 10000);
-
-      } else {
-        // No SW at all — plain reload
-        location.replace(location.pathname);
+      // Clear all SW caches then reload — SW re-installs with fresh assets
+      if ('caches' in window) {
+        const keys = await caches.keys();
+        await Promise.all(keys.map(k => caches.delete(k)));
       }
+      window.location.reload();
     };
   }
 }
@@ -1833,7 +1798,7 @@ document.addEventListener('DOMContentLoaded',()=>{
     fixStoredDates();
   netInit();netQInit();projLoad();histRender();
   importInit();
-    NotificationSystem.init(VER);  // v4.3.1
+    NotificationSystem.init(VER);  // v4.3.2
     updateSessionBanner();
     flushDeleteQueue();
     menuInit();vBadgeInit();swipeInit();ptrInit();swInit();installInit();scrollInit();
@@ -3790,9 +3755,7 @@ function swInit(){
   navigator.serviceWorker.addEventListener('message',e=>{
     if(e.data?.type==='UPDATE_AVAILABLE') showUpd(e.data.version);
   });
-  navigator.serviceWorker.addEventListener('controllerchange',()=>{
-    if(!ST._reloading){ST._reloading=true;window.location.reload();}
-  });
+
 }
 function showUpd(newVer){
   // Delegate to NotificationSystem; also handle SW waiting
