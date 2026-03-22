@@ -55,7 +55,7 @@ html,body{height:100%;background:var(--bg0);color:var(--text);
 .workday-chip input{position:absolute;opacity:0;width:0;height:0}
 .workday-chip:has(input:checked){background:var(--limeDim);border-color:var(--lime);color:var(--lime)}
 
-/* ── NOTIFICATION SYSTEM v4.2.2 ── */
+/* ── NOTIFICATION SYSTEM v4.2.3 ── */
 .offline-banner{position:fixed;top:0;left:0;right:0;
   background:var(--red,#ef4444);color:#fff;text-align:center;
   padding:calc(var(--safeT,0px)+8px) 16px 8px;
@@ -779,7 +779,8 @@ details summary::-webkit-details-marker{display:none}
           <span style="color:var(--text3);font-size:.8rem" data-i18n="labelRangeSep">עד</span>
           <input type="date" id="range-to" class="fi" data-i18n-attr="title" data-i18n="rangeTo" title="עד-"/>
           <button class="btn-p sm" id="btn-range-go" style="font-size:.75rem"data-i18n="btnRangeGo">הצג</button>
-          <button class="btn-g sm" id="btn-export-range" style="font-size:.75rem;display:none" title="ייצא לאקסל">📊 Excel</button>
+          <button class="btn-g sm" id="btn-export-range" style="font-size:.75rem;display:none" title="שמור Excel">📊 Excel</button>
+          <button class="btn-g sm" id="btn-share-range"  style="font-size:.75rem;display:none" title="שתף דוח">📤 שתף</button>
         </div>
       </div>
       <div class="stats-grid">
@@ -1606,12 +1607,12 @@ details summary::-webkit-details-marker{display:none}
 /* BOOT */
 
 /* ═══════════════════════════════════════════════════════
-   NOTIFICATION SYSTEM  v4.2.2
+   NOTIFICATION SYSTEM  v4.2.3
    Manages: Offline banner · PWA Install · Update Prompt · Toast
    ═══════════════════════════════════════════════════════ */
 const NotificationSystem = {
   settings: { showNetworkStatus: true },
-  currentVersion: '4.2.2',
+  currentVersion: '4.2.3',
   deferredInstallPrompt: null,
   _wasOffline: false,   // track previous state for auto-cleanup
 
@@ -1809,7 +1810,7 @@ document.addEventListener('DOMContentLoaded',()=>{
     fixStoredDates();
   netInit();netQInit();projLoad();histRender();
   importInit();
-    NotificationSystem.init(VER);  // v4.2.2
+    NotificationSystem.init(VER);  // v4.2.3
     updateSessionBanner();
     flushDeleteQueue();
     menuInit();vBadgeInit();swipeInit();ptrInit();swInit();installInit();scrollInit();
@@ -3456,7 +3457,7 @@ function summaryRender(){
     const mwcSec=$('monthly-wc-section');if(mwcSec)mwcSec.style.display='none';
     const annSec2=$('annual-section');if(annSec2)annSec2.style.display='none';
     const riSec=$('range-period-inputs');if(riSec)riSec.style.display='none';
-    const expBtn=$('btn-export-range');if(expBtn)expBtn.style.display='none';
+    const expBtn=$('btn-export-range');if(expBtn)expBtn.style.display='none';const shrBtn=$('btn-share-range');if(shrBtn)shrBtn.style.display='none';
     // day-rep-actions inside renderDayWCStatus replaces summary-list in day view
     const sumCard=$('summary-list')?.closest('.card');if(sumCard)sumCard.style.display='none';
     renderDayWCStatus(ds,rs);
@@ -4009,94 +4010,164 @@ async function exportXLSX(){
 }
 
 /* ─ Period Excel Export (2 sheets: Attendance + Tasks)  v3.7.0 ─ */
+async function buildReportWorkbook(fromDate, toDate){
+  /* Build and return { wb, attRows, taskRows, wsRows, wlRows, projRows, filename }
+     Throws on error — callers handle catch. */
+  await loadSheetJS();
+  const reps       = store(K.reps)||[];
+  const periodReps = reps.filter(r=>r.report_date>=fromDate&&r.report_date<=toDate);
+  if(!periodReps.length) throw new Error('no_data');
+
+  /* ── Sheet 1: Attendance ──────────────────────────────── */
+  const ATT_COLS=['Date','Entry','Exit','Duration','Daily Standard','Deviation'];
+  const attDates=[...new Set(periodReps
+    .filter(r=>r.category==='entry'||r.category==='exit')
+    .map(r=>r.report_date))].sort();
+  const attRows=[];
+  for(const ds of attDates){
+    const{stdHours}=getDayStd(ds);
+    const stdMins=Math.round(stdHours*60);
+    const stdStr=stdMins>0?minsToHHMM(stdMins):'';
+    const{pairs,mins:totalMins}=calcDayWorkMins(ds,periodReps);
+    if(!pairs.length) continue;
+    const devMins=stdMins>0?totalMins-stdMins:null;
+    const devStr=devMins!==null?(devMins>=0?'+':'')+minsToHHMM(Math.abs(devMins)):'';
+    if(pairs.length===1){
+      attRows.push([ds,pairs[0].entry,pairs[0].exit,minsToHHMM(pairs[0].mins),stdStr,devStr]);
+    }else{
+      attRows.push([ds,pairs[0].entry,pairs[pairs.length-1].exit,minsToHHMM(totalMins),stdStr,devStr]);
+      pairs.forEach(p=>attRows.push([ds,p.entry,p.exit,minsToHHMM(p.mins),'','']));
+    }
+  }
+
+  /* ── Sheet 2: Tasks ──────────────────────────────────── */
+  const TASK_COLS=['Date','Duration','Project','Description'];
+  const taskRows=periodReps
+    .filter(r=>r.category==='task')
+    .map(r=>[r.report_date||'',r.report_time||'',r.project||'',r.description||'']);
+
+  /* ── Sheet 3: WorkStandard ───────────────────────────── */
+  const WS_COLS=['Date','Day','Standard Hours','Notes','Description'];
+  const wsRows=getWStandard()
+    .filter(r=>r.date>=fromDate&&r.date<=toDate)
+    .sort((a,b)=>a.date<b.date?-1:1)
+    .map(r=>[r.date||'',r.weekDay||'',r.stdHours||0,r.notes||'',r.description||'']);
+
+  /* ── Sheet 4: WorkLog ───────────────────────────────────
+     All raw reports in the period (entries, exits, tasks)   */
+  const WL_COLS=['Date','Time','Category','Description','Project','ID'];
+  const catLabel={entry:'כניסה',exit:'יציאה',task:'משימה'};
+  const wlRows=periodReps
+    .sort((a,b)=>a.report_date<b.report_date?-1:a.report_date>b.report_date?1:
+                 (a.report_time||'')<(b.report_time||'')?-1:1)
+    .map(r=>[
+      r.report_date||'',
+      r.report_time||'',
+      catLabel[r.category]||r.category||'',
+      r.description||'',
+      r.project||'',
+      r.id||''
+    ]);
+
+  /* ── Sheet 5: Projects ──────────────────────────────────
+     All projects that appear in the period                  */
+  const PROJ_COLS=['Project'];
+  const projSet=new Set(periodReps.filter(r=>r.project).map(r=>r.project));
+  // Also include all saved projects
+  (store(K.proj)||[]).forEach(p=>projSet.add(p));
+  const projRows=[...projSet].sort().map(p=>[p]);
+
+  /* ── Build workbook ──────────────────────────────────── */
+  const wb=XLSX.utils.book_new();
+
+  const ws1=XLSX.utils.aoa_to_sheet([ATT_COLS,...attRows]);
+  ws1['!cols']=[{wch:13},{wch:9},{wch:9},{wch:10},{wch:16},{wch:12}];
+  XLSX.utils.book_append_sheet(wb,ws1,'Attendance');
+
+  const ws2=XLSX.utils.aoa_to_sheet([TASK_COLS,...(taskRows.length?taskRows:[['אין משימות']])]);
+  ws2['!cols']=[{wch:13},{wch:10},{wch:22},{wch:36}];
+  XLSX.utils.book_append_sheet(wb,ws2,'Tasks');
+
+  const ws3=XLSX.utils.aoa_to_sheet([WS_COLS,...(wsRows.length?wsRows:[['אין נתוני תקן']])]);
+  ws3['!cols']=[{wch:13},{wch:12},{wch:16},{wch:22},{wch:22}];
+  XLSX.utils.book_append_sheet(wb,ws3,'WorkStandard');
+
+  const ws4=XLSX.utils.aoa_to_sheet([WL_COLS,...wlRows]);
+  ws4['!cols']=[{wch:13},{wch:9},{wch:9},{wch:36},{wch:22},{wch:26}];
+  XLSX.utils.book_append_sheet(wb,ws4,'WorkLog');
+
+  const ws5=XLSX.utils.aoa_to_sheet([PROJ_COLS,...(projRows.length?projRows:[['אין פרויקטים']])]);
+  ws5['!cols']=[{wch:30}];
+  XLSX.utils.book_append_sheet(wb,ws5,'Projects');
+
+  const filename=`worklog-${fromDate}_${toDate}.xlsx`;
+  return{wb, attRows, taskRows, wsRows, wlRows, projRows, filename};
+}
+
+/* Save to local file */
 async function exportPeriodXLSX(){
   const fromDate=($('range-from')?.value||'').trim();
   const toDate=($('range-to')?.value||'').trim();
   if(!fromDate||!toDate){toast('⚠️ בחר תאריך התחלה וסיום','warn',3000);return;}
   if(fromDate>toDate){toast('⚠️ תאריך התחלה חייב להיות לפני תאריך הסיום','warn',3000);return;}
-
-  const reps=store(K.reps)||[];
-  const periodReps=reps.filter(r=>r.report_date>=fromDate&&r.report_date<=toDate);
-  if(!periodReps.length){toast('⚠️ אין דיווחים בתקופה הנבחרת','warn',3000);return;}
-
   try{
-    await loadSheetJS();
-
-    /* ── Sheet 1: Attendance ─────────────────────────────────
-       Columns: Date | Entry | Exit | Duration | Daily Standard | Deviation
-       Matches GAS Attendance sheet structure (v4)
-    ────────────────────────────────────────────────────────── */
-    const ATT_COLS=['Date','Entry','Exit','Duration','Daily Standard','Deviation'];
-    const attDates=[...new Set(periodReps
-      .filter(r=>r.category==='entry'||r.category==='exit')
-      .map(r=>r.report_date))].sort();
-    const attRows=[];
-
-    for(const ds of attDates){
-      const{stdHours}=getDayStd(ds);
-      const stdMins=Math.round(stdHours*60);
-      const stdStr=stdMins>0?minsToHHMM(stdMins):'';
-      const{pairs,mins:totalMins}=calcDayWorkMins(ds,periodReps);
-      if(!pairs.length) continue;
-      const devMins=stdMins>0?totalMins-stdMins:null;
-      const devStr=devMins!==null?(devMins>=0?'+':'')+minsToHHMM(Math.abs(devMins)):'';
-      if(pairs.length===1){
-        attRows.push([ds,pairs[0].entry,pairs[0].exit,minsToHHMM(pairs[0].mins),stdStr,devStr]);
-      } else {
-        // Summary row
-        attRows.push([ds,pairs[0].entry,pairs[pairs.length-1].exit,minsToHHMM(totalMins),stdStr,devStr]);
-        // Detail rows — std/dev blank
-        pairs.forEach(p=>attRows.push([ds,p.entry,p.exit,minsToHHMM(p.mins),'','']));
-      }
-    }
-
-    /* ── Sheet 2: Tasks ─────────────────────────────────────── */
-    const TASK_COLS=['Date','Duration','Project','Description'];
-    const taskRows=periodReps
-      .filter(r=>r.category==='task')
-      .map(r=>[r.report_date||'',r.report_time||'',r.project||'',r.description||'']);
-
-    /* ── Sheet 3: WorkStandard ──────────────────────────────
-       All WorkStandard entries that fall within the period
-    ────────────────────────────────────────────────────────── */
-    const WS_COLS=['Date','Day','Standard Hours','Notes','Description'];
-    const wsRows=getWStandard()
-      .filter(r=>r.date>=fromDate&&r.date<=toDate)
-      .sort((a,b)=>a.date<b.date?-1:1)
-      .map(r=>[
-        r.date||'',
-        r.weekDay||'',
-        r.stdHours||0,
-        r.notes||'',
-        r.description||''
-      ]);
-
-    /* ── Build workbook ──────────────────────────────────────── */
-    const wb=XLSX.utils.book_new();
-
-    const ws1=XLSX.utils.aoa_to_sheet([ATT_COLS,...attRows]);
-    ws1['!cols']=[{wch:13},{wch:9},{wch:9},{wch:10},{wch:16},{wch:12}];
-    XLSX.utils.book_append_sheet(wb,ws1,'Attendance');
-
-    const ws2=XLSX.utils.aoa_to_sheet([TASK_COLS,...(taskRows.length?taskRows:[['אין משימות בתקופה זו']])]);
-    ws2['!cols']=[{wch:13},{wch:10},{wch:22},{wch:36}];
-    XLSX.utils.book_append_sheet(wb,ws2,'Tasks');
-
-    const ws3=XLSX.utils.aoa_to_sheet([WS_COLS,...(wsRows.length?wsRows:[['אין נתוני תקן בתקופה זו']])]);
-    ws3['!cols']=[{wch:13},{wch:12},{wch:16},{wch:22},{wch:22}];
-    XLSX.utils.book_append_sheet(wb,ws3,'WorkStandard');
-
+    const{wb,attRows,taskRows,wsRows,wlRows,projRows,filename}=await buildReportWorkbook(fromDate,toDate);
     const buf=XLSX.write(wb,{type:'array',bookType:'xlsx'});
-    const b=new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
-    const a=document.createElement('a');a.href=URL.createObjectURL(b);
-    a.download=`worklog-${fromDate}_${toDate}.xlsx`;
+    const blob=new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+    const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+    a.download=filename;
     document.body.appendChild(a);a.click();
     setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1000);
-    toast(`📊 ייוצא — ${attRows.length} שורות נוכחות, ${taskRows.length} משימות, ${wsRows.length} ימי תקן`,'success',3500);
+    toast(`📊 ייוצא — ${attRows.length} נוכחות · ${taskRows.length} משימות · ${wlRows.length} דיווחים`,'success',3500);
     buzz([20,40]);
   }catch(e){
+    if(e.message==='no_data'){toast('⚠️ אין דיווחים בתקופה הנבחרת','warn',3000);return;}
     console.error('[exportPeriod]',e);
     toast('❌ שגיאה בייצוא: '+e.message,'error',4000);
+  }
+}
+
+/* Share via Web Share API (mobile) — fallback to save */
+async function shareReport(){
+  const fromDate=($('range-from')?.value||'').trim();
+  const toDate=($('range-to')?.value||'').trim();
+  if(!fromDate||!toDate){toast('⚠️ בחר תאריך התחלה וסיום','warn',3000);return;}
+  if(fromDate>toDate){toast('⚠️ תאריך התחלה חייב להיות לפני תאריך הסיום','warn',3000);return;}
+  try{
+    const{wb,attRows,taskRows,wlRows,filename}=await buildReportWorkbook(fromDate,toDate);
+    const buf=XLSX.write(wb,{type:'array',bookType:'xlsx'});
+    const blob=new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+    const file=new File([blob],filename,{type:blob.type});
+
+    // Web Share API level 2 — share files
+    if(navigator.canShare&&navigator.canShare({files:[file]})){
+      await navigator.share({
+        title:'MyWorkLog דוח',
+        text:`דוח נוכחות ${fromDate} — ${toDate}`,
+        files:[file]
+      });
+      toast('✅ דוח שותף','success',2000);
+    } else if(navigator.share){
+      // Level 1 — share text only (no file support on this browser)
+      await navigator.share({
+        title:'MyWorkLog דוח',
+        text:`דוח נוכחות ${fromDate} — ${toDate}
+${attRows.length} ימי נוכחות, ${taskRows.length} משימות`
+      });
+      toast('✅ קישור שותף','success',2000);
+    } else {
+      // Fallback — trigger download (desktop browsers)
+      const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+      a.download=filename;
+      document.body.appendChild(a);a.click();
+      setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1000);
+      toast('📊 שיתוף לא נתמך — הקובץ הורד','info',3000);
+    }
+  }catch(e){
+    if(e.name==='AbortError') return; // user cancelled share sheet
+    if(e.message==='no_data'){toast('⚠️ אין דיווחים בתקופה הנבחרת','warn',3000);return;}
+    console.error('[shareReport]',e);
+    toast('❌ שגיאה בשיתוף: '+e.message,'error',4000);
   }
 }
 
@@ -4104,11 +4175,12 @@ function exportInit(){
   $('btn-export-csv')?.addEventListener('click',exportCSV);
   $('btn-export-xlsx')?.addEventListener('click',exportXLSX);
   $('btn-export-range')?.addEventListener('click',exportPeriodXLSX);
+  $('btn-share-range')?.addEventListener('click',shareReport);
   $('btn-open-import-from-settings')?.addEventListener('click',()=>{closeM('modal-settings');openImportModal();});
-  // Show export button after "הצג" is clicked in range view
+  // Show export + share buttons after "הצג" is clicked in range view
   $('btn-range-go')?.addEventListener('click',()=>{
-    const btn=$('btn-export-range');
-    if(btn) btn.style.display='';
+    const expBtn=$('btn-export-range');if(expBtn) expBtn.style.display='';
+    const shrBtn=$('btn-share-range');if(shrBtn) shrBtn.style.display='';
   });
 }
 

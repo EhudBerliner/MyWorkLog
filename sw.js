@@ -1,6 +1,6 @@
-// MyWorkLog Service Worker v4.2.2
+// MyWorkLog Service Worker v4.2.3
 // Strategy: Cache-First for app shell, Network-First for GAS API calls
-const APP_VERSION = '4.2.2';
+const APP_VERSION = '4.2.3';
 const CACHE_SHELL = `mwl-shell-${APP_VERSION}`;
 const CACHE_DATA  = `mwl-data-${APP_VERSION}`;
 
