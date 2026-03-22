@@ -55,7 +55,7 @@ html,body{height:100%;background:var(--bg0);color:var(--text);
 .workday-chip input{position:absolute;opacity:0;width:0;height:0}
 .workday-chip:has(input:checked){background:var(--limeDim);border-color:var(--lime);color:var(--lime)}
 
-/* ── NOTIFICATION SYSTEM v4.3.7 ── */
+/* ── NOTIFICATION SYSTEM v4.3.8 ── */
 .offline-banner{position:fixed;top:0;left:0;right:0;
   background:var(--red,#ef4444);color:#fff;text-align:center;
   padding:calc(var(--safeT,0px)+8px) 16px 8px;
@@ -1607,12 +1607,12 @@ details summary::-webkit-details-marker{display:none}
 /* BOOT */
 
 /* ═══════════════════════════════════════════════════════
-   NOTIFICATION SYSTEM  v4.3.7
+   NOTIFICATION SYSTEM  v4.3.8
    Manages: Offline banner · PWA Install · Update Prompt · Toast
    ═══════════════════════════════════════════════════════ */
 const NotificationSystem = {
   settings: { showNetworkStatus: true },
-  currentVersion: '4.3.7',
+  currentVersion: '4.3.8',
   deferredInstallPrompt: null,
   _wasOffline: false,   // track previous state for auto-cleanup
 
@@ -1797,7 +1797,7 @@ document.addEventListener('DOMContentLoaded',()=>{
     fixStoredDates();
   netInit();netQInit();projLoad();histRender();
   importInit();
-    NotificationSystem.init(VER);  // v4.3.7
+    NotificationSystem.init(VER);  // v4.3.8
     updateSessionBanner();
     flushDeleteQueue();
     menuInit();vBadgeInit();swipeInit();ptrInit();swInit();installInit();scrollInit();
@@ -4156,21 +4156,42 @@ async function shareReport(){
   // Blob pre-built → share immediately (no await before navigator.share)
   const blob=_shareBlob, filename=_shareFilename;
 
+  // No Web Share support → download
   if(!navigator.share){
     _triggerDownload(blob,filename);
     toast('📊 הקובץ הורד','success',2000);
     return;
   }
 
+  // Try file share first, fall back to text-only, then download
+  const file=new File([blob],filename,{type:blob.type});
+  let shareData;
   try{
-    const file=new File([blob],filename,{type:blob.type});
-    const shareData=navigator.canShare&&navigator.canShare({files:[file]})
-      ? {title:'MyWorkLog דוח',text:`${fromDate} — ${toDate}`,files:[file]}
-      : {title:'MyWorkLog דוח',text:`דוח נוכחות ${fromDate} — ${toDate}`};
+    if(navigator.canShare&&navigator.canShare({files:[file]})){
+      shareData={title:'MyWorkLog דוח',text:`${fromDate} — ${toDate}`,files:[file]};
+    } else {
+      shareData={title:'MyWorkLog דוח',text:`דוח נוכחות ${fromDate} — ${toDate}`};
+    }
+  }catch(_){
+    shareData={title:'MyWorkLog דוח',text:`דוח נוכחות ${fromDate} — ${toDate}`};
+  }
+
+  try{
     await navigator.share(shareData);
     toast('✅ דוח שותף','success',2000);
   }catch(e){
-    if(e.name==='AbortError') return;
+    if(e.name==='AbortError') return; // user dismissed — do nothing
+    // Share failed: if was file share, retry as text-only
+    if(shareData.files){
+      try{
+        await navigator.share({title:'MyWorkLog דוח',text:`דוח נוכחות ${fromDate} — ${toDate}`});
+        toast('✅ שותף (ללא קובץ)','success',2000);
+        return;
+      }catch(e2){
+        if(e2.name==='AbortError') return;
+      }
+    }
+    // All share attempts failed → download
     _triggerDownload(blob,filename);
     toast('📊 הקובץ הורד','success',2000);
   }
