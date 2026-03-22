@@ -55,7 +55,7 @@ html,body{height:100%;background:var(--bg0);color:var(--text);
 .workday-chip input{position:absolute;opacity:0;width:0;height:0}
 .workday-chip:has(input:checked){background:var(--limeDim);border-color:var(--lime);color:var(--lime)}
 
-/* ── NOTIFICATION SYSTEM v4.0.1 ── */
+/* ── NOTIFICATION SYSTEM v4.0.3 ── */
 .offline-banner{position:fixed;top:0;left:0;right:0;
   background:var(--red,#ef4444);color:#fff;text-align:center;
   padding:calc(var(--safeT,0px)+8px) 16px 8px;
@@ -1699,12 +1699,12 @@ details summary::-webkit-details-marker{display:none}
 /* BOOT */
 
 /* ═══════════════════════════════════════════════════════
-   NOTIFICATION SYSTEM  v4.0.1
+   NOTIFICATION SYSTEM  v4.0.3
    Manages: Offline banner · PWA Install · Update Prompt · Toast
    ═══════════════════════════════════════════════════════ */
 const NotificationSystem = {
   settings: { showNetworkStatus: true },
-  currentVersion: '4.0.1',
+  currentVersion: '4.0.3',
   deferredInstallPrompt: null,
   _wasOffline: false,   // track previous state for auto-cleanup
 
@@ -1832,17 +1832,24 @@ const NotificationSystem = {
     document.getElementById('updateNowBtn').onclick = async () => {
       el.classList.remove('visible');
       if (onUpdate) onUpdate();
-      // Unregister SW so fresh install happens on reload
+      // 1. Tell active SW to skip waiting (if one is waiting)
+      if (navigator.serviceWorker?.controller) {
+        navigator.serviceWorker.controller.postMessage({type:'SKIP_WAITING'});
+      }
+      // 2. Unregister all SWs
       if ('serviceWorker' in navigator) {
         const regs = await navigator.serviceWorker.getRegistrations();
         await Promise.all(regs.map(r => r.unregister()));
       }
-      // Clear all caches
+      // 3. Clear all caches
       if ('caches' in window) {
         const keys = await caches.keys();
         await Promise.all(keys.map(k => caches.delete(k)));
       }
-      location.reload(true);
+      // 4. Navigate with cache-busting query so browser fetches fresh assets
+      //    (location.reload(true) is ignored by modern browsers)
+      const sep = location.href.includes('?') ? '&' : '?';
+      location.href = location.href.split('?')[0] + sep + '_r=' + Date.now();
     };
   }
 }
@@ -1896,7 +1903,7 @@ document.addEventListener('DOMContentLoaded',()=>{
     fixStoredDates();
   netInit();netQInit();projLoad();histRender();
   importInit();
-    NotificationSystem.init(VER);  // v4.0.1
+    NotificationSystem.init(VER);  // v4.0.3
     updateSessionBanner();
     flushDeleteQueue();
     menuInit();vBadgeInit();swipeInit();ptrInit();swInit();installInit();scrollInit();
@@ -4058,22 +4065,20 @@ async function syncCRM(silent=false){
   crmSyncUI('syncing','מסנכרן...');
   try{
     const res=await fetch(ep+'?action=getCRM&t='+Date.now(),{cache:'no-store'});
-    const data=await res.json();
+    if(!res.ok) throw new Error('HTTP '+res.status);
+    const text=await res.text();
+    let data;
+    try{ data=JSON.parse(text); }
+    catch(e){ throw new Error('תגובה לא תקינה מהשרת — בדוק שה-GAS מעודכן לגרסה v6.0 ו-Deploy נעשה'); }
 
     if(Array.isArray(data.taskDefinitions)){
-      const local  = getTaskDefs();
-      const localIds  = new Set(local.map(td=>td.id));
+      const local     = getTaskDefs();
       const serverIds = new Set(data.taskDefinitions.map(td=>td.id));
-
-      // Start from server list (source of truth)
-      const merged = [...data.taskDefinitions];
-
-      // Add any local items that the server doesn't know about yet
-      // (newly added offline — their id won't be on the server)
-      local.forEach(td=>{
-        if(!serverIds.has(td.id)) merged.push(td);
-      });
-
+      // Server is source of truth; keep local-only items not yet on server
+      const merged = [
+        ...data.taskDefinitions,
+        ...local.filter(td=>!serverIds.has(td.id))
+      ];
       saveTaskDefs(merged);
     }
 
@@ -4084,8 +4089,8 @@ async function syncCRM(silent=false){
     if(!silent) toast('✅ משימות סונכרנו','success',2000);
   }catch(err){
     crmSyncUI('err','שגיאת סנכרון');
-    console.warn('[syncCRM]',err);
-    if(!silent) toast('❌ שגיאת CRM Sync','error',3000);
+    console.warn('[syncCRM]',err.message||err);
+    if(!silent) toast('❌ '+( err.message||'שגיאת CRM Sync'),'error',4000);
   }
 }
 
@@ -4152,9 +4157,8 @@ function addTaskDef(){
   taskDefsRender();
   buzz([10]);
   // Push to GAS — no-cors so no confirmation, but sync will reconcile
-  _crmPost({action:'addTaskDef', id, name, billable})
-    .then(()=>toast('✅ משימה נוספה ונשלחה','success',2000))
-    .catch(()=>toast('✅ משימה נוספה (תסונכרן בחיבור)','warn',2500));
+  toast('✅ משימה נוספה','success',1500);
+  _crmPost({action:'addTaskDef', id, name, billable});
 }
 
 function removeTaskDef(id){
@@ -4162,9 +4166,8 @@ function removeTaskDef(id){
   saveTaskDefs(getTaskDefs().filter(td=>td.id!==id));
   taskDefsRender();
   buzz([30,20]);
-  _crmPost({action:'deleteTaskDef', id})
-    .then(()=>toast('🗑 משימה נמחקה','success',1500))
-    .catch(()=>toast('🗑 נמחקה מקומית (תסונכרן בחיבור)','warn',2500));
+  toast('🗑 משימה נמחקה','success',1500);
+  _crmPost({action:'deleteTaskDef', id});
 }
 
 /* ── CRM Init ─────────────────────────────────────────── */

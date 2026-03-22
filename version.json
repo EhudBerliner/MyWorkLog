@@ -1,5 +1,5 @@
 {
-  "version": "4.0.1",
+  "version": "4.0.3",
   "buildDate": "2026-03-19",
-  "changelog": "v4.0.1: fix task-def sync — async missing on syncCRM/_crmPost; merge logic; tab refresh; id collision"
+  "changelog": "v4.0.3: fix update — cache-busting URL (reload(true) deprecated); fix GAS appendRow missing description col"
 }

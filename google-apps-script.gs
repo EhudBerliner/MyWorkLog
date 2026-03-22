@@ -1,4 +1,4 @@
-//  MyWorkLog – Google Apps Script  v6.0
+//  MyWorkLog – Google Apps Script  v6.1
 //  הדבק קוד זה ב-Apps Script של הגיליון שלך
 //  לאחר מכן: Deploy > New deployment > Web App
 //  ✅ הרשאות: Anyone (אנונימי) / Execute as: Me
@@ -472,7 +472,7 @@ function updateWorkStandard(date, weekDay, stdHours, notes, description) {
       }
     }
   }
-  sheet.appendRow([dateStr, weekDay||'', Number(stdHours)||0, notes||'']);
+  sheet.appendRow([dateStr, weekDay||'', Number(stdHours)||0, notes||'', description||'']);
   autoFormatLastRow(sheet, WSTANDARD_HEADERS.length);
   rebuildDayAttendance(ss, dateStr);
   return 'added';
@@ -569,7 +569,7 @@ function setupSheets() {
   ss.getSheetByName(SHEET_WSTANDARD)?.getRange('A2:A1000').setNumberFormat('@STRING@');
   getOrCreateAttSheet(ss); // create / style Attendance with new headers
   SpreadsheetApp.getUi().alert(
-    'MyWorkLog v6.0 — גיליונות מוכנים!\n\n' +
+    'MyWorkLog v6.1 — גיליונות מוכנים!\n\n' +
     'Attendance החדש: תאריך | כניסה | יציאה | משך | תקן יומי | עודף/חוסר\n\n' +
     'הרץ rebuildAllAttendance לבנות מחדש את ההיסטוריה.\n\n' +
     'Deploy → New deployment לאחר השמירה!'
@@ -692,7 +692,7 @@ function debugAttendanceData() {
 
 /*
   ═══════════════════════════════════════════════════════
-  SETUP & MIGRATION (v6.0)
+  SETUP & MIGRATION (v6.1)
   ═══════════════════════════════════════════════════════
   1. Extensions → Apps Script → הדבק → שמור (Ctrl+S)
   2. בחר setupSheets     → Run   (מקים/מעדכן גיליונות)
