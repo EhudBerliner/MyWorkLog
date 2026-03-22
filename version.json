@@ -1,5 +1,5 @@
 {
-  "version": "4.2.3",
+  "version": "4.2.4",
   "buildDate": "2026-03-22",
-  "changelog": "v4.2.3: export — 5 sheets (Attendance/Tasks/WorkStandard/WorkLog/Projects); Share via Web Share API with fallback"
+  "changelog": "v4.2.4: fix update 404 — use location.replace(pathname+#fragment) instead of ?query on static hosts"
 }

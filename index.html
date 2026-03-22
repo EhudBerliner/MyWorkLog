@@ -55,7 +55,7 @@ html,body{height:100%;background:var(--bg0);color:var(--text);
 .workday-chip input{position:absolute;opacity:0;width:0;height:0}
 .workday-chip:has(input:checked){background:var(--limeDim);border-color:var(--lime);color:var(--lime)}
 
-/* ── NOTIFICATION SYSTEM v4.2.3 ── */
+/* ── NOTIFICATION SYSTEM v4.2.4 ── */
 .offline-banner{position:fixed;top:0;left:0;right:0;
   background:var(--red,#ef4444);color:#fff;text-align:center;
   padding:calc(var(--safeT,0px)+8px) 16px 8px;
@@ -1607,12 +1607,12 @@ details summary::-webkit-details-marker{display:none}
 /* BOOT */
 
 /* ═══════════════════════════════════════════════════════
-   NOTIFICATION SYSTEM  v4.2.3
+   NOTIFICATION SYSTEM  v4.2.4
    Manages: Offline banner · PWA Install · Update Prompt · Toast
    ═══════════════════════════════════════════════════════ */
 const NotificationSystem = {
   settings: { showNetworkStatus: true },
-  currentVersion: '4.2.3',
+  currentVersion: '4.2.4',
   deferredInstallPrompt: null,
   _wasOffline: false,   // track previous state for auto-cleanup
 
@@ -1754,10 +1754,10 @@ const NotificationSystem = {
         const keys = await caches.keys();
         await Promise.all(keys.map(k => caches.delete(k)));
       }
-      // 4. Navigate with cache-busting query so browser fetches fresh assets
-      //    (location.reload(true) is ignored by modern browsers)
-      const sep = location.href.includes('?') ? '&' : '?';
-      location.href = location.href.split('?')[0] + sep + '_r=' + Date.now();
+      // 4. Navigate to clean URL — no query params, no reload(true) (deprecated).
+      //    Using location.replace() so the back-button doesn't return to the old page.
+      //    Adding #_r= as fragment keeps static hosts happy (no 404 on unknown query strings).
+      location.replace(location.pathname + location.search + '#_r=' + Date.now());
     };
   }
 }
@@ -1810,7 +1810,7 @@ document.addEventListener('DOMContentLoaded',()=>{
     fixStoredDates();
   netInit();netQInit();projLoad();histRender();
   importInit();
-    NotificationSystem.init(VER);  // v4.2.3
+    NotificationSystem.init(VER);  // v4.2.4
     updateSessionBanner();
     flushDeleteQueue();
     menuInit();vBadgeInit();swipeInit();ptrInit();swInit();installInit();scrollInit();
