@@ -1,6 +1,6 @@
-// MyWorkLog Service Worker v4.3.8
+// MyWorkLog Service Worker v4.3.9
 // Strategy: Cache-First for app shell, Network-First for GAS API calls
-const APP_VERSION = '4.3.8';
+const APP_VERSION = '4.3.9';
 const CACHE_SHELL = `mwl-shell-${APP_VERSION}`;
 const CACHE_DATA  = `mwl-data-${APP_VERSION}`;
 
@@ -33,6 +33,15 @@ self.addEventListener('activate', e => {
           .map(k => caches.delete(k))
       ))
       .then(() => self.clients.claim())
+      .then(() => self.clients.matchAll({ type: 'window' }))
+      .then(clients => {
+        // After taking control, reload all open tabs so they get fresh assets
+        clients.forEach(client => {
+          if (client.url && 'navigate' in client) {
+            client.navigate(client.url);
+          }
+        });
+      })
   );
 });
 
