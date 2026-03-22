@@ -55,7 +55,7 @@ html,body{height:100%;background:var(--bg0);color:var(--text);
 .workday-chip input{position:absolute;opacity:0;width:0;height:0}
 .workday-chip:has(input:checked){background:var(--limeDim);border-color:var(--lime);color:var(--lime)}
 
-/* ── NOTIFICATION SYSTEM v4.0.3 ── */
+/* ── NOTIFICATION SYSTEM v4.1.0 ── */
 .offline-banner{position:fixed;top:0;left:0;right:0;
   background:var(--red,#ef4444);color:#fff;text-align:center;
   padding:calc(var(--safeT,0px)+8px) 16px 8px;
@@ -223,7 +223,6 @@ textarea.fi{resize:vertical;min-height:72px}
 .btn-d.sm{padding:5px 10px;font-size:.74rem}
 
 /* ─ PENDING ─ */
-.pending-row{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:.82rem;color:var(--text2)}
 
 /* ─ HISTORY ─ */
 .hlist{display:flex;flex-direction:column;gap:7px}
@@ -362,12 +361,6 @@ textarea.fi{resize:vertical;min-height:72px}
   box-shadow:var(--shadowLg);white-space:nowrap}
 .update-prompt.visible{transform:translateX(-50%) translateY(0)}
 .update-prompt.hidden{display:none}
-.upd-body{display:flex;align-items:center;gap:10px;flex:1}
-.upd-icon{font-size:1.4rem;flex-shrink:0}
-.upd-text{display:flex;flex-direction:column;gap:1px}
-.upd-title{font-size:.88rem;font-weight:700;color:var(--text)}
-.upd-ver{font-size:.7rem;color:var(--blue)}
-.upd-acts{display:flex;gap:8px;flex-shrink:0}
 
 /* ─ INSTALL BANNER ─ */
 .install-banner{position:fixed;bottom:-160px;left:0;right:0;
@@ -405,7 +398,7 @@ textarea.fi{resize:vertical;min-height:72px}
 .toast.show{opacity:1;transform:translateY(0)}
 .toast.success{background:var(--lime,#10b981);color:var(--bg0,#0d0f1a)}
 .toast.error{background:var(--red,#ef4444)}
-.toast.warn,.toast.warning{background:var(--amber,#f59e0b);color:var(--bg0,#0d0f1a)}
+.toast.warn,.toast
 .toast.info{background:var(--blue,#4dabff)}
 
 /* ─ CLOCK UI ─ */
@@ -423,7 +416,6 @@ textarea.fi{resize:vertical;min-height:72px}
 .clock-preset:hover{border-color:var(--blue);color:var(--blue)}
 
 .hidden{display:none!important}
-.reset-desc{font-size:.85rem;color:var(--text2)}
 
 /* ─ WORK CALENDAR ─ */
 .wc-dow-row{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:3px}
@@ -482,10 +474,6 @@ textarea.fi{resize:vertical;min-height:72px}
 .wc-sect-lbl{font-size:.67rem;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:1.5px;margin:2px 0 6px}
 .workcal-hint{font-size:.72rem;color:var(--text3);text-align:center;padding:6px 0}
 details summary::-webkit-details-marker{display:none}
-.wc-range-row{display:flex;flex-direction:column;gap:8px}
-.wc-min-row{display:flex;gap:8px;align-items:flex-end}
-.wc-min-row .fg{flex:1}
-.wc-min-row .btn-p{padding:11px 16px;white-space:nowrap}
 
 /* ─ SETTINGS TABS ─ */
 .stab-nav{display:flex;gap:0;background:var(--bg3);border:1px solid var(--border);border-radius:var(--rs);overflow:hidden;margin-bottom:2px;flex-shrink:0}
@@ -498,21 +486,6 @@ details summary::-webkit-details-marker{display:none}
 .stab-pnl.active{display:flex;animation:fadeUp .18s ease both}
 
 /* ─ CLIENT/PROJECT TREE ─ */
-.client-block{background:var(--bg3);border:1px solid var(--border);border-radius:var(--rs);overflow:hidden}
-.client-hdr{display:flex;align-items:center;gap:10px;padding:11px 13px;cursor:pointer;transition:background .15s;user-select:none}
-.client-hdr:hover{background:var(--glass2)}
-.client-hdr-dot{width:8px;height:8px;border-radius:50%;background:var(--blue);flex-shrink:0}
-.client-hdr-name{flex:1;font-size:.86rem;font-weight:700;color:var(--text)}
-.client-hdr-count{font-size:.68rem;color:var(--text3);font-family:'Syne',monospace}
-.client-hdr-chev{font-size:.7rem;color:var(--text3);transition:transform .2s;flex-shrink:0}
-.client-body{display:none;padding:0 13px 12px;flex-direction:column;gap:8px}
-.client-body.open{display:flex}
-.client-proj-list{display:flex;flex-direction:column;gap:4px}
-.client-proj-item{display:flex;align-items:center;gap:8px;padding:7px 10px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--rxs);font-size:.8rem}
-.client-proj-name{flex:1;color:var(--text2)}
-.client-task-list{display:flex;flex-direction:column;gap:3px;margin-top:4px;padding-right:16px}
-.client-task-item{display:flex;align-items:center;gap:8px;padding:5px 10px;background:var(--bg3);border-radius:var(--rxs);font-size:.76rem;color:var(--text3)}
-.client-task-item .task-name{flex:1}
 .billable-badge{font-size:.6rem;font-weight:800;letter-spacing:.6px;padding:2px 7px;border-radius:10px;flex-shrink:0}
 .billable-badge.yes{background:var(--limeDim);color:var(--lime)}
 .billable-badge.no{background:var(--glass);color:var(--text3)}
@@ -535,9 +508,6 @@ details summary::-webkit-details-marker{display:none}
 .crm-sync-dot.syncing{background:var(--amber);animation:pulse 1s ease infinite}
 .crm-sync-dot.err{background:var(--red)}
 .crm-sync-label{flex:1}
-.tab-badge{display:inline-flex;align-items:center;justify-content:center;
-  min-width:16px;height:16px;border-radius:8px;background:var(--blue);
-  color:#fff;font-size:.58rem;font-weight:800;padding:0 4px;margin-right:3px}
 
 /* ─ PROFILE SECTION ─ */
 .profile-avatar{width:56px;height:56px;border-radius:14px;background:var(--limeDim);
@@ -1699,12 +1669,12 @@ details summary::-webkit-details-marker{display:none}
 /* BOOT */
 
 /* ═══════════════════════════════════════════════════════
-   NOTIFICATION SYSTEM  v4.0.3
+   NOTIFICATION SYSTEM  v4.1.0
    Manages: Offline banner · PWA Install · Update Prompt · Toast
    ═══════════════════════════════════════════════════════ */
 const NotificationSystem = {
   settings: { showNetworkStatus: true },
-  currentVersion: '4.0.3',
+  currentVersion: '4.1.0',
   deferredInstallPrompt: null,
   _wasOffline: false,   // track previous state for auto-cleanup
 
@@ -1903,7 +1873,7 @@ document.addEventListener('DOMContentLoaded',()=>{
     fixStoredDates();
   netInit();netQInit();projLoad();histRender();
   importInit();
-    NotificationSystem.init(VER);  // v4.0.3
+    NotificationSystem.init(VER);  // v4.1.0
     updateSessionBanner();
     flushDeleteQueue();
     menuInit();vBadgeInit();swipeInit();ptrInit();swInit();installInit();scrollInit();

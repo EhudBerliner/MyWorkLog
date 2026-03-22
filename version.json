@@ -1,5 +1,5 @@
 {
-  "version": "4.0.3",
-  "buildDate": "2026-03-19",
-  "changelog": "v4.0.3: fix update — cache-busting URL (reload(true) deprecated); fix GAS appendRow missing description col"
+  "version": "4.1.0",
+  "buildDate": "2026-03-22",
+  "changelog": "v4.1.0: code review — removed 29 unused CSS rules, 2 dead functions (processOfflineDeleteQueue, queueDelete), 3 unused K constants (inst, syncToken, settingsTab)"
 }

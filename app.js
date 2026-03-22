@@ -2,7 +2,7 @@
    MyWorkLog · App Core  v3.2.0
    ═══════════════════════════════════════════════════════ */
 
-const VER = '4.0.3';
+const VER = '4.1.0';
 
 /* ── Storage keys ── */
 const K = {
@@ -15,14 +15,11 @@ const K = {
   theme:     'mwl_theme',
   prefs:     'mwl_prefs',
   ver:       'mwl_version',
-  inst:      'mwl_install_dismissed',
   sheetUrl:  'mwl_sheet_url',
-  syncToken: 'mwl_sync_token',          // last sync timestamp
   wstandard: 'mwl_wstandard',           // WorkStandard local cache
   profile:   'mwl_profile',             // {name, role}
   rounding:  'mwl_rounding',            // 0 | 5 | 10 | 15
-  taskDefs:  'mwl_task_definitions',    // [{id,name,billable}]              — global task definitions
-  settingsTab:'mwl_settings_tab',       // last open settings tab
+  taskDefs:  'mwl_task_definitions',    // [{id,name,billable}]              — global task definitions       // last open settings tab
   crmSync:   'mwl_crm_sync',           // last task-defs sync timestamp
 };
 
@@ -62,23 +59,3 @@ const catLbl = cat => t({ entry:'catEntry', exit:'catExit', task:'catTask' }[cat
 
 /* ── BOOT ── */
 
-
-function queueDelete(id) {
-  const q = store(K.delQ) || [];
-  if (!q.includes(id)) { q.push(id); store(K.delQ, q); }
-}
-
-async function processOfflineDeleteQueue() {
-  const ep = store(K.ep);
-  if (!ep || !navigator.onLine) return;
-  const q = store(K.delQ) || [];
-  if (!q.length) return;
-  const fail = [];
-  for (const id of q) {
-    try {
-      await fetch(ep, { method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'delete', id }), mode: 'no-cors' });
-    } catch { fail.push(id); }
-  }
-  store(K.delQ, fail);
-}
