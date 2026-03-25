@@ -2,7 +2,7 @@
    MyWorkLog · App Core  v3.2.0
    ═══════════════════════════════════════════════════════ */
 
-const VER = '4.4.0';
+const VER = '4.4.1';
 
 /* ── Storage keys ── */
 const K = {

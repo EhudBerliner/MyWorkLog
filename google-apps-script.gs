@@ -43,6 +43,7 @@ function doPost(e) {
     if (data.action === 'addClientProject')     return ok(addClientProject(data.id, data.clientId, data.name));
     if (data.action === 'deleteClientProject')  return ok(deleteClientProject(data.id));
     if (data.action === 'delete')               { deleteById(data.id, data.category, data.report_date); return ok('נמחק'); }
+    if (data.action === 'editReport')           return ok(editReport(data));
 
     const ss   = SpreadsheetApp.getActiveSpreadsheet();
     const main = getOrCreateSheet(ss, SHEET_NAME, HEADERS);
@@ -104,7 +105,7 @@ function doGet(e) {
     return ok('Attendance rebuilt');
   }
 
-  return jsonResp({ status:'ok', app:'MyWorkLog', version:'6.4' });
+  return jsonResp({ status:'ok', app:'MyWorkLog', version:'6.5' });
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -420,6 +421,53 @@ function formatAttRows(sheet, startRow, rows) {
   });
 }
 
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  editReport — update an existing WorkLog row in-place
+//  If not found (not yet synced), falls through to appendRow (handled by caller)
+// ─────────────────────────────────────────────────────────────────────────────
+function editReport(data) {
+  if (!data.id) return 'no id';
+  const ss   = SpreadsheetApp.getActiveSpreadsheet();
+  const main = ss.getSheetByName(SHEET_NAME);
+  if (!main || main.getLastRow() <= 1) return 'no sheet';
+
+  const rows = main.getDataRange().getValues();
+  for (let i = rows.length - 1; i >= 1; i--) {
+    if (String(rows[i][6]) === String(data.id)) {
+      // Update in-place: keep original Timestamp, update all other fields
+      const ts = rows[i][0]; // preserve original timestamp
+      main.getRange(i + 1, 1, 1, HEADERS.length).setValues([[
+        ts,
+        data.report_date  || '',
+        data.report_time  || '',
+        translateCategory(data.category) || '',
+        data.description  || '',
+        data.project      || '',
+        data.id
+      ]]);
+      // Rebuild Attendance if entry/exit changed
+      if (data.category === 'entry' || data.category === 'exit') {
+        rebuildDayAttendance(ss, data.report_date);
+      }
+      // Rebuild old date too if date changed
+      if (data.old_date && data.old_date !== data.report_date) {
+        if (data.category === 'entry' || data.category === 'exit') {
+          rebuildDayAttendance(ss, data.old_date);
+        }
+      }
+      return 'updated';
+    }
+  }
+  // Row not found in GAS (not yet synced) — append as new
+  const ts2 = new Date().toLocaleString('he-IL', { timeZone: 'Asia/Jerusalem' });
+  main.appendRow([ts2, data.report_date||'', data.report_time||'',
+    translateCategory(data.category)||'', data.description||'', data.project||'', data.id||'']);
+  autoFormatLastRow(main, HEADERS.length);
+  if (data.category === 'entry' || data.category === 'exit') rebuildDayAttendance(ss, data.report_date);
+  return 'appended';
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 //  deleteById  (v4.0 — rebuilds the whole day instead of editing cells)
 // ─────────────────────────────────────────────────────────────────────────────
@@ -556,7 +604,7 @@ function setupSheets() {
   }
   getOrCreateAttSheet(ss); // create / style Attendance with new headers
   SpreadsheetApp.getUi().alert(
-    'MyWorkLog v6.4 — גיליונות מוכנים!\n\n' +
+    'MyWorkLog v6.5 — גיליונות מוכנים!\n\n' +
     'Attendance החדש: תאריך | כניסה | יציאה | משך | תקן יומי | עודף/חוסר\n\n' +
     'הרץ rebuildAllAttendance לבנות מחדש את ההיסטוריה.\n\n' +
     'Deploy → New deployment לאחר השמירה!'

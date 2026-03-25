@@ -1,5 +1,5 @@
 {
-  "version": "4.4.0",
+  "version": "4.4.1",
   "buildDate": "2026-03-22",
-  "changelog": "v4.4.0: fix GAS rebuildDayAttendance — missing Classification column caused silent failure on every entry/exit report"
+  "changelog": "v4.4.1: fix edit/delete — GAS editReport handler was missing; edits now update in-place, not append new row"
 }
