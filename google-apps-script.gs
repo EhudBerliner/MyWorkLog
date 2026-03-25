@@ -104,7 +104,7 @@ function doGet(e) {
     return ok('Attendance rebuilt');
   }
 
-  return jsonResp({ status:'ok', app:'MyWorkLog', version:'6.3' });
+  return jsonResp({ status:'ok', app:'MyWorkLog', version:'6.4' });
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -224,19 +224,19 @@ function rebuildDayAttendance(ss, dateStr) {
   if (pairs.length <= 1 && !openEntry) {
     // ── Single pair ──────────────────────────────────────────
     const p = pairs[0];
-    newRows.push([dateStr, p.entry, p.exit, fmtMins(p.durationMins), stdStr, devStr, 'single']);
+    newRows.push([dateStr, p.entry, p.exit, fmtMins(p.durationMins), stdStr, devStr, classification, 'single']);
   } else {
     // ── Multiple pairs (or open session) ────────────────────
     const firstEntry = pairs.length>0 ? pairs[0].entry : openEntry;
     const lastExit   = pairs.length>0 ? pairs[pairs.length-1].exit : '';
     // Summary
-    newRows.push([dateStr, firstEntry, lastExit, fmtMins(totalMins), stdStr, devStr, 'summary']);
+    newRows.push([dateStr, firstEntry, lastExit, fmtMins(totalMins), stdStr, devStr, classification, 'summary']);
     // Detail rows
     for (const p of pairs) {
-      newRows.push([dateStr, p.entry, p.exit, fmtMins(p.durationMins), '', '', 'detail']);
+      newRows.push([dateStr, p.entry, p.exit, fmtMins(p.durationMins), '', '', '', 'detail']);
     }
     if (openEntry) {
-      newRows.push([dateStr, openEntry, '⏳ פתוח', '', '', '', 'detail']);
+      newRows.push([dateStr, openEntry, '⏳ פתוח', '', '', '', '', 'detail']);
     }
   }
 
@@ -556,7 +556,7 @@ function setupSheets() {
   }
   getOrCreateAttSheet(ss); // create / style Attendance with new headers
   SpreadsheetApp.getUi().alert(
-    'MyWorkLog v6.3 — גיליונות מוכנים!\n\n' +
+    'MyWorkLog v6.4 — גיליונות מוכנים!\n\n' +
     'Attendance החדש: תאריך | כניסה | יציאה | משך | תקן יומי | עודף/חוסר\n\n' +
     'הרץ rebuildAllAttendance לבנות מחדש את ההיסטוריה.\n\n' +
     'Deploy → New deployment לאחר השמירה!'

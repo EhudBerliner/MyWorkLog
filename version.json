@@ -1,5 +1,5 @@
 {
-  "version": "4.3.9",
+  "version": "4.4.0",
   "buildDate": "2026-03-22",
-  "changelog": "v4.3.9: fix SW update — activate handler navigates all clients after taking control"
+  "changelog": "v4.4.0: fix GAS rebuildDayAttendance — missing Classification column caused silent failure on every entry/exit report"
 }
