@@ -1,5 +1,5 @@
 {
-  "version": "4.4.1",
+  "version": "4.4.2",
   "buildDate": "2026-03-22",
-  "changelog": "v4.4.1: fix edit/delete — GAS editReport handler was missing; edits now update in-place, not append new row"
+  "changelog": "v4.4.2: fix sync button — debounce+disable during sync; clear queue before send to prevent duplicate rows"
 }

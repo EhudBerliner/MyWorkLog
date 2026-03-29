@@ -55,7 +55,7 @@ html,body{height:100%;background:var(--bg0);color:var(--text);
 .workday-chip input{position:absolute;opacity:0;width:0;height:0}
 .workday-chip:has(input:checked){background:var(--limeDim);border-color:var(--lime);color:var(--lime)}
 
-/* ── NOTIFICATION SYSTEM v4.4.1 ── */
+/* ── NOTIFICATION SYSTEM v4.4.2 ── */
 .offline-banner{position:fixed;top:0;left:0;right:0;
   background:var(--red,#ef4444);color:#fff;text-align:center;
   padding:calc(var(--safeT,0px)+8px) 16px 8px;
@@ -1607,12 +1607,12 @@ details summary::-webkit-details-marker{display:none}
 /* BOOT */
 
 /* ═══════════════════════════════════════════════════════
-   NOTIFICATION SYSTEM  v4.4.1
+   NOTIFICATION SYSTEM  v4.4.2
    Manages: Offline banner · PWA Install · Update Prompt · Toast
    ═══════════════════════════════════════════════════════ */
 const NotificationSystem = {
   settings: { showNetworkStatus: true },
-  currentVersion: '4.4.1',
+  currentVersion: '4.4.2',
   deferredInstallPrompt: null,
   _wasOffline: false,   // track previous state for auto-cleanup
 
@@ -1797,7 +1797,7 @@ document.addEventListener('DOMContentLoaded',()=>{
     fixStoredDates();
   netInit();netQInit();projLoad();histRender();
   importInit();
-    NotificationSystem.init(VER);  // v4.4.1
+    NotificationSystem.init(VER);  // v4.4.2
     updateSessionBanner();
     flushDeleteQueue();
     menuInit();vBadgeInit();swipeInit();ptrInit();swInit();installInit();scrollInit();
@@ -2540,7 +2540,18 @@ function submitInit(){
     if(!navigator.onLine){toast(t('toastSavedOffline'),'warn');addQ(rep);pendUI();return}
     sendBackground(rep,ep);
   });
-  $('btn-sync')?.addEventListener('click',syncQ);
+  $('btn-sync')?.addEventListener('click',async()=>{
+    const btn=$('btn-sync');
+    if(btn.dataset.syncing==='1') return; // debounce — ignore if already syncing
+    btn.dataset.syncing='1';
+    btn.disabled=true;
+    btn.textContent='⏳';
+    try{ await syncQ(); }finally{
+      btn.disabled=false;
+      btn.textContent=btn.getAttribute('data-i18n-orig')||'↑ שלח';
+      delete btn.dataset.syncing;
+    }
+  });
 }
 function buildRep(date,time){
   const cat=ST.cat;let rTime=time,desc='',proj='';
@@ -2607,9 +2618,24 @@ async function syncQ(){
     await syncFromSheet();
     toast(t('toastNoQueuePending'),'success');return;
   }
+  // Snapshot + clear queue immediately — prevents duplicate sends on re-click
+  const snapshot=[...q];
+  store(K.q,[]);pendUI();
   let ok=0;const fail=[];
-  for(const r of q){try{await fetch(ep,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(r),mode:'no-cors'});markSent(r.id);ok++}catch{fail.push(r)}}
-  store(K.q,fail);pendUI();
+  for(const r of snapshot){
+    try{
+      await fetch(ep,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(r),mode:'no-cors'});
+      markSent(r.id);ok++;
+    }catch{fail.push(r);}
+  }
+  // Re-add only items that failed (network error)
+  if(fail.length){
+    const current=store(K.q)||[];
+    const ids=new Set(current.map(x=>x.id));
+    fail.forEach(r=>{if(!ids.has(r.id))current.push(r);});
+    store(K.q,current);
+  }
+  pendUI();
   await flushDeleteQueue();
   await flushWStandardQueue();
   await syncFromSheet();
