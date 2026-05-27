@@ -2,7 +2,7 @@
    MyWorkLog · App Core  v3.2.0
    ═══════════════════════════════════════════════════════ */
 
-const VER = '3.6.0';
+const VER = '4.4.2';
 
 /* ── Storage keys ── */
 const K = {
@@ -15,15 +15,10 @@ const K = {
   theme:     'mwl_theme',
   prefs:     'mwl_prefs',
   ver:       'mwl_version',
-  inst:      'mwl_install_dismissed',
   sheetUrl:  'mwl_sheet_url',
-  syncToken: 'mwl_sync_token',          // last sync timestamp
   wstandard: 'mwl_wstandard',           // WorkStandard local cache
   profile:   'mwl_profile',             // {name, role}
   rounding:  'mwl_rounding',            // 0 | 5 | 10 | 15
-  taskDefs:  'mwl_task_definitions',    // [{id,name,billable}]              — global task definitions
-  settingsTab:'mwl_settings_tab',       // last open settings tab
-  crmSync:   'mwl_crm_sync',           // last task-defs sync timestamp
 };
 
 /* ── Runtime state ── */
@@ -47,7 +42,7 @@ function store(key, val) {
   localStorage.setItem(key, JSON.stringify(val));
 }
 
-const getP   = () => store(K.prefs) || { vibration: true, animations: true, pullRefresh: false };
+const getP   = () => { const p = store(K.prefs) || {}; return { vibration:true, animations:true, pullRefresh:false, workDays:[0,1,2,3,4], ...p }; };
 const buzz   = (p = [30]) => { if (getP().vibration && navigator.vibrate) navigator.vibrate(p); };
 const fmtD   = d => { const [y,m,day] = d.split('-'); return `${day}/${m}/${y}`; };
 const fmtT   = tt => {
@@ -58,33 +53,7 @@ const fmtT   = tt => {
 };
 const catLbl = cat => t({ entry:'catEntry', exit:'catExit', task:'catTask' }[cat]) || cat;
 
-function toast(msg, type = 'success', ms = 2800) {
-  const el = $('toast');
-  el.textContent = msg;
-  el.className = `toast ${type}`;
-  clearTimeout(el._t);
-  el._t = setTimeout(() => el.classList.add('hidden'), ms);
-}
+/* toast() moved to index.html — bridges to NotificationSystem v3.8.0 */
 
 /* ── BOOT ── */
 
-
-function queueDelete(id) {
-  const q = store(K.delQ) || [];
-  if (!q.includes(id)) { q.push(id); store(K.delQ, q); }
-}
-
-async function processOfflineDeleteQueue() {
-  const ep = store(K.ep);
-  if (!ep || !navigator.onLine) return;
-  const q = store(K.delQ) || [];
-  if (!q.length) return;
-  const fail = [];
-  for (const id of q) {
-    try {
-      await fetch(ep, { method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'delete', id }), mode: 'no-cors' });
-    } catch { fail.push(id); }
-  }
-  store(K.delQ, fail);
-}
