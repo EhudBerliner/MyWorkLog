@@ -1,4 +1,4 @@
-//  MyWorkLog – Google Apps Script  v6.6 (Deduplication & Regression Tested)
+//  MyWorkLog – Google Apps Script  v6.7 (Server-Side Deduplication)
 //  הדבק קוד זה ב-Apps Script של הגיליון שלך
 //  לאחר מכן: Deploy > New deployment > Web App
 //  ✅ הרשאות: Anyone (אנונימי) / Execute as: Me
@@ -19,12 +19,11 @@ const WSTANDARD_HEADERS = ['Date','WeekDay','Day_Standard_Hours','Notes','Descri
 const CLIENTS_HEADERS   = ['Client_ID','Client_Name','Created_At'];
 const CLI_PROJ_HEADERS  = ['Project_ID','Client_ID','Project_Name','Created_At'];
 
-// ── Attendance sheet columns (v4.0) ──────────────────────────────────────────
 const ATT_HEADERS = ['Date','Entry','Exit','Duration','Daily Standard','Deviation','Classification','_row_type'];
 const ATT_NCOLS   = ATT_HEADERS.length;
 
 // ─────────────────────────────────────────────────────────────────────────────
-//  doPost
+//  doPost - WITH SERVER-SIDE DEDUPLICATION
 // ─────────────────────────────────────────────────────────────────────────────
 function doPost(e) {
   try {
@@ -41,6 +40,24 @@ function doPost(e) {
 
     const ss   = SpreadsheetApp.getActiveSpreadsheet();
     const main = getOrCreateSheet(ss, SHEET_NAME, HEADERS);
+    
+    // 🛡️ חסימת כפילויות בצד שרת (Server-Side Deduplication)
+    // בודק האם המזהה (ID) כבר קיים בגיליון WorkLog. אם כן - חוסם את הכתיבה.
+    if (data.id) {
+      const lastRow = main.getLastRow();
+      if (lastRow > 1) {
+        // שולף רק את עמודת ה-ID (עמודה 7) לטובת ביצועים
+        const idCol = main.getRange(2, 7, lastRow - 1, 1).getValues();
+        for (let i = 0; i < idCol.length; i++) {
+          if (String(idCol[i][0]).trim() === String(data.id).trim()) {
+            // ה-ID כבר קיים! מחזירים "נשמר" כדי שה-PWA ינקה את התור, אך לא רושמים שוב.
+            return ok('נשמר (כפילות סוננה בשרת)');
+          }
+        }
+      }
+    }
+
+    // אם ה-ID לא קיים, רושמים כשורה חדשה
     const ts   = new Date().toLocaleString('he-IL', { timeZone: 'Asia/Jerusalem' });
     main.appendRow([ts, data.report_date||'', data.report_time||'',
       translateCategory(data.category)||'', data.description||'', data.project||'', data.id||'']);
@@ -97,13 +114,12 @@ function doGet(e) {
     return ok('Attendance rebuilt');
   }
 
-  return jsonResp({ status:'ok', app:'MyWorkLog', version:'6.6' });
+  return jsonResp({ status:'ok', app:'MyWorkLog', version:'6.7' });
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-//  Attendance  v4.1 (Deduplication enabled)
+//  Attendance  v4.1
 // ─────────────────────────────────────────────────────────────────────────────
-
 function getStdForDate(ss, dateStr) {
   const sh = ss.getSheetByName(SHEET_WSTANDARD);
   if (!sh || sh.getLastRow() <= 1) return { stdHours:0, stdStr:'', classification:'' };
@@ -140,10 +156,6 @@ function fmtDev(d) {
   return sign + pad(Math.floor(abs/60)) + ':' + pad(abs%60);
 }
 
-/**
- * Read WorkLog for a date → match entry/exit pairs greedily.
- * Fixed: Filters out duplicate IDs and duplicate timestamps per category.
- */
 function getPairsForDate(ss, dateStr) {
   const sh = ss.getSheetByName(SHEET_NAME);
   if (!sh || sh.getLastRow() <= 1) return { pairs:[], openEntry:null, unmatchedExits:[] };
@@ -235,7 +247,7 @@ function rebuildDayAttendance(ss, dateStr) {
     const data = sheet.getRange(2, 1, sheet.getLastRow()-1, ATT_NCOLS).getValues();
     for (let i=0; i<data.length; i++) {
       const rowDate = fmtDateCell(data[i][0]);
-      const rowType = String(data[i][7] || data[i][6]); // handle old and new hidden col positions
+      const rowType = String(data[i][7] || data[i][6]); 
       if ((rowType === 'single' || rowType === 'summary' || rowType === 'orphan') && rowDate > dateStr) {
         insertBefore = i + 2;
         break;
@@ -254,9 +266,6 @@ function rebuildDayAttendance(ss, dateStr) {
   }
 }
 
-/** * Rebuild entire Attendance from WorkLog. 
- * Fixed: Includes global deduplication logic.
- */
 function rebuildAllAttendance() {
   const ss   = SpreadsheetApp.getActiveSpreadsheet();
   const main = ss.getSheetByName(SHEET_NAME);
@@ -372,7 +381,7 @@ function getOrCreateAttSheet(ss) {
 function formatAttRows(sheet, startRow, rows) {
   rows.forEach((r, i) => {
     const sr    = startRow + i;
-    const type  = r[7]; // updated index for hidden type col
+    const type  = r[7]; 
     const range = sheet.getRange(sr, 1, 1, ATT_NCOLS);
 
     if (type === 'summary') {
@@ -403,9 +412,6 @@ function formatAttRows(sheet, startRow, rows) {
   });
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-//  editReport
-// ─────────────────────────────────────────────────────────────────────────────
 function editReport(data) {
   if (!data.id) return 'no id';
   const ss   = SpreadsheetApp.getActiveSpreadsheet();
@@ -557,9 +563,8 @@ function setupSheets() {
   }
   getOrCreateAttSheet(ss); 
   SpreadsheetApp.getUi().alert(
-    'MyWorkLog v6.6 — גיליונות מוכנים!\n\n' +
-    'Attendance החדש יסנן אוטומטית שורות כפולות.\n\n' +
-    'הרץ rebuildAllAttendance לבנות מחדש את ההיסטוריה בצורה נקייה.\n\n' +
+    'MyWorkLog v6.7 — גיליונות מוכנים!\n\n' +
+    'חסימת כפילויות צד שרת הופעלה.\n\n' +
     'Deploy → New deployment לאחר השמירה!'
   );
 }
