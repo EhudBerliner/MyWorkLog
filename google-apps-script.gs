@@ -214,20 +214,34 @@ function rebuildDayAttendance(ss, dateStr) {
   deleteAttendanceRowsForDate(sheet, dateStr);
   SpreadsheetApp.flush();
 
-  const { pairs, openEntry, unmatchedExits } = getPairsForDate(ss, dateStr);
-  if (pairs.length === 0 && !openEntry && unmatchedExits.length === 0) return;
-
+  let { pairs, openEntry, unmatchedExits } = getPairsForDate(ss, dateStr);
   const { stdHours, stdStr, classification } = getStdForDate(ss, dateStr);
+  
+  // זיהוי סיווג היום לצורך הפיצוי
+  const lowerClass = classification.toLowerCase();
+  const isPaidAbsence = /חופש|מחלה|חלה|sick|vacation|חג|שבתון|sabbatical/.test(lowerClass);
+
+  if (pairs.length === 0 && !openEntry && unmatchedExits.length === 0 && !isPaidAbsence) return;
+
   const stdMins   = Math.round(stdHours * 60);
-  const totalMins = pairs.reduce((s,p)=>s+p.durationMins, 0);
+  let totalMins = pairs.reduce((s,p)=>s+p.durationMins, 0);
+  
+  // הפעלת מנגנון הפיצוי בשרת
+  if (isPaidAbsence && stdMins > 0 && totalMins < stdMins) {
+    totalMins = stdMins;
+  }
+
   const devMins   = stdMins > 0 ? totalMins - stdMins : null;
   const devStr    = devMins !== null ? fmtDev(devMins) : '';
 
   const newRows = [];
 
-  if (pairs.length <= 1 && !openEntry) {
-    const p = pairs[0];
-    newRows.push([dateStr, p.entry, p.exit, fmtMins(p.durationMins), stdStr, devStr, classification, 'single']);
+  if (pairs.length === 0 && isPaidAbsence) {
+    // יום חופש/מחלה ללא שעות עבודה בפועל - ירשום את שעות התקן כשעות מפוצות
+    newRows.push([dateStr, '🛡️ מפוצה', '🛡️ מפוצה', fmtMins(totalMins), stdStr, devStr, classification, 'single']);
+  } else if (pairs.length <= 1 && !openEntry) {
+    const p = pairs[0] || { entry: '🛡️ מפוצה', exit: '🛡️ מפוצה' };
+    newRows.push([dateStr, p.entry, p.exit, fmtMins(totalMins), stdStr, devStr, classification, 'single']);
   } else {
     const firstEntry = pairs.length>0 ? pairs[0].entry : openEntry;
     const lastExit   = pairs.length>0 ? pairs[pairs.length-1].exit : '';
@@ -242,6 +256,7 @@ function rebuildDayAttendance(ss, dateStr) {
     newRows.push([dateStr, '⚠️ חסרה כניסה', ex, '', stdStr, devStr, classification, 'orphan']);
   });
 
+  // (שאר לוגיקת ההכנסה לגיליון נשארת זהה...)
   let insertBefore = -1;
   if (sheet.getLastRow() > 1) {
     const data = sheet.getRange(2, 1, sheet.getLastRow()-1, ATT_NCOLS).getValues();
@@ -330,17 +345,27 @@ function rebuildAllAttendance() {
     const openEntry       = arrEntries.find(e=>!pairedEntries.has(e)) || null;
     const unmatchedExits  = arrExits.filter(x=>!pairedExits.has(x));
 
-    if (pairs.length === 0 && !openEntry && unmatchedExits.length === 0) return;
-
-    const std      = stdMap[dateStr] || { stdHours:0, stdStr:'' };
+    const std      = stdMap[dateStr] || { stdHours:0, stdStr:'', classification:'' };
     const stdMins  = Math.round(std.stdHours * 60);
-    const totalMins = pairs.reduce((s,p)=>s+p.durationMins, 0);
+    let totalMins = pairs.reduce((s,p)=>s+p.durationMins, 0);
+
+    // 🛡️ מנגנון הפיצוי בבנייה מחדש הכללית
+    const isPaidAbsence = /חופש|מחלה|חלה|sick|vacation|חג|שבתון|sabbatical/.test(String(std.classification||'').toLowerCase());
+    if (isPaidAbsence && stdMins > 0 && totalMins < stdMins) {
+      totalMins = stdMins;
+    }
+
+    if (pairs.length === 0 && !openEntry && unmatchedExits.length === 0 && !isPaidAbsence) return;
+
     const devMins  = stdMins > 0 ? totalMins - stdMins : null;
     const devStr   = devMins !== null ? fmtDev(devMins) : '';
 
-    if (pairs.length <= 1 && !openEntry) {
-      const p = pairs[0];
-      allRows.push([dateStr, p.entry, p.exit, fmtMins(p.durationMins), std.stdStr, devStr, std.classification||'', 'single']);
+    if (pairs.length === 0 && isPaidAbsence) {
+      // יום חופש/מחלה היסטורי ללא שעות בפועל — רישום שורת שעות מפוצות
+      allRows.push([dateStr, '🛡️ מפוצה', '🛡️ מפוצה', fmtMins(totalMins), std.stdStr, devStr, std.classification||'', 'single']);
+    } else if (pairs.length <= 1 && !openEntry) {
+      const p = pairs[0] || { entry: '🛡️ מפוצה', exit: '🛡️ מפוצה' };
+      allRows.push([dateStr, p.entry, p.exit, fmtMins(totalMins), std.stdStr, devStr, std.classification||'', 'single']);
     } else {
       const firstEntry = pairs.length > 0 ? pairs[0].entry : openEntry;
       const lastExit   = pairs.length > 0 ? pairs[pairs.length-1].exit : '';
