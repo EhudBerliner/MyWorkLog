@@ -2908,22 +2908,38 @@ function calcDayWorkMins(ds,reports){
   return{mins:total,fromTasks:true,pairs:[],hasOpen};
 }
 
-/* Full status for a day */
-function getDayStatus(ds,reports){
-  const{stdHours,notes,description,isWorkDay,dayType}=getDayStd(ds);
-  const{mins:actualMins,fromTasks,pairs,hasOpen}=calcDayWorkMins(ds,reports);
-  const wdStr=actualMins>0?`${pad(Math.floor(actualMins/60))}:${pad(actualMins%60)}`:'-';
-  if(!isWorkDay){
-    const st=dayType!=='normal'&&dayType!=='weekend'?dayType:(dayType==='weekend'?'weekend':'nostandard');
-    return{status:st,actualMins,minMins:0,diffMins:actualMins,wdStr,notes,description,pct:null,fromTasks,dayType,pairs,hasOpen};
+/* Full status for a day — With Auto-Compensation for Paid Absences */
+function getDayStatus(ds, reports) {
+  const { stdHours, notes, description, isWorkDay, dayType } = getDayStd(ds);
+  let { mins: actualMins, fromTasks, pairs, hasOpen } = calcDayWorkMins(ds, reports);
+  const minMins = Math.round(stdHours * 60);
+  
+  // מנגנון הפיצוי: אם זה יום מחלה, חופש, חג או שבתון
+  const isPaidAbsence = ['vacation', 'sick', 'holiday', 'sabbatical'].includes(dayType);
+  
+  if (isPaidAbsence && minMins > 0) {
+    // אם המשתמש לא עבד בכלל, או עבד פחות מהתקן - הוא מפוצה בגובה התקן המלא
+    if (actualMins < minMins) {
+      actualMins = minMins; 
+      fromTasks = false; // השעות מגיעות כעת מפיצוי התקן
+    }
   }
-  const minMins=Math.round(stdHours*60);
-  const diffMins=actualMins-minMins;
-  const status=diffMins>=0?'ok':'deficit';
-  const pct=minMins>0?Math.min(999,Math.round(actualMins/minMins*100)):100;
-  return{status,actualMins,minMins,diffMins,wdStr,notes,description,pct,fromTasks,dayType,pairs,hasOpen};
-}
 
+  const wdStr = actualMins > 0 ? `${pad(Math.floor(actualMins / 60))}:${pad(actualMins % 60)}` : '-';
+
+  if (!isWorkDay && !isPaidAbsence) {
+    const st = dayType !== 'normal' && dayType !== 'weekend' ? dayType : (dayType === 'weekend' ? 'weekend' : 'nostandard');
+    return { status: st, actualMins, minMins: 0, diffMins: actualMins, wdStr, notes, description, pct: null, fromTasks, dayType, pairs, hasOpen };
+  }
+
+  const diffMins = actualMins - minMins;
+  // אם זה יום מפוצה והגענו לאיזון מדויק, נציג סטטוס ייעודי כדי שהמשתמש יבין שיש פיצוי
+  const status = isPaidAbsence && diffMins === 0 ? dayType : (diffMins >= 0 ? 'ok' : 'deficit');
+  const pct = minMins > 0 ? Math.min(999, Math.round(actualMins / minMins * 100)) : 100;
+
+  return { status, actualMins, minMins, diffMins, wdStr, notes, description, pct, fromTasks, dayType, pairs, hasOpen };
+}
+ 
 function minsToHHMM(m){
   if(!m&&m!==0)return'0:00';
   const sign=m<0?'-':'';const abs=Math.abs(m);
