@@ -1829,36 +1829,6 @@ function splashInit(){
   },900);
 }
 
-/* Background sync on launch */
-async function bgSync(){
-  const ep=store(K.ep);
-  if(!ep||!navigator.onLine)return;
-  // Throttle: skip if last full sync was <5 min ago
-  const lastFull=store('mwl_last_full_sync');
-  if(lastFull&&(Date.now()-Number(lastFull))<5*60*1000)return;
-
-  // ── Sweep: find local reports not yet sent and add to queue ───
-  const reps=store(K.reps)||[];
-  const q=store(K.q)||[];
-  const qIds=new Set(q.map(r=>r.id));
-  const unsent=reps.filter(r=>!r.sent&&!qIds.has(r.id));
-  if(unsent.length){
-    const newQ=[...q,...unsent];
-    store(K.q,newQ);pendUI();
-  }
-
-  // ── Flush all queued outgoing reports ─────────────────────────
-  await flushWStandardQueue();
-  await syncQ_silent();
-
-  // ── Pull from sheet (imports missing records) ─────────────────
-  await syncFromSheet();
-
-  // ── Sync WorkStandard ─────────────────────────────────────────
-  const ok=await syncWStandard(true);
-  if(ok) summaryRender();
-  store('mwl_last_full_sync',String(Date.now()));
-}
 
 /* Silent queue flush — no UI, no toast, just sends pending reports */
 async function syncQ_silent(){
@@ -3684,68 +3654,152 @@ async function flushDeleteQueue(){
   store(K.delQ,fail);
 }
 
-/* Pull sheet IDs and remove any locally that were deleted remotely */
-async function syncFromSheet(){
-  const ep=store(K.ep);
-  if(!ep||!navigator.onLine)return;
-  try{
-    const headers={};
-    const etag=store('mwl_etag_reports');
-    if(etag)headers['If-None-Match']=etag;
-    const res=await fetch(ep+'?action=getReports',{headers,cache:'no-store'});
-    if(res.status===304)return;
-    const newEtag=res.headers.get('ETag');
-    if(newEtag)store('mwl_etag_reports',newEtag);
-    const data=await res.json();
-    if(!Array.isArray(data.reports))return;
+/* ═══════════════════════════════════════════════════════
+   DELTA SYNC FUNCTIONS — 60 DAYS TIME WINDOW
+   ═══════════════════════════════════════════════════════ */
 
-    const local=store(K.reps)||[];
-    const localIds=new Set(local.map(r=>String(r.id)));
-    const sheetIds=new Set(data.reports.map(r=>String(r.id)).filter(Boolean));
+/* חישוב תאריך נוכחי פחות 60 ימים בפורמט YYYY-MM-DD */
+function getDeltaStartDate() {
+  const d = new Date();
+  d.setDate(d.getDate() - 60);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
 
-    // ── Import: add sheet records that are missing locally ──────
-    // normTime handled by normTimeStr()
-    // Normalise dates from sheet (Sheets may return various date formats)
-    const normDate=s=>{if(!s)return'';const t=String(s).trim();
-      if(/^\d{4}-\d{2}-\d{2}/.test(t))return t.slice(0,10);
-      const m=t.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
-      if(m)return`${m[3]}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`;
-      const d=new Date(s);return isNaN(d)?t:`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+/* Background sync on launch — Runs dynamic Delta Sync (60 days window) */
+async function bgSync() {
+  const ep = store(K.ep);
+  if (!ep || !navigator.onLine) return;
+
+  // הגנת הצפה: דילוג אם בוצע סנכרון מוצלח ב-3 הדקות האחרונות
+  const lastFull = store('mwl_last_full_sync');
+  if (lastFull && (Date.now() - Number(lastFull)) < 3 * 60 * 1000) return;
+
+  // 1. איסוף וטאטוא דיווחים מקומיים שלא נשלחו אל השרת
+  const reps = store(K.reps) || [];
+  const q = store(K.q) || [];
+  const qIds = new Set(q.map(r => r.id));
+  const unsent = reps.filter(r => !r.sent && !qIds.has(r.id));
+  if (unsent.length) {
+    store(K.q, [...q, ...unsent]);
+    pendUI();
+  }
+
+  // 2. ריקון תור ההוצאה (דיווחים ומחיקות שממתינים)
+  await flushWStandardQueue();
+  await syncQ_silent();
+
+  // 3. הרצת סנכרון דלתא (60 ימים אחורה ועד אינסוף)
+  const deltaDate = getDeltaStartDate();
+  await syncFromSheet(deltaDate);
+
+  // 4. משיכת WorkStandard ממוקד של 60 ימים
+  await syncWStandardDelta(deltaDate);
+
+  // 5. חותמת זמן לסנכרון מוצלח
+  store('mwl_last_full_sync', String(Date.now()));
+  summaryRender();
+}
+
+/* פונקציית משיכת דיווחים מהגיליון — תומכת כעת בפרמטר Delta ובסינון מחיקות היסטוריות */
+async function syncFromSheet(fromDate = '') {
+  const ep = store(K.ep);
+  if (!ep || !navigator.onLine) return 0;
+  try {
+    const headers = {};
+    // אם זה סנכרון רקע רגיל (דלתא), נבטל זמנית את ה-ETag כדי לא לפספס שינויים ממוקדים
+    const etag = fromDate ? null : store('mwl_etag_reports');
+    if (etag) headers['If-None-Match'] = etag;
+
+    // בניית ה-URL עם פרמטר הסינון במידה וקיים
+    let url = ep + '?action=getReports';
+    if (fromDate) url += `&fromDate=${fromDate}&t=${Date.now()}`;
+    else url += `&t=${Date.now()}`;
+
+    const res = await fetch(url, { headers, cache: 'no-store' });
+    if (res.status === 304) return 0;
+    
+    if (!fromDate) {
+      const newEtag = res.headers.get('ETag');
+      if (newEtag) store('mwl_etag_reports', newEtag);
+    }
+    
+    const data = await res.json();
+    if (!Array.isArray(data.reports)) return 0;
+
+    let local = store(K.reps) || [];
+
+    // נרמול תאריכים ושעות מהשרת
+    const normDate = s => {
+      if (!s) return ''; const t = String(s).trim();
+      if (/^\d{4}-\d{2}-\d{2}/.test(t)) return t.slice(0, 10);
+      const m = t.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+      if (m) return `${m[3]}-${m[2].padStart(2, '0')}-${m[1].padStart(2, '0')}`;
+      const d = new Date(s); return isNaN(d) ? t : `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
     };
-    data.reports.forEach(r=>{r.report_date=normDate(r.report_date);if(r.category==='entry'||r.category==='exit')r.report_time=normTimeStr(r.report_time);});
-    const toImport=data.reports.filter(r=>r.id&&r.report_date&&!localIds.has(String(r.id)));
+    data.reports.forEach(r => { r.report_date = normDate(r.report_date); if (r.category === 'entry' || r.category === 'exit') r.report_time = normTimeStr(r.report_time); });
 
-    // ── Prune: remove local records that were deleted from sheet
-    //    (only sent records — unsent stay so they can be re-sent)
-    const pruned=local.filter(r=>!r.sent||sheetIds.has(String(r.id)));
-
-    // ── Merge: imported records + surviving local records ────────
-    // De-dupe by id, sheet record wins (has sent:true)
-    const merged=[...toImport,...pruned];
-    // Sort by timestamp desc
-    merged.sort((a,b)=>(b.timestamp||b.report_date||'').localeCompare(a.timestamp||a.report_date||''));
-
-    const changed=toImport.length>0||pruned.length!==local.length;
-    if(changed){
-      store(K.reps,merged.slice(0,300));
-      histRender();summaryRender();updateSessionBanner();
+    if (fromDate) {
+      // 🛡️ לוגיקת מיזוג דלתא חכמה המונעת "רשומות רפאים":
+      // א. מסננים מהלוקאל את כל מה שקטן מחלון ה-60 יום
+      let unexaminedLocal = local.filter(r => r.report_date < fromDate);
+      
+      // ב. הגנה מפני מחיקות היסטוריות (פתרון הרגרסיה):
+      // מנקים מהלוקאל הישן רשומות שכבר לא קיימות פיזית בגיליון
+      if (Array.isArray(data.allSheetIds)) {
+        const sheetIdsSet = new Set(data.allSheetIds.map(String));
+        unexaminedLocal = unexaminedLocal.filter(r => !r.sent || sheetIdsSet.has(String(r.id)));
+      }
+      
+      // ג. מיזוג של הנתונים החדשים מהחלון יחד עם הנתונים ההיסטוריים שעברו ניקוי
+      const merged = [...data.reports, ...unexaminedLocal];
+      merged.sort((a, b) => (b.timestamp || b.report_date || '').localeCompare(a.timestamp || a.report_date || ''));
+      store(K.reps, merged.slice(0, 300));
+    } else {
+      // סנכרון מלא (מיועד ללחיצה הידנית בלשונית הגדרות)
+      const sheetIds = new Set(data.reports.map(r => String(r.id)).filter(Boolean));
+      const pruned = local.filter(r => !r.sent || sheetIds.has(String(r.id)));
+      const localIds = new Set(pruned.map(r => String(r.id)));
+      const toImport = data.reports.filter(r => !localIds.has(String(r.id)));
+      const merged = [...toImport, ...pruned];
+      merged.sort((a, b) => (b.timestamp || b.report_date || '').localeCompare(a.timestamp || a.report_date || ''));
+      store(K.reps, merged.slice(0, 300));
     }
 
-    // ── Sync projects ────────────────────────────────────────────
-    if(Array.isArray(data.projects)){
-      const localP=store(K.proj)||[];
-      const toAdd=data.projects.filter(p=>!localP.includes(p));
-      if(toAdd.length){store(K.proj,[...localP,...toAdd]);projLoad();projChipsRender();}
+    // מיזוג פרויקטים
+    if (Array.isArray(data.projects)) {
+      const localP = store(K.proj) || [];
+      const toAdd = data.projects.filter(p => !localP.includes(p));
+      if (toAdd.length) { store(K.proj, [...localP, ...toAdd]); projLoad(); projChipsRender(); }
     }
 
-    return toImport.length; // return count of new records imported
-  }catch(e){console.warn('[syncFromSheet]',e);return 0;}
-  finally{
-    // WorkStandard: only if >10 min since last sync
-    const lastSync=store('mwl_wstandard_sync');
-    const staleMins=lastSync?Math.floor((Date.now()-new Date(lastSync.replace(/(\d+)\/(\d+)\/(\d+)/,'$3-$2-$1')).getTime())/60000):999;
-    if(staleMins>10) await syncWStandard(true);
+    histRender(); updateSessionBanner();
+    return data.reports.length;
+  } catch (e) { 
+    console.warn('[syncFromSheet Delta Failure]', e); 
+    return 0; 
+  }
+}
 
+/* משיכת תקן שעות ממוקדת ברקע לחלון ה-60 יום */
+async function syncWStandardDelta(fromDate) {
+  const ep = store(K.ep);
+  if (!ep || !navigator.onLine) return false;
+  try {
+    const res = await fetch(`${ep}?action=getWorkStandard&fromDate=${fromDate}&t=${Date.now()}`, { cache: 'no-store' });
+    if (!res.ok) return false;
+    const data = await res.json();
+    if (!Array.isArray(data.workStandard)) return false;
+
+    // מיזוג נתוני התקן: שומרים את הישנים שלפני ה-60 יום ומעדכנים את החדשים
+    let localWStd = store(K.wstandard) || [];
+    localWStd = localWStd.filter(r => r.date < fromDate);
+    
+    const finalWStd = [...data.workStandard, ...localWStd].sort((a, b) => a.date.localeCompare(b.date));
+    store(K.wstandard, finalWStd);
+    store('mwl_wstandard_sync', new Date().toLocaleString('he-IL'));
+    return true;
+  } catch (_) { 
+    return false; 
   }
 }
 
