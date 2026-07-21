@@ -1,4 +1,4 @@
-//  MyWorkLog – Google Apps Script  v6.7 (Server-Side Deduplication)
+//  MyWorkLog – Google Apps Script  v6.9 (Server-Side Deduplication + Paid Absence Compensation)
 //  הדבק קוד זה ב-Apps Script של הגיליון שלך
 //  לאחר מכן: Deploy > New deployment > Web App
 //  ✅ הרשאות: Anyone (אנונימי) / Execute as: Me
@@ -28,7 +28,7 @@ const ATT_NCOLS   = ATT_HEADERS.length;
 function doPost(e) {
   try {
     const data = JSON.parse(e.postData.contents);
-    if (data.action === 'setDayStandard')      return ok(updateWorkStandard(data.date, data.weekDay, data.stdHours, data.notes||'', data.description||''));
+    if (data.action === 'setDayStandard')       return ok(updateWorkStandard(data.date, data.weekDay, data.stdHours, data.notes||'', data.description||''));
     if (data.action === 'addProject')           return ok(addProject(data.project));
     if (data.action === 'deleteProject')        return ok(deleteProject(data.project));
     if (data.action === 'addClient')            return ok(addClient(data.id, data.name));
@@ -42,22 +42,18 @@ function doPost(e) {
     const main = getOrCreateSheet(ss, SHEET_NAME, HEADERS);
     
     // 🛡️ חסימת כפילויות בצד שרת (Server-Side Deduplication)
-    // בודק האם המזהה (ID) כבר קיים בגיליון WorkLog. אם כן - חוסם את הכתיבה.
     if (data.id) {
       const lastRow = main.getLastRow();
       if (lastRow > 1) {
-        // שולף רק את עמודת ה-ID (עמודה 7) לטובת ביצועים
         const idCol = main.getRange(2, 7, lastRow - 1, 1).getValues();
         for (let i = 0; i < idCol.length; i++) {
           if (String(idCol[i][0]).trim() === String(data.id).trim()) {
-            // ה-ID כבר קיים! מחזירים "נשמר" כדי שה-PWA ינקה את התור, אך לא רושמים שוב.
             return ok('נשמר (כפילות סוננה בשרת)');
           }
         }
       }
     }
 
-    // אם ה-ID לא קיים, רושמים כשורה חדשה
     const ts   = new Date().toLocaleString('he-IL', { timeZone: 'Asia/Jerusalem' });
     main.appendRow([ts, data.report_date||'', data.report_time||'',
       translateCategory(data.category)||'', data.description||'', data.project||'', data.id||'']);
@@ -217,8 +213,7 @@ function rebuildDayAttendance(ss, dateStr) {
   let { pairs, openEntry, unmatchedExits } = getPairsForDate(ss, dateStr);
   const { stdHours, stdStr, classification } = getStdForDate(ss, dateStr);
   
-  // זיהוי סיווג היום לצורך הפיצוי
-  const lowerClass = classification.toLowerCase();
+  const lowerClass = String(classification).toLowerCase();
   const isPaidAbsence = /חופש|מחלה|חלה|sick|vacation|חג|שבתון|sabbatical/.test(lowerClass);
 
   if (pairs.length === 0 && !openEntry && unmatchedExits.length === 0 && !isPaidAbsence) return;
@@ -226,7 +221,6 @@ function rebuildDayAttendance(ss, dateStr) {
   const stdMins   = Math.round(stdHours * 60);
   let totalMins = pairs.reduce((s,p)=>s+p.durationMins, 0);
   
-  // הפעלת מנגנון הפיצוי בשרת
   if (isPaidAbsence && stdMins > 0 && totalMins < stdMins) {
     totalMins = stdMins;
   }
@@ -237,7 +231,6 @@ function rebuildDayAttendance(ss, dateStr) {
   const newRows = [];
 
   if (pairs.length === 0 && isPaidAbsence) {
-    // יום חופש/מחלה ללא שעות עבודה בפועל - ירשום את שעות התקן כשעות מפוצות
     newRows.push([dateStr, '🛡️ מפוצה', '🛡️ מפוצה', fmtMins(totalMins), stdStr, devStr, classification, 'single']);
   } else if (pairs.length <= 1 && !openEntry) {
     const p = pairs[0] || { entry: '🛡️ מפוצה', exit: '🛡️ מפוצה' };
@@ -256,7 +249,6 @@ function rebuildDayAttendance(ss, dateStr) {
     newRows.push([dateStr, '⚠️ חסרה כניסה', ex, '', stdStr, devStr, classification, 'orphan']);
   });
 
-  // (שאר לוגיקת ההכנסה לגיליון נשארת זהה...)
   let insertBefore = -1;
   if (sheet.getLastRow() > 1) {
     const data = sheet.getRange(2, 1, sheet.getLastRow()-1, ATT_NCOLS).getValues();
@@ -284,31 +276,34 @@ function rebuildDayAttendance(ss, dateStr) {
 function rebuildAllAttendance() {
   const ss   = SpreadsheetApp.getActiveSpreadsheet();
   const main = ss.getSheetByName(SHEET_NAME);
-  if (!main || main.getLastRow() <= 1) return;
-
-  const worklogRows = main.getDataRange().getValues().slice(1);
-
+  
   const dateMap = {}; 
   const seenIds = new Set();
 
-  worklogRows.forEach(r => {
-    const id = String(r[6] || '').trim();
-    if (id && seenIds.has(id)) return;
-    if (id) seenIds.add(id);
+  // לקבלת תאריך היום הנוכחי בפורמט YYYY-MM-DD לפי שעון ישראל
+  const todayStr = Utilities.formatDate(new Date(), "Asia/Jerusalem", "yyyy-MM-dd");
 
-    const cat = reverseCategory(String(r[3]||''));
-    const d   = fmtDateCell(r[1]);
-    const t   = parseTimeCell(r[2]);
-    if (!d || !t) return;
+  // 1. איסוף דיווחים קיימים מ-WorkLog
+  if (main && main.getLastRow() > 1) {
+    const worklogRows = main.getDataRange().getValues().slice(1);
+    worklogRows.forEach(r => {
+      const id = String(r[6] || '').trim();
+      if (id && seenIds.has(id)) return;
+      if (id) seenIds.add(id);
 
-    if (!dateMap[d]) dateMap[d] = { entries: new Set(), exits: new Set() };
-    
-    if (cat === 'entry') dateMap[d].entries.add(t);
-    else if (cat === 'exit') dateMap[d].exits.add(t);
-  });
+      const cat = reverseCategory(String(r[3]||''));
+      const d   = fmtDateCell(r[1]);
+      const t   = parseTimeCell(r[2]);
+      if (!d || !t) return;
 
-  const allRows = [];
-  
+      if (!dateMap[d]) dateMap[d] = { entries: new Set(), exits: new Set() };
+      
+      if (cat === 'entry') dateMap[d].entries.add(t);
+      else if (cat === 'exit') dateMap[d].exits.add(t);
+    });
+  }
+
+  // 2. משיכת נתוני תקן מ-WorkStandard ובניית מפת התקן
   const wss = ss.getSheetByName(SHEET_WSTANDARD);
   const stdMap = {};
   if (wss && wss.getLastRow() > 1) {
@@ -318,14 +313,24 @@ function rebuildAllAttendance() {
       const h    = parseFloat(r[2]) || 0;
       const notes = String(r[3]||'').trim();
       const desc  = String(r[4]||'').trim();
+      
       stdMap[d] = {
         stdHours: h,
         stdStr: h > 0 ? pad(Math.floor(h)) + ':' + pad(Math.round((h % 1) * 60)) : '',
         classification: [notes, desc].filter(Boolean).join(' — ')
       };
+
+      // ✨ תיקון: מייצרים יום מפוצה ב-dateMap אך ורק אם יש בו שעות תקן מעל 0 (h > 0)
+      const isPaidAbsence = /חופש|מחלה|חלה|sick|vacation|חג|שבתון|sabbatical/.test(notes.toLowerCase());
+      if (isPaidAbsence && h > 0 && d <= todayStr && !dateMap[d]) {
+        dateMap[d] = { entries: new Set(), exits: new Set() };
+      }
     });
   }
 
+  const allRows = [];
+  
+  // 3. מעבר על כל התאריכים הרלוונטיים
   Object.keys(dateMap).sort().forEach(dateStr => {
     const arrEntries = Array.from(dateMap[dateStr].entries).sort();
     const arrExits = Array.from(dateMap[dateStr].exits).sort();
@@ -349,34 +354,39 @@ function rebuildAllAttendance() {
     const stdMins  = Math.round(std.stdHours * 60);
     let totalMins = pairs.reduce((s,p)=>s+p.durationMins, 0);
 
-    // 🛡️ מנגנון הפיצוי בבנייה מחדש הכללית
+    // בדיקה האם מדובר ביום היעדרות מוצדק *שיש בו תקן שעות בפועל*
     const isPaidAbsence = /חופש|מחלה|חלה|sick|vacation|חג|שבתון|sabbatical/.test(String(std.classification||'').toLowerCase());
-    if (isPaidAbsence && stdMins > 0 && totalMins < stdMins) {
+    const hasValidStandard = stdMins > 0;
+
+    // מנגנון הפיצוי בשעות ירוץ רק אם יש תקן שעות מוגדר
+    if (isPaidAbsence && hasValidStandard && dateStr <= todayStr && totalMins < stdMins) {
       totalMins = stdMins;
     }
 
-    if (pairs.length === 0 && !openEntry && unmatchedExits.length === 0 && !isPaidAbsence) return;
+    // ✨ תיקון: אם אין דיווחים וזה יום ללא תקן שעות (גם אם כתוב חג/שבתון) — מדלגים לחלוטין ולא מייצרים שורה
+    if (pairs.length === 0 && !openEntry && unmatchedExits.length === 0 && !(isPaidAbsence && hasValidStandard)) return;
 
     const devMins  = stdMins > 0 ? totalMins - stdMins : null;
     const devStr   = devMins !== null ? fmtDev(devMins) : '';
+    const absenceLabel = std.classification || 'היעדרות מוצדקת';
 
-    if (pairs.length === 0 && isPaidAbsence) {
-      // יום חופש/מחלה היסטורי ללא שעות בפועל — רישום שורת שעות מפוצות
-      allRows.push([dateStr, '🛡️ מפוצה', '🛡️ מפוצה', fmtMins(totalMins), std.stdStr, devStr, std.classification||'', 'single']);
+    if (pairs.length === 0 && isPaidAbsence && hasValidStandard) {
+      allRows.push([dateStr, absenceLabel, absenceLabel, fmtMins(totalMins), std.stdStr, devStr, std.classification || '', 'single']);
     } else if (pairs.length <= 1 && !openEntry) {
-      const p = pairs[0] || { entry: '🛡️ מפוצה', exit: '🛡️ מפוצה' };
-      allRows.push([dateStr, p.entry, p.exit, fmtMins(totalMins), std.stdStr, devStr, std.classification||'', 'single']);
+      const p = pairs[0] || { entry: absenceLabel, exit: absenceLabel };
+      allRows.push([dateStr, p.entry, p.exit, fmtMins(totalMins), std.stdStr, devStr, std.classification || '', 'single']);
     } else {
       const firstEntry = pairs.length > 0 ? pairs[0].entry : openEntry;
       const lastExit   = pairs.length > 0 ? pairs[pairs.length-1].exit : '';
-      allRows.push([dateStr, firstEntry, lastExit, fmtMins(totalMins), std.stdStr, devStr, std.classification||'', 'summary']);
+      allRows.push([dateStr, firstEntry, lastExit, fmtMins(totalMins), std.stdStr, devStr, std.classification || '', 'summary']);
       
       pairs.forEach(p => allRows.push([dateStr, p.entry, p.exit, fmtMins(p.durationMins), '', '', '', 'detail']));
       if (openEntry) allRows.push([dateStr, openEntry, '⏳ פתוח', '', '', '', '', 'detail']);
-      unmatchedExits.forEach(ex => allRows.push([dateStr, '⚠️ חסרה כניסה', ex, '', std.stdStr, devStr, std.classification||'', 'orphan']));
+      unmatchedExits.forEach(ex => allRows.push([dateStr, '⚠️ חסרה כניסה', ex, '', std.stdStr, devStr, std.classification || '', 'orphan']));
     }
   });
 
+  // 4. כתיבה מחדש לגיליון Attendance
   const sheet = getOrCreateAttSheet(ss);
   if (sheet.getLastRow() > 1) sheet.deleteRows(2, sheet.getLastRow()-1);
 
