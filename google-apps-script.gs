@@ -1,4 +1,4 @@
-//  MyWorkLog – Google Apps Script  v6.9 (Server-Side Deduplication + Paid Absence Compensation)
+//  MyWorkLog – Google Apps Script  v6.10 (Server-Side Deduplication + Paid Absence Compensation)
 //  הדבק קוד זה ב-Apps Script של הגיליון שלך
 //  לאחר מכן: Deploy > New deployment > Web App
 //  ✅ הרשאות: Anyone (אנונימי) / Execute as: Me
@@ -66,10 +66,12 @@ function doPost(e) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-//  doGet
+//  doGet — עם תמיכה בסינון תאריכים דינמי (Delta Sync)
 // ─────────────────────────────────────────────────────────────────────────────
 function doGet(e) {
   const action = (e && e.parameter && e.parameter.action) || '';
+  // קריאת פרמטר התאריך מהלקוח (אם נשלח)
+  const fromDate = (e && e.parameter && e.parameter.fromDate) || '';
 
   if (action === 'getWorkStandard') {
     const ss    = SpreadsheetApp.getActiveSpreadsheet();
@@ -77,11 +79,19 @@ function doGet(e) {
     const lastRow = sheet.getLastRow();
     if (lastRow <= 1) return jsonResp({ workStandard: [] });
     const rows = sheet.getRange(2, 1, lastRow-1, 5).getValues();
-    return jsonResp({ workStandard: rows.map(r=>({
+    
+    let result = rows.map(r=>({
       date:fmtDateCell(r[0]), weekDay:String(r[1]||'').trim(),
       stdHours:parseFloat(r[2])||0, notes:String(r[3]||'').trim(),
       description:String(r[4]||'').trim()
-    })).filter(r=>r.date) });
+    })).filter(r=>r.date);
+
+    // סינון Delta: אם נשלח תאריך, נחזיר רק ממנו והלאה
+    if (fromDate) {
+      result = result.filter(r => r.date >= fromDate);
+    }
+
+    return jsonResp({ workStandard: result });
   }
 
   if (action === 'getProjects') {
@@ -91,18 +101,31 @@ function doGet(e) {
     return jsonResp({ projects: sheet.getDataRange().getValues().slice(1).map(r=>String(r[0]).trim()).filter(Boolean) });
   }
 
-  if (action === 'getReports') {
+if (action === 'getReports') {
     const ss    = SpreadsheetApp.getActiveSpreadsheet();
     const sheet = ss.getSheetByName(SHEET_NAME);
-    if (!sheet) return jsonResp({ reports: [], projects: [] });
-    const reports = sheet.getDataRange().getValues().slice(1).map(r=>({
+    if (!sheet) return jsonResp({ reports: [], projects: [], allSheetIds: [] });
+    
+    const allRows = sheet.getDataRange().getValues().slice(1);
+    
+    // מפה מלאה של מזהים בלבד (לצורך סנכרון מחיקות היסטוריות)
+    const allSheetIds = birdsEyeIds = allRows.map(r => String(r[6]||'').trim()).filter(Boolean);
+
+    let reports = allRows.map(r=>({
       timestamp:fmtDateCell(r[0])||String(r[0]||''), report_date:fmtDateCell(r[1]),
       report_time:parseTimeCell(r[2]), category:reverseCategory(String(r[3]||'')),
       description:String(r[4]||''), project:String(r[5]||''), id:String(r[6]||''), sent:true
     })).filter(r=>r.id);
+
+    // סינון Delta לחלון הזמן המבוקש
+    if (fromDate) {
+      reports = reports.filter(r => r.report_date >= fromDate);
+    }
+
     const pSheet   = ss.getSheetByName(SHEET_PROJECTS);
     const projects = pSheet ? pSheet.getDataRange().getValues().slice(1).map(r=>String(r[0]).trim()).filter(Boolean) : [];
-    return jsonResp({ reports, projects });
+    
+    return jsonResp({ reports, projects, allSheetIds });
   }
 
   if (action === 'rebuildAttendance') {
