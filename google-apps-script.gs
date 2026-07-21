@@ -1,4 +1,4 @@
-//  MyWorkLog – Google Apps Script  v6.10 (Server-Side Deduplication + Paid Absence Compensation)
+//  MyWorkLog – Google Apps Script  v7.0 (Delta Sync, Deduplication, Paid Absence)
 //  הדבק קוד זה ב-Apps Script של הגיליון שלך
 //  לאחר מכן: Deploy > New deployment > Web App
 //  ✅ הרשאות: Anyone (אנונימי) / Execute as: Me
@@ -108,8 +108,8 @@ if (action === 'getReports') {
     
     const allRows = sheet.getDataRange().getValues().slice(1);
     
-    // מפה מלאה של מזהים בלבד (לצורך סנכרון מחיקות היסטוריות)
-    const allSheetIds = birdsEyeIds = allRows.map(r => String(r[6]||'').trim()).filter(Boolean);
+    // מפה מלאה של מזהים בלבד (לצורך סנכרון מחיקות היסטוריות בצד הלקוח)
+    const allSheetIds = allRows.map(r => String(r[6]||'').trim()).filter(Boolean);
 
     let reports = allRows.map(r=>({
       timestamp:fmtDateCell(r[0])||String(r[0]||''), report_date:fmtDateCell(r[1]),
@@ -133,7 +133,7 @@ if (action === 'getReports') {
     return ok('Attendance rebuilt');
   }
 
-  return jsonResp({ status:'ok', app:'MyWorkLog', version:'6.7' });
+  return jsonResp({ status:'ok', app:'MyWorkLog', version:'7.0' });
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -343,7 +343,7 @@ function rebuildAllAttendance() {
         classification: [notes, desc].filter(Boolean).join(' — ')
       };
 
-      // ✨ תיקון: מייצרים יום מפוצה ב-dateMap אך ורק אם יש בו שעות תקן מעל 0 (h > 0)
+      // ✨ מייצרים יום מפוצה ב-dateMap אך ורק אם יש בו שעות תקן מעל 0 (h > 0)
       const isPaidAbsence = /חופש|מחלה|חלה|sick|vacation|חג|שבתון|sabbatical/.test(notes.toLowerCase());
       if (isPaidAbsence && h > 0 && d <= todayStr && !dateMap[d]) {
         dateMap[d] = { entries: new Set(), exits: new Set() };
@@ -386,7 +386,7 @@ function rebuildAllAttendance() {
       totalMins = stdMins;
     }
 
-    // ✨ תיקון: אם אין דיווחים וזה יום ללא תקן שעות (גם אם כתוב חג/שבתון) — מדלגים לחלוטין ולא מייצרים שורה
+    // ✨ אם אין דיווחים וזה יום ללא תקן שעות — מדלגים לחלוטין ולא מייצרים שורה
     if (pairs.length === 0 && !openEntry && unmatchedExits.length === 0 && !(isPaidAbsence && hasValidStandard)) return;
 
     const devMins  = stdMins > 0 ? totalMins - stdMins : null;
@@ -621,8 +621,8 @@ function setupSheets() {
   }
   getOrCreateAttSheet(ss); 
   SpreadsheetApp.getUi().alert(
-    'MyWorkLog v6.7 — גיליונות מוכנים!\n\n' +
-    'חסימת כפילויות צד שרת הופעלה.\n\n' +
+    'MyWorkLog v7.0 — גיליונות מוכנים!\n\n' +
+    'סנכרון מהיר (Delta) מופעל.\n\n' +
     'Deploy → New deployment לאחר השמירה!'
   );
 }
