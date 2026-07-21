@@ -55,7 +55,7 @@ html,body{height:100%;background:var(--bg0);color:var(--text);
 .workday-chip input{position:absolute;opacity:0;width:0;height:0}
 .workday-chip:has(input:checked){background:var(--limeDim);border-color:var(--lime);color:var(--lime)}
 
-/* ── NOTIFICATION SYSTEM v4.4.3 ── */
+/* ── NOTIFICATION SYSTEM v4.4.4 ── */
 .offline-banner{position:fixed;top:0;left:0;right:0;
   background:var(--red,#ef4444);color:#fff;text-align:center;
   padding:calc(var(--safeT,0px)+8px) 16px 8px;
@@ -618,7 +618,7 @@ details summary::-webkit-details-marker{display:none}
     
     <!-- תחתית התפריט - חיווי גרסה בלבד -->
     <div class="menu-foot" style="display: flex; justify-content: center; padding: 12px 16px;">
-      <span id="menu-vbadge" class="vbadge" title="לחץ לאיפוס">v4.4.3</span>
+      <span id="menu-vbadge" class="vbadge" title="לחץ לאיפוס">v4.4.4</span>
     </div>
   </aside>
   
@@ -1082,7 +1082,7 @@ details summary::-webkit-details-marker{display:none}
           <div class="sset-block">
             <div class="sset-row" style="gap: 0;">
               <div class="about-row"><span class="about-lbl">שם</span><span class="about-val">MyWorkLog</span></div>
-              <div class="about-row"><span class="about-lbl">גרסה</span><span class="about-val" id="about-version">v4.4.3</span></div>
+              <div class="about-row"><span class="about-lbl">גרסה</span><span class="about-val" id="about-version">v4.4.4</span></div>
               <div class="about-row"><span class="about-lbl">סטטוס PWA</span><span class="about-val" id="about-pwa-status">בודק...</span></div>
               <div class="about-row"><span class="about-lbl">Service Worker</span><span class="about-val" id="about-sw-status">בודק...</span></div>
               <div class="about-row"><span class="about-lbl">כמות דיווחים שמורים</span><span class="about-val" id="about-data-count">—</span></div>
@@ -1494,12 +1494,12 @@ details summary::-webkit-details-marker{display:none}
 /* BOOT */
 
 /* ═══════════════════════════════════════════════════════
-   NOTIFICATION SYSTEM  v4.4.3
+   NOTIFICATION SYSTEM  v4.4.4
    Manages: Offline banner · PWA Install · Update Prompt · Toast
    ═══════════════════════════════════════════════════════ */
 const NotificationSystem = {
   settings: { showNetworkStatus: true },
-  currentVersion: '4.4.3',
+  currentVersion: '4.4.4',
   deferredInstallPrompt: null,
   _wasOffline: false,   // track previous state for auto-cleanup
 
@@ -1684,7 +1684,7 @@ document.addEventListener('DOMContentLoaded',()=>{
     fixStoredDates();
   netInit();netQInit();projLoad();histRender();
   importInit();
-    NotificationSystem.init(VER);  // v4.4.3
+    NotificationSystem.init(VER);  // v4.4.4
     updateSessionBanner();
     flushDeleteQueue();
     menuInit();vBadgeInit();swipeInit();ptrInit();swInit();installInit();scrollInit();
