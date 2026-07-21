@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════
-   MyWorkLog · App Core  v4.4.2
+   MyWorkLog · App Core  v4.4.3
    ═══════════════════════════════════════════════════════ */
 
 const VER = '4.4.2';
@@ -55,5 +55,31 @@ const catLbl = cat => t({ entry:'catEntry', exit:'catExit', task:'catTask' }[cat
 
 /* toast() moved to index.html — bridges to NotificationSystem v3.8.0 */
 
+/* ── CONFLICT RESOLUTION (Offline vs Sheet) ── */
+function mergeSheetAndOfflineData(sheetData) {
+  // שליפת תור הדיווחים המקומיים הממתינים לשליחה (באמצעות המפתח הקיים באפליקציה)
+  const offlineQueue = store(K.q) || [];
+  
+  // אם תור האופליין ריק, אין התנגשויות - נחזיר את נתוני הגיליון כפי שהם
+  if (offlineQueue.length === 0) {
+    return sheetData;
+  }
+
+  // יצירת סט מזהים של כל דיווחי האופליין הממתינים
+  const offlineIds = new Set(offlineQueue.map(item => String(item.id)));
+
+  // סינון נתוני הגיליון המרוחק: כל דיווח שקיים לו עדכון אופליין באפליקציה - מוסר
+  const filteredSheetData = sheetData.filter(report => report.id && !offlineIds.has(String(report.id)));
+
+  // חיבור הנתונים: דיווחי האופליין גוברים ומתווספים לנתונים הנקיים מהגיליון
+  const finalMergedData = [...filteredSheetData, ...offlineQueue];
+
+  // מיון כרונולוגי יורד (מהחדש לישן) לפי תאריך ושעה, כפי שנדרש בהיסטוריה של המערכת
+  return finalMergedData.sort((a, b) => {
+    const keyA = (a.report_date || '') + 'T' + (a.report_time && !a.report_time.includes('-') ? a.report_time : '00:00');
+    const keyB = (b.report_date || '') + 'T' + (b.report_time && !b.report_time.includes('-') ? b.report_time : '00:00');
+    return keyB.localeCompare(keyA);
+  });
+}
 /* ── BOOT ── */
 
