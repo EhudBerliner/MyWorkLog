@@ -2,7 +2,8 @@
    MyWorkLog · App Core  v4.4.3
    ═══════════════════════════════════════════════════════ */
 
-const VER = '4.4.2';
+// תיקון: עדכון הגרסה המערכתית לסינכרון מלא מול ה-UI וה-Service Worker
+const VER = '4.4.3';
 
 /* ── Storage keys ── */
 const K = {
@@ -81,5 +82,5 @@ function mergeSheetAndOfflineData(sheetData) {
     return keyB.localeCompare(keyA);
   });
 }
-/* ── BOOT ── */
 
+/* ── BOOT ── */
