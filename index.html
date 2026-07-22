@@ -590,25 +590,29 @@ details summary::-webkit-details-marker{display:none}
       <span class="menu-appname">MyWorkLog</span>
       <button class="ibtn" id="btn-close-menu" data-i18n="menuClose" data-i18n-attr="aria-label" aria-label="סגור">✕</button>
     </div>
-    <nav class="menu-nav">
+
+<nav class="menu-nav">
+      <!-- ניווט ראשי -->
       <button class="menu-item" data-tab="report"  data-i18n="menuReport">דיווח</button>
       <button class="menu-item" data-tab="history" data-i18n="menuHistory">היסטוריה</button>
       <button class="menu-item" data-tab="summary" data-i18n="menuSummary">סיכום</button>
+      
       <hr class="menu-div"/>
-      <button class="menu-item" id="menu-theme-btn"data-i18n="menuThemeDark">🌙 מצב כהה</button>
+      
+      <!-- פעולות מהירות -->
+      <button class="menu-item" id="menu-master-sync-btn" style="color: var(--lime); font-weight: 600;">🔄 סנכרון נתונים מלא</button>
+      
       <hr class="menu-div"/>
+      
+      <!-- הגדרות ומערכת -->
+      <button class="menu-item" id="menu-theme-btn" data-i18n="menuThemeDark">🌙 מצב כהה</button>
       <button class="menu-item" id="menu-settings-btn" data-i18n="menuSettings">⚙️ הגדרות</button>
-      <button class="menu-item" id="menu-help-btn"data-i18n="menuHelp2">📄 עזרה — Apps Script</button>
-      <button class="menu-item" id="menu-gs-btn"data-i18n="menuGS">🔗 קוד google-apps-script.gs</button>
-      <button class="menu-item" id="menu-import-btn" data-i18n="menuImport">📥 טעינת נתונים</button>
-      <hr class="menu-div"/>
-      <button class="menu-item" id="menu-wstandard-btn"data-i18n="menuWorkstandard">📊 תקן שעות — WorkStandard</button>
     </nav>
     <div class="menu-foot" style="display:flex;flex-direction:column;gap:8px">
       <a id="menu-sheet-link" href="#" target="_blank" rel="noopener" style="display:none;align-items:center;gap:7px;font-size:.8rem;color:var(--blue);text-decoration:none;padding:3px 2px">
-        <span data-i18n="menuOpenSheet">📊 פתח גיליון הדיווחים</span>
+        <span data-i18n="menuOpenSheet">📊 פתח גיליון Google</span>
       </a>
-      <span id="menu-vbadge" class="vbadge" data-i18n-attr="title" data-i18n="menuVersionTooltip" title="לחץ לאיפוס">v3.7.0</span>
+      <span id="menu-vbadge" class="vbadge" data-i18n-attr="title" data-i18n="menuVersionTooltip" title="לחץ לאיפוס">v4.4.3</span>
     </div>
   </aside>
 
@@ -1975,6 +1979,26 @@ function switchTab(name){
 
 /* MENU */
 function menuInit(){
+  $('btn-hamburger').addEventListener('click',menuOpen);
+  $('btn-close-menu').addEventListener('click',menuClose);
+  $('menu-overlay').addEventListener('click',menuClose);
+  $('menu-settings-btn').addEventListener('click',()=>{menuClose();openM('modal-settings')});
+  
+  // מאזין ללחצן הסנכרון המלא החדש (ללא הלוגיקה המלאה עדיין)
+  $('menu-master-sync-btn')?.addEventListener('click', () => {
+    menuClose();
+    buzz([20]);
+    toast('לחצן סנכרון מוכן – לוגיקה תיושם בשלב הבא', 'info');
+  });
+
+  $('menu-theme-btn').addEventListener('click',()=>{
+    applyTheme(document.body.classList.contains('light')?'dark':'light');buzz([20]);
+  });
+  
+  document.querySelectorAll('.menu-item[data-tab]').forEach(el=>el.addEventListener('click',()=>switchTab(el.dataset.tab)));
+  updateMenuSheetLink();
+}
+
   $('btn-hamburger').addEventListener('click',menuOpen);
   $('btn-close-menu').addEventListener('click',menuClose);
   $('menu-overlay').addEventListener('click',menuClose);
