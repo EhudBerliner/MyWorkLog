@@ -487,22 +487,9 @@ details summary::-webkit-details-marker{display:none}
 
 /* ─ CLIENT/PROJECT TREE ─ */
 
-
-
 .add-row{display:flex;gap:7px;margin-top:6px}
 .add-row .fi{flex:1;font-size:.8rem;padding:8px 10px}
 .add-row .btn-g{padding:8px 12px;font-size:.8rem}
-
-/* ─ CRM TASKS TAB ─ */
-
-
-
-
-
-
-
-
-
 
 
 /* ─ PROFILE SECTION ─ */
@@ -532,6 +519,49 @@ details summary::-webkit-details-marker{display:none}
 .changelog-items{display:flex;flex-direction:column;gap:4px}
 .changelog-item{font-size:.8rem;color:var(--text2);padding-right:4px}
 .changelog-item.new{color:var(--lime);font-weight:600}
+
+/* ─ NEW SETTINGS TABS ─ */
+.settings-tabs {
+  display: flex;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: var(--rs);
+  overflow: hidden;
+}
+.settings-tab-btn {
+  flex: 1;
+  padding: 10px 4px;
+  border: none;
+  border-bottom: 2px solid transparent;
+  background: none;
+  font-family: var(--fhe);
+  font-size: .78rem;
+  font-weight: 600;
+  color: var(--text2);
+  cursor: pointer;
+  transition: all .18s ease;
+  text-align: center;
+  white-space: nowrap;
+}
+.settings-tab-btn:hover:not(.active) {
+  color: var(--text);
+  background: var(--glass);
+}
+.settings-tab-btn.active {
+  color: var(--lime);
+  border-bottom-color: var(--lime);
+  background: var(--bg2);
+}
+.settings-tab-content {
+  display: none;
+  flex-direction: column;
+  gap: 14px;
+  animation: fadeUp .18s ease both;
+}
+.settings-tab-content.active {
+  display: flex;
+}
+
 </style>
 </head>
 <body>
@@ -860,21 +890,19 @@ details summary::-webkit-details-marker{display:none}
       <button class="ibtn" id="btn-close-settings">✕</button>
     </div>
 
-    <!-- SETTINGS TABS NAV -->
+    <!-- SETTINGS TABS NAV (העיצוב החדש) -->
     <div style="padding:10px 18px 0">
-      <div class="stab-nav" id="settings-tab-nav">
-        <button class="stab-btn active" data-stab="ui">🎨 תצוגה</button>
-        <button class="stab-btn"        data-stab="connection">🔗 חיבור</button>
-        <button class="stab-btn"        data-stab="data">📦 נתונים</button>
-        <button class="stab-btn"        data-stab="about">ℹ️ אודות</button>
+      <div class="settings-tabs" id="settings-tab-nav">
+        <button class="settings-tab-btn active" data-settings-tab="set-general">כללי</button>
+        <button class="settings-tab-btn" data-settings-tab="set-sheets">סנכרון ונתונים</button>
+        <button class="settings-tab-btn" data-settings-tab="set-display">תצוגה ואודות</button>
       </div>
     </div>
 
     <div class="mbody" style="padding-top:14px">
 
-      <!-- ══ TAB: UI ══ -->
-      <div class="stab-pnl active" id="stab-ui">
-
+      <!-- ══ TAB 1: כללי ══ -->
+      <div id="set-general" class="settings-tab-content active">
         <!-- PROFILE -->
         <div class="sset-group">
           <div class="sset-label">👤 פרופיל</div>
@@ -899,31 +927,6 @@ details summary::-webkit-details-marker{display:none}
           </div>
         </div>
 
-        <!-- LANGUAGE -->
-        <div class="sset-group">
-          <div class="sset-label" data-i18n="settingsLangLabel">שפה</div>
-          <div class="sset-block">
-            <div class="sset-row-inline">
-              <span class="sset-row-label" data-i18n="settingsLangInterface">🌐 שפת ממשק</span>
-              <div class="seg" style="width:140px">
-                <button class="seg-btn active" data-lang="he" data-i18n="settingsLang">עברית</button>
-                <button class="seg-btn"        data-lang="en">English</button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- THEME -->
-        <div class="sset-group">
-          <div class="sset-label">🎨 ערכת נושא</div>
-          <div class="sset-block">
-            <div class="sset-row-inline">
-              <span class="sset-row-label" id="theme-label-settings">🌙 מצב כהה</span>
-              <button class="btn-g sm" id="btn-theme-toggle-settings" style="white-space:nowrap">החלף מצב</button>
-            </div>
-          </div>
-        </div>
-
         <!-- TIME ROUNDING -->
         <div class="sset-group">
           <div class="sset-label">⏱ עיגול שעות</div>
@@ -931,7 +934,6 @@ details summary::-webkit-details-marker{display:none}
             <div class="sset-row-inline">
               <div style="display:flex;flex-direction:column;gap:2px;flex:1">
                 <span class="sset-row-label">עיגול אוטומטי לדיווחי כניסה/יציאה</span>
-                <span class="sset-row-sub">עיגול שעת הדיווח לפי הגדרה</span>
               </div>
             </div>
             <div class="sset-row-inline" style="border-top:1px solid var(--border)">
@@ -954,7 +956,6 @@ details summary::-webkit-details-marker{display:none}
               <span class="pref-row-icon">📳</span>
               <span class="pref-row-body">
                 <span class="pref-row-label" data-i18n="prefVibration">רטט</span>
-                <span class="pref-row-desc" data-i18n="prefVibrationDesc">פידבק הפטי בכפתורים ופעולות</span>
               </span>
               <input type="checkbox" id="pref-vibration" class="ptog" checked/>
             </label>
@@ -962,203 +963,118 @@ details summary::-webkit-details-marker{display:none}
               <span class="pref-row-icon">✨</span>
               <span class="pref-row-body">
                 <span class="pref-row-label" data-i18n="prefAnimations">אנימציות</span>
-                <span class="pref-row-desc" data-i18n="prefAnimationsDesc">מעברים ואנימציות ממשק</span>
               </span>
               <input type="checkbox" id="pref-animations" class="ptog" checked/>
             </label>
-            <label class="pref-row">
-              <span class="pref-row-icon">↓</span>
-              <span class="pref-row-body">
-                <span class="pref-row-label" data-i18n="prefPullRefresh">משיכה לרענון</span>
-                <span class="pref-row-desc" data-i18n="prefPullRefreshDesc">משוך למטה לרענון הדף</span>
-              </span>
-              <input type="checkbox" id="pref-pull-refresh" class="ptog"/>
-            </label>
-
-            <!-- Work Days -->
-            <div class="sset-row" style="border-top:1px solid var(--border);padding-top:11px;margin-top:4px">
-              <div class="sset-row-label">📅 ימי עבודה בשבוע</div>
-              <div class="sset-row-sub" style="margin-bottom:8px">ימים שלא יסומנו יסווגו אוטומטית כ"לא יום עבודה"</div>
-              <div style="display:flex;gap:6px;flex-wrap:wrap">
-                <label class="workday-chip"><input type="checkbox" class="pref-workday-cb" data-day="0" checked><span>א'</span></label>
-                <label class="workday-chip"><input type="checkbox" class="pref-workday-cb" data-day="1" checked><span>ב'</span></label>
-                <label class="workday-chip"><input type="checkbox" class="pref-workday-cb" data-day="2" checked><span>ג'</span></label>
-                <label class="workday-chip"><input type="checkbox" class="pref-workday-cb" data-day="3" checked><span>ד'</span></label>
-                <label class="workday-chip"><input type="checkbox" class="pref-workday-cb" data-day="4" checked><span>ה'</span></label>
-                <label class="workday-chip"><input type="checkbox" class="pref-workday-cb" data-day="5"><span>ו'</span></label>
-                <label class="workday-chip"><input type="checkbox" class="pref-workday-cb" data-day="6"><span>ש'</span></label>
-              </div>
-            </div>
           </div>
         </div>
 
-      </div><!-- /stab-ui -->
+        <!-- Placeholder עתידי לבקשתך -->
+        <div class="sset-group">
+          <div class="sset-label">⚙️ הגדרות עבודה נוספות</div>
+          <div class="sset-block" style="padding: 12px; text-align: center; color: var(--text3); font-style: italic; font-size: 0.8rem;">
+            אזור שמור להגדרות משרה ותקנים עתידיים
+          </div>
+        </div>
+      </div><!-- /set-general -->
 
-      <!-- ══ TAB: CONNECTION ══ -->
-      <div class="stab-pnl" id="stab-connection">
 
-        <!-- GAS + SHEETS -->
+      <!-- ══ TAB 2: סנכרון ונתונים ══ -->
+      <div id="set-sheets" class="settings-tab-content">
+        <!-- CONNECTION -->
         <div class="sset-group">
           <div class="sset-label" data-i18n="settingsConnectionLabel">חיבור ל-Google</div>
           <div class="sset-block">
             <div class="sset-row">
               <label class="sset-row-label" for="settings-endpoint">🔗 Google Apps Script URL</label>
-              <div class="sset-row-sub" data-i18n="settingsEndpointHint">הדבק את ה-URL של ה-Web App</div>
-              <input type="url" id="settings-endpoint" class="fi" style="margin-top:4px"
-                placeholder="https://script.google.com/macros/s/.../exec"/>
+              <input type="url" id="settings-endpoint" class="fi" style="margin-top:4px" placeholder="https://script.google.com/..."/>
             </div>
             <div class="sset-row">
               <label class="sset-row-label" for="settings-sheet-url">📊 Google Sheets URL</label>
-              <div class="sset-row-sub" data-i18n="sheetUrlHint">הדבק את ה-URL של הגיליון</div>
-              <input type="url" id="settings-sheet-url" class="fi" style="margin-top:4px"
-                placeholder="https://docs.google.com/spreadsheets/d/.../edit"/>
+              <input type="url" id="settings-sheet-url" class="fi" style="margin-top:4px" placeholder="https://docs.google.com/..."/>
             </div>
             <div class="sset-row" id="sheet-link-section" style="display:none">
-              <a id="sheet-link" href="#" target="_blank" rel="noopener"
-                style="display:flex;align-items:center;gap:8px;padding:9px 12px;background:var(--bg0);
-                border:1px solid var(--border);border-radius:var(--rs);color:var(--blue);font-size:.82rem;
-                text-decoration:none;margin-top:8px;transition:border-color .2s"
-                onmouseover="this.style.borderColor='var(--blue)'" onmouseout="this.style.borderColor='var(--border)'">
-                ↗ <span data-i18n="settingsOpenSheet">פתח גיליון הדיווחים</span>
-              </a>
+              <a id="sheet-link" href="#" target="_blank" style="color:var(--blue); font-size:.82rem;">↗ פתח גיליון הדיווחים</a>
             </div>
           </div>
         </div>
 
-        <!-- SYNC -->
+        <!-- SYNC BUTTONS -->
         <div class="sset-group">
-          <div class="sset-label" data-i18n="settingsSyncLabel">סנכרון</div>
+          <div class="sset-label" data-i18n="settingsSyncLabel">סנכרון מול שרת</div>
           <div class="sset-block">
             <div class="sset-row">
               <div class="sync-btn-row">
-                <button class="btn-g sm" id="btn-sync-reports" data-i18n="btnSyncReports">↓ דיווחים מגיליון</button>
+                <button class="btn-g sm" id="btn-sync-reports" data-i18n="btnSyncReports">↓ דיווחים</button>
                 <button class="btn-g sm" id="btn-sync-projects" data-i18n="btnSyncProjects">↓ פרויקטים</button>
               </div>
+              <button class="btn-g sm" id="btn-sync-wstandard-settings" style="width:100%; margin-top:8px;">↻ משוך WorkStandard</button>
             </div>
           </div>
         </div>
 
-        <!-- WORKCAL SYNC -->
+        <!-- DATA MANAGEMENT -->
         <div class="sset-group">
-          <div class="sset-label">📊 WorkStandard</div>
+          <div class="sset-label">📥 ייבוא וייצוא נתונים מקומיים</div>
           <div class="sset-block">
             <div class="sset-row">
-              <div id="wstandard-sync-status-inline" style="font-size:.76rem;color:var(--text3);min-height:18px;margin-bottom:6px"></div>
-              <button class="btn-g sm" id="btn-sync-wstandard-settings" style="width:100%">↻ משוך WorkStandard מגיליון</button>
+              <button class="btn-g sm" id="btn-open-import-from-settings" style="width:100%">📂 ייבוא מ-Excel/CSV</button>
             </div>
-          </div>
-        </div>
-
-      </div><!-- /stab-connection -->
-
-      <!-- ══ TAB: DATA ══ -->
-      <div class="stab-pnl" id="stab-data">
-
-        <!-- IMPORT -->
-        <div class="sset-group">
-          <div class="sset-label">📥 ייבוא נתונים</div>
-          <div class="sset-block">
             <div class="sset-row">
-              <div class="sset-row-sub" style="margin-bottom:8px">טען דיווחים מקובץ Excel (.xlsx) או CSV</div>
-              <button class="btn-g sm" id="btn-open-import-from-settings" style="width:100%">📂 פתח חלון ייבוא</button>
-            </div>
-          </div>
-        </div>
-
-        <!-- EXPORT -->
-        <div class="sset-group">
-          <div class="sset-label">📤 ייצוא נתונים</div>
-          <div class="sset-block">
-            <div class="sset-row">
-              <div class="sset-row-sub" style="margin-bottom:8px">ייצא את כל הדיווחים המקומיים לקובץ</div>
               <div class="sync-btn-row">
                 <button class="btn-g sm" id="btn-export-csv">📄 ייצא CSV</button>
                 <button class="btn-g sm" id="btn-export-xlsx">📊 ייצא Excel</button>
               </div>
             </div>
-
+            <div class="sset-row">
+              <button class="btn-d sm" id="btn-clear-data" style="width:100%">🗑 מחק כל הנתונים המקומיים</button>
+            </div>
           </div>
         </div>
+      </div><!-- /set-sheets -->
 
-        <!-- PROJECTS (legacy flat list) -->
+
+      <!-- ══ TAB 3: תצוגה ואודות ══ -->
+      <div id="set-display" class="settings-tab-content">
+        <!-- THEME & LANG -->
         <div class="sset-group">
-          <div class="sset-label" data-i18n="settingsProjectsLabel">פרויקטים שמורים</div>
+          <div class="sset-label">🎨 תצוגה וממשק</div>
           <div class="sset-block">
-            <div class="sset-row">
-              <div class="proj-row">
-                <input type="text" id="new-project" class="fi"
-                  data-i18n="placeholderNewProject" data-i18n-attr="placeholder"
-                  placeholder="הוסף פרויקט..."/>
-                <button class="btn-g" id="btn-add-project" style="padding:10px 16px">+</button>
+            <div class="sset-row-inline">
+              <span class="sset-row-label" id="theme-label-settings">🌙 מצב כהה</span>
+              <button class="btn-g sm" id="btn-theme-toggle-settings">החלף מצב</button>
+            </div>
+            <div class="sset-row-inline" style="border-top:1px solid var(--border)">
+              <span class="sset-row-label">🌐 שפת ממשק</span>
+              <div class="seg" style="width:140px">
+                <button class="seg-btn active" data-lang="he">עברית</button>
+                <button class="seg-btn" data-lang="en">English</button>
               </div>
-              <div id="projects-chips" class="chips" style="margin-top:6px"></div>
             </div>
           </div>
         </div>
 
-        <!-- CLEAR DATA -->
+        <!-- ABOUT -->
         <div class="sset-group">
-          <div class="sset-label" data-i18n="settingsDataLabel">ניהול נתונים</div>
-          <div class="sset-block">
-            <div class="sset-row">
-              <button class="btn-d sm" id="btn-clear-data" style="width:100%" data-i18n="btnClearData">🗑 מחק כל הנתונים המקומיים</button>
-            </div>
-          </div>
-        </div>
-
-      </div><!-- /stab-data -->
-
-            <!-- ══ TAB: ABOUT ══ -->
-      <div class="stab-pnl" id="stab-about">
-
-        <!-- APP INFO -->
-        <div class="sset-group">
-          <div class="sset-label" style="display:flex;align-items:center;justify-content:space-between"><span>📱 פרטי אפליקציה</span><button class="btn-g sm" onclick="openChangelog()" style="font-size:.72rem">📋 מה חדש?</button></div>
+          <div class="sset-label">📱 פרטי אפליקציה</div>
           <div class="sset-block">
             <div class="sset-row" style="gap:0">
               <div class="about-row">
-                <span class="about-lbl">שם</span>
-                <span class="about-val">MyWorkLog</span>
+                <span class="about-lbl">שם</span><span class="about-val">MyWorkLog</span>
               </div>
               <div class="about-row">
-                <span class="about-lbl">גרסה</span>
-                <span class="about-val" id="about-version">v3.7.0</span>
-              </div>
-              <div class="about-row">
-                <span class="about-lbl">סטטוס PWA</span>
-                <span class="about-val" id="about-pwa-status">בודק...</span>
-              </div>
-              <div class="about-row">
-                <span class="about-lbl">Service Worker</span>
-                <span class="about-val" id="about-sw-status">בודק...</span>
-              </div>
-              <div class="about-row">
-                <span class="about-lbl">נתונים מקומיים</span>
-                <span class="about-val" id="about-data-count">—</span>
-              </div>
-              <div class="about-row">
-                <span class="about-lbl">סנכרון אחרון</span>
-                <span class="about-val" id="about-last-sync">—</span>
+                <span class="about-lbl">גרסה</span><span class="about-val" id="about-version">v3.7.0</span>
               </div>
             </div>
-          </div>
-        </div>
-
-        <!-- GAS DOWNLOAD -->
-        <div class="sset-group">
-          <div class="sset-label">🛠 כלי מפתח</div>
-          <div class="sset-block">
             <div class="sset-row">
-              <button class="btn-g sm" id="btn-open-changelog" style="width:100%">📋 Change Log</button>
               <button class="btn-g sm" onclick="downloadGS()" style="width:100%">⬇️ הורד google-apps-script.gs</button>
             </div>
             <div class="sset-row">
-              <button class="btn-d sm" id="btn-open-reset-about" style="width:100%">⚠️ איפוס אפליקציה</button>
+              <button class="btn-d sm" id="btn-open-reset-about" style="width:100%">⚠️ איפוס אפליקציה מוחלט</button>
             </div>
           </div>
         </div>
-
-      </div><!-- /stab-about -->
+      </div><!-- /set-display -->
 
     </div><!-- /mbody -->
     <div class="mfoot">
@@ -3865,28 +3781,43 @@ function scrollInit(){
 }
 
 /* ═══════════════════════════════════════════════════════
-   SETTINGS TABS  v3.7.0
+   SETTINGS TABS  
    ═══════════════════════════════════════════════════════ */
 let _lastSettingsTab = null;
 
 function settingsTabsInit(){
-  document.querySelectorAll('.stab-btn').forEach(btn=>{
-    btn.addEventListener('click',()=>{
-      const id=btn.dataset.stab;
-      switchSettingsTab(id);
+  document.querySelectorAll('.settings-tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const targetTab = btn.dataset.settingsTab;
+      switchSettingsTab(targetTab);
+      buzz([15]);
     });
   });
 }
 
 function switchSettingsTab(id){
-  document.querySelectorAll('.stab-btn').forEach(b=>b.classList.toggle('active',b.dataset.stab===id));
-  document.querySelectorAll('.stab-pnl').forEach(p=>p.classList.toggle('active',p.id===`stab-${id}`));
-  _lastSettingsTab=id;
-  try{sessionStorage.setItem('mwl_stab',id);}catch(_){}
+  document.querySelectorAll('.settings-tab-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.settingsTab === id);
+  });
+  document.querySelectorAll('.settings-tab-content').forEach(p => {
+    p.classList.toggle('active', p.id === id);
+  });
+  
+  _lastSettingsTab = id;
+  try { sessionStorage.setItem('mwl_stab', id); } catch(_) {}
 }
 
+// אובייקט Placeholder לבקשתך
+const SettingsFeaturePlaceholder = {
+  isInitialized: false,
+  logInfo: function(msg) {
+    console.log(`[Settings Placeholder] ${msg}`);
+  }
+};
+
+
 /* ═══════════════════════════════════════════════════════
-   PROFILE  v3.7.0
+   PROFILE   
    ═══════════════════════════════════════════════════════ */
 function profileLoad(){
   const p=store(K.profile)||{name:'',role:''};
