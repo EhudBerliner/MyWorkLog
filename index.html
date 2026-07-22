@@ -399,7 +399,7 @@ textarea.fi{resize:vertical;min-height:72px}
 .toast.success{background:var(--lime,#10b981);color:var(--bg0,#0d0f1a)}
 .toast.error{background:var(--red,#ef4444)}
 .toast.warn,.toast
-.toast.info{background:var(--blue,#4dabff)}
+.toast.warn, .toast.info {background:var(--blue,#4dabff)}
 
 /* ─ CLOCK UI ─ */
 .clock-ui{display:flex;flex-direction:column;align-items:center;gap:12px;padding:8px 0}
@@ -1978,11 +1978,16 @@ function switchTab(name){
 }
 
 /* MENU */
+/* MENU */
 function menuInit(){
   $('btn-hamburger').addEventListener('click',menuOpen);
   $('btn-close-menu').addEventListener('click',menuClose);
   $('menu-overlay').addEventListener('click',menuClose);
   $('menu-settings-btn').addEventListener('click',()=>{menuClose();openM('modal-settings')});
+  $('menu-help-btn').addEventListener('click',()=>{menuClose();openM('modal-help')});
+  $('menu-gs-btn').addEventListener('click',()=>{menuClose();downloadGS();});
+  $('menu-import-btn').addEventListener('click',()=>{menuClose();openImportModal();}); // keep in menu too
+  $('menu-wstandard-btn')?.addEventListener('click',()=>{menuClose();openWorkcalSettings();});
   
   // מאזין ללחצן הסנכרון המלא החדש (ללא הלוגיקה המלאה עדיין)
   $('menu-master-sync-btn')?.addEventListener('click', () => {
@@ -1998,20 +2003,6 @@ function menuInit(){
   document.querySelectorAll('.menu-item[data-tab]').forEach(el=>el.addEventListener('click',()=>switchTab(el.dataset.tab)));
   updateMenuSheetLink();
 }
-
-  $('btn-hamburger').addEventListener('click',menuOpen);
-  $('btn-close-menu').addEventListener('click',menuClose);
-  $('menu-overlay').addEventListener('click',menuClose);
-  $('menu-settings-btn').addEventListener('click',()=>{menuClose();openM('modal-settings')});
-  $('menu-help-btn').addEventListener('click',()=>{menuClose();openM('modal-help')});
-  $('menu-gs-btn').addEventListener('click',()=>{menuClose();downloadGS();});
-  $('menu-import-btn').addEventListener('click',()=>{menuClose();openImportModal();}); // keep in menu too
-  $('menu-theme-btn').addEventListener('click',()=>{
-    applyTheme(document.body.classList.contains('light')?'dark':'light');buzz([20]);
-  });
-  document.querySelectorAll('.menu-item[data-tab]').forEach(el=>el.addEventListener('click',()=>switchTab(el.dataset.tab)));
-  updateMenuSheetLink();
-  $('menu-wstandard-btn')?.addEventListener('click',()=>{menuClose();openWorkcalSettings();});
 
 function updateMenuSheetLink(){
   const su=store(K.sheetUrl);
