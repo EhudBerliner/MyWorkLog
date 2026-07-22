@@ -222,8 +222,6 @@ textarea.fi{resize:vertical;min-height:72px}
 .btn-d:hover{background:rgba(255,77,106,.22)}
 .btn-d.sm{padding:5px 10px;font-size:.74rem}
 
-/* ─ PENDING ─ */
-
 /* ─ HISTORY ─ */
 .hlist{display:flex;flex-direction:column;gap:7px}
 .hitem{display:flex;align-items:center;gap:11px;padding:12px;
@@ -439,7 +437,7 @@ textarea.fi{resize:vertical;min-height:72px}
 .wc-cell.vacation .wc-day-num{color:var(--amber)}
 .wc-cell.sick .wc-day-num{color:var(--purple)}
 .wc-cell.sabbatical .wc-day-num{color:#63cab7}
-.wc-cell.sabbatical .wc-day-num{color:#63cab7}
+
 .wc-actual{font-family:'Syne',monospace;font-size:.57rem;font-weight:700;color:var(--text3);line-height:1}
 .wc-cell.ok .wc-actual{color:rgba(200,241,53,.75)}
 .wc-cell.deficit .wc-actual{color:rgba(255,77,106,.8)}
@@ -469,7 +467,6 @@ textarea.fi{resize:vertical;min-height:72px}
 .wc-legend-dot.deficit{background:var(--red)}
 .wc-legend-dot.vacation{background:var(--amber)}
 .wc-legend-dot.sick{background:var(--purple)}
-.wc-legend-dot.sabbatical{background:#63cab7}
 .wc-legend-dot.sabbatical{background:#63cab7}
 .wc-sect-lbl{font-size:.67rem;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:1.5px;margin:2px 0 6px}
 .workcal-hint{font-size:.72rem;color:var(--text3);text-align:center;padding:6px 0}
@@ -506,7 +503,6 @@ details summary::-webkit-details-marker{display:none}
 .about-row:last-child{border-bottom:none}
 .about-lbl{color:var(--text3);font-size:.76rem}
 .about-val{color:var(--text);font-weight:600;font-family:'Syne',monospace;font-size:.82rem}
-
 
 /* - Edit-report category buttons - */
 .edit-cat-btn.active[data-cat=entry]{border-color:var(--lime)!important;color:var(--lime)!important;background:var(--limeDim)!important}
@@ -561,7 +557,6 @@ details summary::-webkit-details-marker{display:none}
 .settings-tab-content.active {
   display: flex;
 }
-
 </style>
 </head>
 <body>
@@ -595,10 +590,6 @@ details summary::-webkit-details-marker{display:none}
     <button class="install-btn secondary" id="installDismissBtn" data-i18n="btnInstallDismiss">אחר כך</button>
   </div>
 </div>
-
-
-
-
 
 <!-- SPLASH -->
 <div id="splash">
@@ -710,7 +701,6 @@ details summary::-webkit-details-marker{display:none}
         <div class="fg">
           <label class="flbl" data-i18n="labelDescription">תיאור <span style="color:var(--text3);font-weight:400">(אופציונלי)</span></label>
           <textarea id="task-desc" class="fi" rows="3"
-            data-i18n="placeholderDesc" data-i18n-attr="placeholder"
             data-i18n="placeholderDesc" data-i18n-attr="placeholder" placeholder="מה בוצע..."></textarea>
         </div>
         <div class="fg">
@@ -1009,7 +999,8 @@ details summary::-webkit-details-marker{display:none}
                 <button class="btn-g sm" id="btn-sync-projects" data-i18n="btnSyncProjects">↓ פרויקטים</button>
               </div>
               <button class="btn-g sm" id="btn-sync-wstandard-settings" style="width:100%; margin-top:8px;">↻ משוך WorkStandard</button>
-            </div>
+              <div id="wstandard-sync-status" style="font-size:.75rem;color:var(--text3);text-align:center;margin-top:6px"></div>
+			</div>
           </div>
         </div>
 
@@ -1063,7 +1054,7 @@ details summary::-webkit-details-marker{display:none}
                 <span class="about-lbl">שם</span><span class="about-val">MyWorkLog</span>
               </div>
               <div class="about-row">
-                <span class="about-lbl">גרסה</span><span class="about-val" id="about-version">v3.7.0</span>
+                <span class="about-lbl">גרסה</span><span class="about-val" id="about-version">v4.4.3</span>
               </div>
             </div>
             <div class="sset-row">
@@ -1579,6 +1570,11 @@ function toast(msg, type = 'success', ms = 2800) {
   NotificationSystem.showToast(msg, typeMap[type] || type, ms);
 }
 
+// Fixed goToday function
+function goToday() {
+  ST.sumOff = 0;
+  summaryRender();
+}
 document.addEventListener('DOMContentLoaded',()=>{
   const _failsafe=window.setTimeout(()=>{
     try{document.getElementById('splash')?.remove();}catch(_){}
@@ -1653,14 +1649,21 @@ function splashInit(){
 async function syncQ_silent(){
   const ep=store(K.ep);if(!ep||!navigator.onLine)return;
   const q=store(K.q)||[];if(!q.length)return;
-  const fail=[];
+  const successIds=new Set();
   for(const r of q){
     try{
       await fetch(ep,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(r),mode:'no-cors'});
       markSent(r.id);
-    }catch{fail.push(r);}
+      successIds.add(r.id);
+    }catch(e){
+      // כשל בסנכרון, לא מוסיפים ל-successIds
+    }
   }
-  store(K.q,fail);pendUI();
+  // שליפת התור המעודכן כדי לא לדרוס דיווחים חדשים שנוצרו בינתיים
+  const currentQ = store(K.q)||[];
+  const newQ = currentQ.filter(r => !successIds.has(r.id));
+  store(K.q, newQ);
+  pendUI();
 }
 
 function backBtnInit(){
@@ -2328,26 +2331,35 @@ function pendUI(){
 async function syncQ(){
   const ep=store(K.ep);if(!ep){toast(t('toastNoEndpointSync'),'warn');return}
   const q=store(K.q)||[];
-  if(!q.length&&!(store(K.delQ)||[]).length){
+  const delQ=store(K.delQ)||[];
+  const wstdQ=store('mwl_wstandard_queue')||[];
+  
+  if(!q.length && !delQ.length && !wstdQ.length){
     await syncFromSheet();
     toast(t('toastNoQueuePending'),'success');return;
   }
+  
   const snapshot=[...q];
-  store(K.q,[]);pendUI();
-  let ok=0;const fail=[];
+  let ok=0;
+  const successIds=new Set();
+  
+  // אנחנו משאירים את התור קיים בזמן הסנכרון כדי למנוע אובדן נתונים במקרה של קריסה
   for(const r of snapshot){
     try{
       await fetch(ep,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(r),mode:'no-cors'});
-      markSent(r.id);ok++;
-    }catch{fail.push(r);}
+      markSent(r.id);
+      successIds.add(r.id);
+      ok++;
+    }catch(e){
+      // כשל
+    }
   }
-  if(fail.length){
-    const current=store(K.q)||[];
-    const ids=new Set(current.map(x=>x.id));
-    fail.forEach(r=>{if(!ids.has(r.id))current.push(r);});
-    store(K.q,current);
-  }
+  
+  // עדכון בטוח של התור - מחיקת הדיווחים שסונכרנו בהצלחה בלבד
+  const currentQ = store(K.q)||[];
+  store(K.q, currentQ.filter(r => !successIds.has(r.id)));
   pendUI();
+
   await flushDeleteQueue();
   await flushWStandardQueue();
   await syncFromSheet();
@@ -2729,13 +2741,19 @@ function _wstdQueue(rec){
 async function flushWStandardQueue(){
   const ep=store(K.ep);if(!ep||!navigator.onLine)return;
   const q=store('mwl_wstandard_queue')||[];if(!q.length)return;
-  const fail=[];
+  const successDates=new Set();
+  
   for(const item of q){
     const ok=await _wstdSend(item);
-    if(!ok)fail.push(item);
+    if(ok) successDates.add(item.date);
   }
-  store('mwl_wstandard_queue',fail);
-  if(fail.length===0&&q.length>0)toast(t('toastWStdSent'),'success');
+  
+  // מחיקה בטוחה מהתור
+  const currentQ = store('mwl_wstandard_queue')||[];
+  const remainingQ = currentQ.filter(item => !successDates.has(item.date));
+  store('mwl_wstandard_queue', remainingQ);
+  
+  if(remainingQ.length===0 && q.length>0) toast(t('toastWStdSent'),'success');
 }
 
 function renderDayWCStatus(ds,reports){
@@ -3351,14 +3369,19 @@ async function flushDeleteQueue(){
   const ep=store(K.ep);
   if(!ep||!navigator.onLine)return;
   const q=store(K.delQ)||[];if(!q.length)return;
-  const fail=[];
+  const successIds=new Set();
   for(const item of q){
     try{
       await fetch(ep,{method:'POST',headers:{'Content-Type':'application/json'},
         body:JSON.stringify({action:'delete',id:item.id,category:item.category,report_date:item.report_date}),mode:'no-cors'});
-    }catch{fail.push(item);}
+      successIds.add(item.id);
+    }catch(e){
+      // כשל
+    }
   }
-  store(K.delQ,fail);
+  // עדכון בטוח של תור המחיקות
+  const currentQ = store(K.delQ)||[];
+  store(K.delQ, currentQ.filter(item => !successIds.has(item.id)));
 }
 
 function getDeltaStartDate() {
