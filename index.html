@@ -4066,7 +4066,11 @@ function verCheck() {
     store('mwl_ver_updated_at', new Date().toLocaleString('he-IL'));
   }
   store(K.ver, VER);
-  document.querySelectorAll('.vbadge').forEach(el => el.textContent = t('versionLabel', VER));
+  
+  // תיקון: עדכון בטוח של הטקסט בכל כפתורי הגרסה (התגים) באפליקציה
+  [$('version-badge'), $('menu-vbadge'), $('about-version')].forEach(el => {
+    if (el) el.textContent = 'v' + VER;
+  });
 }
 
 function aboutTabRender() {
@@ -4101,7 +4105,14 @@ function aboutTabRender() {
     lsEl.textContent = ls ? new Date(Number(ls)).toLocaleString('he-IL') : 'לא סונכרן ברקע'; 
   }
   
-  $('btn-open-reset-about')?.addEventListener('click', () => { closeM('modal-settings'); openM('modal-reset'); }, { once: true });
+  // תיקון: הסרת {once:true} כדי לאפשר לחיצות מרובות בכל פעם שהמודל נפתח
+  const resetBtn = $('btn-open-reset-about');
+  if (resetBtn) {
+    resetBtn.onclick = () => {
+      closeM('modal-settings');
+      openM('modal-reset');
+    };
+  }
 }
 
 function themeSettingsSync(){
