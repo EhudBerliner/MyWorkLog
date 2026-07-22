@@ -939,25 +939,50 @@ details summary::-webkit-details-marker{display:none}
         </div>
 
         <!-- PREFERENCES -->
-        <div class="sset-group">
-          <div class="sset-label" data-i18n="settingsPrefTitle">העדפות</div>
-          <div class="sset-block pref-list">
-            <label class="pref-row">
-              <span class="pref-row-icon">📳</span>
-              <span class="pref-row-body">
-                <span class="pref-row-label" data-i18n="prefVibration">רטט</span>
-              </span>
-              <input type="checkbox" id="pref-vibration" class="ptog" checked/>
-            </label>
-            <label class="pref-row">
-              <span class="pref-row-icon">✨</span>
-              <span class="pref-row-body">
-                <span class="pref-row-label" data-i18n="prefAnimations">אנימציות</span>
-              </span>
-              <input type="checkbox" id="pref-animations" class="ptog" checked/>
-            </label>
-          </div>
-        </div>
+		<div class="sset-group">
+		  <div class="sset-label" data-i18n="settingsPrefTitle">העדפות</div>
+		  <div class="sset-block pref-list">
+			<label class="pref-row">
+			  <span class="pref-row-icon">📳</span>
+			  <span class="pref-row-body">
+				<span class="pref-row-label" data-i18n="prefVibration">רטט</span>
+			  </span>
+			  <input type="checkbox" id="pref-vibration" class="ptog" checked/>
+			</label>
+			<label class="pref-row">
+			  <span class="pref-row-icon">✨</span>
+			  <span class="pref-row-body">
+				<span class="pref-row-label" data-i18n="prefAnimations">אנימציות</span>
+			  </span>
+			  <input type="checkbox" id="pref-animations" class="ptog" checked/>
+			</label>
+			<!-- סעיף 1: מתג משיכה לרענון -->
+			<label class="pref-row">
+			  <span class="pref-row-icon">🔄</span>
+			  <span class="pref-row-body">
+				<span class="pref-row-label">משיכה לרענון (Pull to Refresh)</span>
+			  </span>
+			  <input type="checkbox" id="pref-pullrefresh" class="ptog"/>
+			</label>
+		  </div>
+		</div>
+
+		<!-- סעיף 2: הגדרת ימי עבודה בשבוע -->
+		<div class="sset-group">
+		  <div class="sset-label">📅 הגדרת ימי עבודה שבועיים</div>
+		  <div class="sset-block" style="padding: 13px 14px;">
+			<div style="font-size: 0.75rem; color: var(--text2); margin-bottom: 8px;">בחר את ימי העבודה לצורך חישובי תקן ומאזן:</div>
+			<div style="display: flex; gap: 6px; flex-wrap: wrap;">
+			  <label style="font-size: 0.8rem; background: var(--bg0); border: 1px solid var(--border2); padding: 5px 10px; border-radius: 20px; cursor: pointer; display: flex; align-items: center; gap: 4px;"><input type="checkbox" name="workday-chk" value="0"> א'</label>
+			  <label style="font-size: 0.8rem; background: var(--bg0); border: 1px solid var(--border2); padding: 5px 10px; border-radius: 20px; cursor: pointer; display: flex; align-items: center; gap: 4px;"><input type="checkbox" name="workday-chk" value="1"> ב'</label>
+			  <label style="font-size: 0.8rem; background: var(--bg0); border: 1px solid var(--border2); padding: 5px 10px; border-radius: 20px; cursor: pointer; display: flex; align-items: center; gap: 4px;"><input type="checkbox" name="workday-chk" value="2"> ג'</label>
+			  <label style="font-size: 0.8rem; background: var(--bg0); border: 1px solid var(--border2); padding: 5px 10px; border-radius: 20px; cursor: pointer; display: flex; align-items: center; gap: 4px;"><input type="checkbox" name="workday-chk" value="3"> ד'</label>
+			  <label style="font-size: 0.8rem; background: var(--bg0); border: 1px solid var(--border2); padding: 5px 10px; border-radius: 20px; cursor: pointer; display: flex; align-items: center; gap: 4px;"><input type="checkbox" name="workday-chk" value="4"> ה'</label>
+			  <label style="font-size: 0.8rem; background: var(--bg0); border: 1px solid var(--border2); padding: 5px 10px; border-radius: 20px; cursor: pointer; display: flex; align-items: center; gap: 4px;"><input type="checkbox" name="workday-chk" value="5"> ו'</label>
+			  <label style="font-size: 0.8rem; background: var(--bg0); border: 1px solid var(--border2); padding: 5px 10px; border-radius: 20px; cursor: pointer; display: flex; align-items: center; gap: 4px;"><input type="checkbox" name="workday-chk" value="6"> ש'</label>
+			</div>
+		  </div>
+		</div>
 
         <!-- Placeholder עתידי לבקשתך -->
         <div class="sset-group">
@@ -989,20 +1014,31 @@ details summary::-webkit-details-marker{display:none}
           </div>
         </div>
 
-        <!-- SYNC BUTTONS -->
-        <div class="sset-group">
-          <div class="sset-label" data-i18n="settingsSyncLabel">סנכרון מול שרת</div>
-          <div class="sset-block">
-            <div class="sset-row">
-              <div class="sync-btn-row">
-                <button class="btn-g sm" id="btn-sync-reports" data-i18n="btnSyncReports">↓ דיווחים</button>
-                <button class="btn-g sm" id="btn-sync-projects" data-i18n="btnSyncProjects">↓ פרויקטים</button>
-              </div>
-              <button class="btn-g sm" id="btn-sync-wstandard-settings" style="width:100%; margin-top:8px;">↻ משוך WorkStandard</button>
-              <div id="wstandard-sync-status" style="font-size:.75rem;color:var(--text3);text-align:center;margin-top:6px"></div>
+		<!-- SYNC BUTTONS -->
+		<div class="sset-group">
+		  <div class="sset-label" data-i18n="settingsSyncLabel">סנכרון מול שרת</div>
+		  <div class="sset-block" style="display: flex; flex-direction: column;">
+			
+			<!-- כפתור סנכרון דיווחים -->
+			<div class="sset-row" style="display: flex; flex-direction: column; gap: 4px; padding: 12px 14px; border-bottom: 1px solid var(--border);">
+			  <button class="btn-g" id="btn-sync-reports" style="width: 100%; justify-content: center; font-weight: 600;">🔄 סנכרן דיווחים מגיליון</button>
+			  <div id="sync-reports-time" style="font-size: 0.72rem; color: var(--text3); text-align: center; margin-top: 2px;">סנכרון אחרון: טוען...</div>
 			</div>
-          </div>
-        </div>
+			
+			<!-- כפתור סנכרון פרויקטים -->
+			<div class="sset-row" style="display: flex; flex-direction: column; gap: 4px; padding: 12px 14px; border-bottom: 1px solid var(--border);">
+			  <button class="btn-g" id="btn-sync-projects" style="width: 100%; justify-content: center; font-weight: 600;">🔄 סנכרן פרויקטים מגיליון</button>
+			  <div id="sync-projects-time" style="font-size: 0.72rem; color: var(--text3); text-align: center; margin-top: 2px;">סנכרון אחרון: טוען...</div>
+			</div>
+			
+			<!-- כפתור משיכת WorkStandard -->
+			<div class="sset-row" style="display: flex; flex-direction: column; gap: 4px; padding: 12px 14px;">
+			  <button class="btn-g" id="btn-sync-wstandard-settings" style="width: 100%; justify-content: center; font-weight: 600;">↻ משוך WorkStandard מגיליון</button>
+			  <div id="wstandard-sync-status" style="font-size: 0.72rem; color: var(--text3); text-align: center; margin-top: 2px;"></div>
+			</div>
+			
+		  </div>
+		</div>
 
         <!-- DATA MANAGEMENT -->
         <div class="sset-group">
@@ -1046,26 +1082,40 @@ details summary::-webkit-details-marker{display:none}
         </div>
 
         <!-- ABOUT -->
-        <div class="sset-group">
-          <div class="sset-label">📱 פרטי אפליקציה</div>
-          <div class="sset-block">
-            <div class="sset-row" style="gap:0">
-              <div class="about-row">
-                <span class="about-lbl">שם</span><span class="about-val">MyWorkLog</span>
-              </div>
-              <div class="about-row">
-                <span class="about-lbl">גרסה</span><span class="about-val" id="about-version">v4.4.3</span>
-              </div>
-            </div>
-            <div class="sset-row">
-              <button class="btn-g sm" onclick="downloadGS()" style="width:100%">⬇️ הורד google-apps-script.gs</button>
-            </div>
-            <div class="sset-row">
-              <button class="btn-d sm" id="btn-open-reset-about" style="width:100%">⚠️ איפוס אפליקציה מוחלט</button>
-            </div>
-          </div>
-        </div>
-      </div><!-- /set-display -->
+		<div class="sset-group">
+		  <div class="sset-label">📱 פרטי אפליקציה ואודות</div>
+		  <div class="sset-block">
+			<div class="sset-row" style="gap:0">
+			  <div class="about-row">
+				<span class="about-lbl">שם האפליקציה</span><span class="about-val">MyWorkLog</span>
+			  </div>
+			  <div class="about-row">
+				<span class="about-lbl">גרסה נוכחית</span><span class="about-val" id="about-version">v4.4.3</span>
+			  </div>
+			  <div class="about-row">
+				<span class="about-lbl">עדכון גרסה אחרון</span><span class="about-val" id="about-build-date">-</span>
+			  </div>
+			  <div class="about-row">
+				<span class="about-lbl">דיווחים במכשיר (localStorage)</span><span class="about-val" id="about-data-count">0 דיווחים</span>
+			  </div>
+			  <div class="about-row">
+				<span class="about-lbl">סביבת PWA</span><span class="about-val" id="about-pwa-status">-</span>
+			  </div>
+			  <div class="about-row">
+				<span class="about-lbl">Service Worker קאש</span><span class="about-val" id="about-sw-status">-</span>
+			  </div>
+			  <div class="about-row">
+				<span class="about-lbl">סנכרון רקע מלא אחרון</span><span class="about-val" id="about-last-sync">-</span>
+			  </div>
+			</div>
+			<div class="sset-row">
+			  <button class="btn-g sm" onclick="downloadGS()" style="width:100%">⬇️ הורד google-apps-script.gs</button>
+			</div>
+			<div class="sset-row">
+			  <button class="btn-d sm" id="btn-open-reset-about" style="width:100%">⚠️ איפוס אפליקציה מוחלט</button>
+			</div>
+		  </div>
+		</div>
 
     </div><!-- /mbody -->
     <div class="mfoot">
@@ -1687,16 +1737,6 @@ function backBtnInit(){
   });
 }
 
-function verCheck(){
-  const prev=store(K.ver);
-  const isUpgrade = prev && prev !== VER;
-  if(isUpgrade){
-    if('caches'in window) caches.keys().then(ks=>ks.forEach(k=>caches.delete(k)));
-    migrateData(prev);
-  }
-  store(K.ver,VER);
-  document.querySelectorAll('.vbadge').forEach(el=>el.textContent=t('versionLabel',VER));
-}
 
 function normTimeStr(v){
   if(!v)return'';
@@ -2975,6 +3015,38 @@ async function saveDayConfig(){
   buzz([20,20]);
 }
 
+function prefsLoadUI() {
+  const p = getP(); // מושך את האובייקט הקיים עם ערכי הדיפולט מתוך app.js
+  if ($('pref-vibration')) $('pref-vibration').checked = p.vibration;
+  if ($('pref-animations')) $('pref-animations').checked = p.animations;
+  if ($('pref-pullrefresh')) $('pref-pullrefresh').checked = p.pullRefresh;
+  
+  // טעינת סימוני ימי העבודה
+  document.querySelectorAll('input[name="workday-chk"]').forEach(chk => {
+    chk.checked = p.workDays.includes(parseInt(chk.value));
+  });
+}
+
+function prefsSave() {
+  const selectedDays = [];
+  document.querySelectorAll('input[name="workday-chk"]:checked').forEach(chk => {
+    selectedDays.push(parseInt(chk.value));
+  });
+
+  const p = {
+    vibration: $('pref-vibration')?.checked ?? true,
+    animations: $('pref-animations')?.checked ?? true,
+    pullRefresh: $('pref-pullrefresh')?.checked ?? false,
+    workDays: selectedDays.length ? selectedDays : [0, 1, 2, 3, 4] // ברירת מחדל א'-ה'
+  };
+  
+  store(K.prefs, p);
+  
+  // החלת שינויי אנימציה בזמן אמת
+  if (!p.animations) document.body.classList.add('no-anim');
+  else document.body.classList.remove('no-anim');
+}
+
 function workcalInit(){
   $('btn-close-workcal')?.addEventListener('click',()=>closeM('modal-workcal'));
   $('btn-close-workcal2')?.addEventListener('click',()=>closeM('modal-workcal'));
@@ -2993,23 +3065,34 @@ function workcalInit(){
   $('modal-dayedit')?.addEventListener('click',e=>{if(e.target===$('modal-dayedit'))closeM('modal-dayedit')});
 }
 
-function updateSyncStatus(){
-  const el=$('wstandard-sync-status');if(!el)return;
-  const last=store('mwl_wstandard_sync');
-  const count=getWStandard().length;
-  const q=(store('mwl_wstandard_queue')||[]).length;
-  const ep=store(K.ep);
-  let html='';
-  if(!ep){
-    html=`<span style="color:var(--red)">${t('syncStatusNoEp')}</span>`;
-  }else if(last){
-    html=t('syncedStatus',last,count);
-    if(q>0)html+=` · <span style="color:var(--amber)">${t('pendingQueue',q)}</span>`;
-  }else{
-    html=`<span style="color:var(--amber)">${t('notSyncedYet')} "${t('btnSyncFromSheet')}"</span>`;
-    if(q>0)html+=` · ${t('wstdQueue',q)}`;
+function updateSyncStatus() {
+  // 1. עדכון זמן סנכרון דיווחים
+  const repTime = store('mwl_reports_sync') || 'טרם בוצע סנכרון ידני';
+  if ($('sync-reports-time')) $('sync-reports-time').textContent = `סנכרון אחרון: ${repTime}`;
+  
+  // 2. עדכון זמן סנכרון פרויקטים
+  const projTime = store('mwl_projects_sync') || 'טרם בוצע סנכרון ידני';
+  if ($('sync-projects-time')) $('sync-projects-time').textContent = `סנכרון אחרון: ${projTime}`;
+
+  // 3. עדכון זמן סנכרון תקן שעות (WorkStandard)
+  const el = $('wstandard-sync-status'); 
+  if (!el) return;
+  const last = store('mwl_wstandard_sync');
+  const count = getWStandard().length;
+  const q = (store('mwl_wstandard_queue')||[]).length;
+  const ep = store(K.ep);
+  
+  let html = '';
+  if (!ep) {
+    html = `<span style="color:var(--red)">${t('syncStatusNoEp')}</span>`;
+  } else if (last) {
+    html = `סנכרון אחרון: ${last} · (${count} ימי תקן במערכת)`;
+    if (q > 0) html += ` · <span style="color:var(--amber)">${t('pendingQueue', q)}</span>`;
+  } else {
+    html = `<span style="color:var(--amber)">לא סונכרן עדיין</span>`;
+    if (q > 0) html += ` · ${t('wstdQueue', q)}`;
   }
-  el.innerHTML=html;
+  el.innerHTML = html;
 }
 
 function openWorkcalSettings(){
@@ -3963,25 +4046,54 @@ function exportInit(){
   });
 }
 
-function aboutTabRender(){
-  const av=$('about-version');if(av)av.textContent='v'+VER;
-  const pwaEl=$('about-pwa-status');
-  if(pwaEl){
-    const installed=window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone===true;
-    pwaEl.textContent=installed?'✅ מותקן':'🌐 פתוח בדפדפן';
-    pwaEl.style.color=installed?'var(--lime)':'var(--text3)';
+function verCheck() {
+  const prev = store(K.ver);
+  const isUpgrade = prev && prev !== VER;
+  if (isUpgrade) {
+    if ('caches' in window) caches.keys().then(ks => ks.forEach(k => caches.delete(k)));
+    migrateData(prev);
+    store('mwl_ver_updated_at', new Date().toLocaleString('he-IL'));
   }
-  const swEl=$('about-sw-status');
-  if(swEl){
-    const hasSW='serviceWorker'in navigator&&navigator.serviceWorker.controller;
-    swEl.textContent=hasSW?'✅ פעיל':'⚠️ לא פעיל';
-    swEl.style.color=hasSW?'var(--lime)':'var(--amber)';
+  if (!store('mwl_ver_updated_at')) {
+    store('mwl_ver_updated_at', new Date().toLocaleString('he-IL'));
   }
-  const dcEl=$('about-data-count');
-  if(dcEl){const n=(store(K.reps)||[]).length;dcEl.textContent=`${n} דיווחים`;}
-  const lsEl=$('about-last-sync');
-  if(lsEl){const ls=store('mwl_last_full_sync');lsEl.textContent=ls?new Date(Number(ls)).toLocaleString('he-IL'):'לא סונכרן';}
-  $('btn-open-reset-about')?.addEventListener('click',()=>{closeM('modal-settings');openM('modal-reset');},{once:true});
+  store(K.ver, VER);
+  document.querySelectorAll('.vbadge').forEach(el => el.textContent = t('versionLabel', VER));
+}
+
+function aboutTabRender() {
+  const av = $('about-version'); if (av) av.textContent = 'v' + VER;
+  
+  const abd = $('about-build-date');
+  if (abd) abd.textContent = store('mwl_ver_updated_at') || new Date().toLocaleString('he-IL');
+
+  const pwaEl = $('about-pwa-status');
+  if (pwaEl) {
+    const installed = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+    pwaEl.textContent = installed ? '✅ אפליקציה מותקנת (Standalone)' : '🌐 פתוח בדפדפן';
+    pwaEl.style.color = installed ? 'var(--lime)' : 'var(--text3)';
+  }
+  
+  const swEl = $('about-sw-status');
+  if (swEl) {
+    const hasSW = 'serviceWorker' in navigator && navigator.serviceWorker.controller;
+    swEl.textContent = hasSW ? '✅ פעיל ומגובה במטמון' : '⚠️ לא פעיל';
+    swEl.style.color = hasSW ? 'var(--lime)' : 'var(--amber)';
+  }
+  
+  const dcEl = $('about-data-count');
+  if (dcEl) { 
+    const n = (store(K.reps) || []).length; 
+    dcEl.textContent = `${n} דיווחים שמורים`; 
+  }
+  
+  const lsEl = $('about-last-sync');
+  if (lsEl) { 
+    const ls = store('mwl_last_full_sync'); 
+    lsEl.textContent = ls ? new Date(Number(ls)).toLocaleString('he-IL') : 'לא סונכרן ברקע'; 
+  }
+  
+  $('btn-open-reset-about')?.addEventListener('click', () => { closeM('modal-settings'); openM('modal-reset'); }, { once: true });
 }
 
 function themeSettingsSync(){
