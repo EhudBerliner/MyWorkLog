@@ -3410,15 +3410,13 @@ function openM(id) {
     const tabButtons = modal.querySelectorAll('.settings-tab-btn');
     const tabContents = modal.querySelectorAll('.settings-tab-content');
     
-	tabContents.forEach((content, idx) => {
-	  if (idx === 0) {
-		content.style.display = ''; // במקום 'block'
-		content.classList.add('active');
-	  } else {
-		content.style.display = 'none';
-		content.classList.remove('active');
-	  }
-	});
+    tabButtons.forEach((btn, idx) => {
+      if (idx === 0) {
+        btn.classList.add('active'); // הפיכת הכפתור הראשון לפעיל
+      } else {
+        btn.classList.remove('active');
+      }
+    });
 
     tabContents.forEach((content, idx) => {
       if (idx === 0) {
