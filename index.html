@@ -396,6 +396,7 @@ textarea.fi{resize:vertical;min-height:72px}
 .toast.show{opacity:1;transform:translateY(0)}
 .toast.success{background:var(--lime,#10b981);color:var(--bg0,#0d0f1a)}
 .toast.error{background:var(--red,#ef4444)}
+.toast.warn,.toast
 .toast.warn, .toast.info {background:var(--blue,#4dabff)}
 
 /* ─ CLOCK UI ─ */
@@ -694,7 +695,7 @@ details summary::-webkit-details-marker{display:none}
         <div class="fg">
           <label class="flbl" data-i18n="labelProject">פרויקט <span style="color:var(--red);font-size:.75rem">*</span></label>
           <input type="text" id="task-project" class="fi" list="projects-list"
-            data-i18n="placeholderProjRequired" data-i18n-attr="placeholder" placeholder="שם הפרויקט (חובה)"/>
+            data-i18n="placeholderProjRequired" data-i18n-attr="placeholder" placeholder="שם הFprojected (חובה)"/>
           <datalist id="projects-list"></datalist>
         </div>
         <div class="fg">
@@ -1788,29 +1789,14 @@ function migrateData(prevVer){
   if(store(K.rounding)===null) store(K.rounding,0);
 }
 
-function vBadgeInit() {
-  const badges = document.querySelectorAll('#version-badge, #menu-vbadge, #about-version');
-  badges.forEach(badge => {
-    if (!badge) return;
-    
-    // הסרת מאזינים ישנים למניעת כפילויות
-    badge.removeAttribute('onclick'); 
-    
-    badge.onclick = (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      
-      // במידה וחלון ההגדרות פתוח, נסגור אותו בצורה מסודרת תחילה
-      if (document.getElementById('modal-settings')?.classList.contains('active')) {
-        closeM('modal-settings');
-      }
-      
-      // פתיחה נקייה ומיידית של חלון האיפוס
-      setTimeout(() => {
-        openM('modal-reset');
-      }, 50);
-    };
+function vBadgeInit(){
+  [$('version-badge'),$('menu-vbadge')].forEach(el=>{
+    if(!el)return;
+    el.addEventListener('click',()=>{buzz([20,30,20]);openM('modal-reset')});
   });
+  $('btn-close-reset')?.addEventListener('click',()=>closeM('modal-reset'));
+  $('btn-reset-cancel')?.addEventListener('click',()=>closeM('modal-reset'));
+  $('btn-reset-confirm')?.addEventListener('click',hardReset);
 }
 
 async function hardReset(){
@@ -3392,41 +3378,27 @@ function settingsInit(){
   }));
 }
 
-function openM(id) {
-  const modal = $(id);
-  if (!modal) return;
-  
-  modal.classList.add('active');
-  document.body.style.overflow = 'hidden'; // מניעת גלילת רקע
-
-  // לוגיקה ייעודית בעת פתיחת חלון הגדרות
-  if (id === 'modal-settings') {
-    // 1. עדכון סטטוסים וטעינת ערכי העדפות לממשק
-    if (typeof prefsLoadUI === 'function') prefsLoadUI();
-    if (typeof updateSyncStatus === 'function') updateSyncStatus();
-    if (typeof aboutTabRender === 'function') aboutTabRender();
-
-    // 2. תיקון: איפוס הטאבים והצגת הטאב הראשון ("כללי") כברירת מחדל
-    const tabButtons = modal.querySelectorAll('.settings-tab-btn');
-    const tabContents = modal.querySelectorAll('.settings-tab-content');
-    
-    tabButtons.forEach((btn, idx) => {
-      if (idx === 0) {
-        btn.classList.add('active'); // הפיכת הכפתור הראשון לפעיל
-      } else {
-        btn.classList.remove('active');
-      }
-    });
-
-    tabContents.forEach((content, idx) => {
-      if (idx === 0) {
-        content.style.display = 'block'; // הצגת התוכן הראשון (כללי)
-        content.classList.add('active');
-      } else {
-        content.style.display = 'none';
-        content.classList.remove('active');
-      }
-    });
+function openM(id){
+  const el = $(id);
+  if(el) el.classList.remove('hidden');
+  document.body.style.overflow='hidden';
+  history.pushState({ui:'modal',id},'');
+  if(id==='modal-settings'){
+    const se = $('settings-endpoint'); if(se) se.value=store(K.ep)||'';
+    const ssu = $('settings-sheet-url'); if(ssu) ssu.value=store(K.sheetUrl)||'';
+    const sheetUrl=store(K.sheetUrl);
+    const sls = $('sheet-link-section'); if(sls) sls.style.display=sheetUrl?'':'none';
+    if(sheetUrl){const sl = $('sheet-link'); if(sl) sl.href=sheetUrl;}
+    prefsLoadUI();projChipsRender();
+    const lang=window._lang||'he';
+    document.querySelectorAll('.seg-btn[data-lang]').forEach(b=>b.classList.toggle('active',b.dataset.lang===lang));
+    profileLoad();
+    roundingLoad();
+    themeSettingsSync();
+    wstdSyncStatusInline();
+    aboutTabRender();
+    const lastTab=_lastSettingsTab||(()=>{try{return sessionStorage.getItem('mwl_stab')||'ui';}catch{return'ui';}})();
+    switchSettingsTab(lastTab);
   }
 }
 
@@ -3586,13 +3558,9 @@ async function syncFromSheet(fromDate = '') {
       if (toAdd.length) { store(K.proj, [...localP, ...toAdd]); projLoad(); projChipsRender(); }
     }
 
-	histRender(); updateSessionBanner();
-		// עדכון חותמת זמן לסנכרון דיווחים
-		store('mwl_reports_sync', new Date().toLocaleString('he-IL'));
-		if (typeof updateSyncStatus === 'function') updateSyncStatus();
-		
-		return data.reports.length;
-	  } catch (e) { 
+    histRender(); updateSessionBanner();
+    return data.reports.length;
+  } catch (e) { 
     console.warn('[syncFromSheet Delta Failure]', e); 
     return 0; 
   }
@@ -3643,13 +3611,9 @@ async function syncProjects(){
     const toAdd=remote.filter(p=>!local.includes(p));
     const final=[...local,...toAdd];
     store(K.proj,final);projLoad();projChipsRender();
-	for(const p of local.filter(pp=>!remote.includes(pp)))await pushProjectToSheet(p);
-		toast(t('toastProjectSynced')||'✅ פרויקטים סונכרנו','success');
-		
-		// עדכון חותמת זמן לסנכרון פרויקטים
-		store('mwl_projects_sync', new Date().toLocaleString('he-IL'));
-		if (typeof updateSyncStatus === 'function') updateSyncStatus();
-	  } catch (_) { toast(t('toastSyncError'), 'error'); }
+    for(const p of local.filter(pp=>!remote.includes(pp)))await pushProjectToSheet(p);
+    toast(t('toastProjectSynced')||'✅ פרויקטים סונכרנו','success');
+  }catch(_){toast(t('toastSyncError'),'error');}
 }
 
 function swInit(){
@@ -4094,11 +4058,7 @@ function verCheck() {
     store('mwl_ver_updated_at', new Date().toLocaleString('he-IL'));
   }
   store(K.ver, VER);
-  
-  // תיקון: עדכון בטוח של הטקסט בכל כפתורי הגרסה (התגים) באפליקציה
-  [$('version-badge'), $('menu-vbadge'), $('about-version')].forEach(el => {
-    if (el) el.textContent = 'v' + VER;
-  });
+  document.querySelectorAll('.vbadge').forEach(el => el.textContent = t('versionLabel', VER));
 }
 
 function aboutTabRender() {
@@ -4133,14 +4093,7 @@ function aboutTabRender() {
     lsEl.textContent = ls ? new Date(Number(ls)).toLocaleString('he-IL') : 'לא סונכרן ברקע'; 
   }
   
-  // תיקון: הסרת {once:true} כדי לאפשר לחיצות מרובות בכל פעם שהמודל נפתח
-  const resetBtn = $('btn-open-reset-about');
-  if (resetBtn) {
-    resetBtn.onclick = () => {
-      closeM('modal-settings');
-      openM('modal-reset');
-    };
-  }
+  $('btn-open-reset-about')?.addEventListener('click', () => { closeM('modal-settings'); openM('modal-reset'); }, { once: true });
 }
 
 function themeSettingsSync(){
