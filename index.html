@@ -55,7 +55,7 @@ html,body{height:100%;background:var(--bg0);color:var(--text);
 .workday-chip input{position:absolute;opacity:0;width:0;height:0}
 .workday-chip:has(input:checked){background:var(--limeDim);border-color:var(--lime);color:var(--lime)}
 
-/* ── NOTIFICATION SYSTEM v4.4.4 ── */
+/* ── NOTIFICATION SYSTEM v4.4.3 ── */
 .offline-banner{position:fixed;top:0;left:0;right:0;
   background:var(--red,#ef4444);color:#fff;text-align:center;
   padding:calc(var(--safeT,0px)+8px) 16px 8px;
@@ -642,7 +642,7 @@ details summary::-webkit-details-marker{display:none}
       <a id="menu-sheet-link" href="#" target="_blank" rel="noopener" style="display:none;align-items:center;gap:7px;font-size:.8rem;color:var(--blue);text-decoration:none;padding:3px 2px">
         <span data-i18n="menuOpenSheet">📊 פתח גיליון Google</span>
       </a>
-      <span id="menu-vbadge" class="vbadge" data-i18n-attr="title" data-i18n="menuVersionTooltip" title="לחץ לאיפוס">v4.4.4</span>
+      <span id="menu-vbadge" class="vbadge" data-i18n-attr="title" data-i18n="menuVersionTooltip" title="לחץ לאיפוס">v4.4.3</span>
     </div>
   </aside>
 
@@ -1448,15 +1448,15 @@ details summary::-webkit-details-marker{display:none}
 /* ─────────────────────────────────────────────────────
    GLOBAL CONFIG & CONSTANTS
 ───────────────────────────────────────────────────── */
-const VER = '4.4.4';
+const VER = '4.4.3';
 
 /* ═══════════════════════════════════════════════════════
-   NOTIFICATION SYSTEM  v4.4.4
+   NOTIFICATION SYSTEM  v4.4.3
    Manages: Offline banner · PWA Install · Update Prompt · Toast
    ═══════════════════════════════════════════════════════ */
 const NotificationSystem = {
   settings: { showNetworkStatus: true },
-  currentVersion: '4.4.4',
+  currentVersion: '4.4.3',
   deferredInstallPrompt: null,
   _wasOffline: false,
 
