@@ -1789,14 +1789,29 @@ function migrateData(prevVer){
   if(store(K.rounding)===null) store(K.rounding,0);
 }
 
-function vBadgeInit(){
-  [$('version-badge'),$('menu-vbadge')].forEach(el=>{
-    if(!el)return;
-    el.addEventListener('click',()=>{buzz([20,30,20]);openM('modal-reset')});
+function vBadgeInit() {
+  const badges = document.querySelectorAll('#version-badge, #menu-vbadge, #about-version');
+  badges.forEach(badge => {
+    if (!badge) return;
+    
+    // הסרת מאזינים ישנים למניעת כפילויות
+    badge.removeAttribute('onclick'); 
+    
+    badge.onclick = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      // במידה וחלון ההגדרות פתוח, נסגור אותו בצורה מסודרת תחילה
+      if (document.getElementById('modal-settings')?.classList.contains('active')) {
+        closeM('modal-settings');
+      }
+      
+      // פתיחה נקייה ומיידית של חלון האיפוס
+      setTimeout(() => {
+        openM('modal-reset');
+      }, 50);
+    };
   });
-  $('btn-close-reset')?.addEventListener('click',()=>closeM('modal-reset'));
-  $('btn-reset-cancel')?.addEventListener('click',()=>closeM('modal-reset'));
-  $('btn-reset-confirm')?.addEventListener('click',hardReset);
 }
 
 async function hardReset(){
@@ -3378,27 +3393,41 @@ function settingsInit(){
   }));
 }
 
-function openM(id){
-  const el = $(id);
-  if(el) el.classList.remove('hidden');
-  document.body.style.overflow='hidden';
-  history.pushState({ui:'modal',id},'');
-  if(id==='modal-settings'){
-    const se = $('settings-endpoint'); if(se) se.value=store(K.ep)||'';
-    const ssu = $('settings-sheet-url'); if(ssu) ssu.value=store(K.sheetUrl)||'';
-    const sheetUrl=store(K.sheetUrl);
-    const sls = $('sheet-link-section'); if(sls) sls.style.display=sheetUrl?'':'none';
-    if(sheetUrl){const sl = $('sheet-link'); if(sl) sl.href=sheetUrl;}
-    prefsLoadUI();projChipsRender();
-    const lang=window._lang||'he';
-    document.querySelectorAll('.seg-btn[data-lang]').forEach(b=>b.classList.toggle('active',b.dataset.lang===lang));
-    profileLoad();
-    roundingLoad();
-    themeSettingsSync();
-    wstdSyncStatusInline();
-    aboutTabRender();
-    const lastTab=_lastSettingsTab||(()=>{try{return sessionStorage.getItem('mwl_stab')||'ui';}catch{return'ui';}})();
-    switchSettingsTab(lastTab);
+function openM(id) {
+  const modal = $(id);
+  if (!modal) return;
+  
+  modal.classList.add('active');
+  document.body.style.overflow = 'hidden'; // מניעת גלילת רקע
+
+  // לוגיקה ייעודית בעת פתיחת חלון הגדרות
+  if (id === 'modal-settings') {
+    // 1. עדכון סטטוסים וטעינת ערכי העדפות לממשק
+    if (typeof prefsLoadUI === 'function') prefsLoadUI();
+    if (typeof updateSyncStatus === 'function') updateSyncStatus();
+    if (typeof aboutTabRender === 'function') aboutTabRender();
+
+    // 2. תיקון: איפוס הטאבים והצגת הטאב הראשון ("כללי") כברירת מחדל
+    const tabButtons = modal.querySelectorAll('.settings-tab-btn');
+    const tabContents = modal.querySelectorAll('.settings-tab-content');
+    
+    tabButtons.forEach((btn, idx) => {
+      if (idx === 0) {
+        btn.classList.add('active'); // הפיכת הכפתור הראשון לפעיל
+      } else {
+        btn.classList.remove('active');
+      }
+    });
+
+    tabContents.forEach((content, idx) => {
+      if (idx === 0) {
+        content.style.display = 'block'; // הצגת התוכן הראשון (כללי)
+        content.classList.add('active');
+      } else {
+        content.style.display = 'none';
+        content.classList.remove('active');
+      }
+    });
   }
 }
 
