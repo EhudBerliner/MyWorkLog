@@ -3558,9 +3558,13 @@ async function syncFromSheet(fromDate = '') {
       if (toAdd.length) { store(K.proj, [...localP, ...toAdd]); projLoad(); projChipsRender(); }
     }
 
-    histRender(); updateSessionBanner();
-    return data.reports.length;
-  } catch (e) { 
+	histRender(); updateSessionBanner();
+		// עדכון חותמת זמן לסנכרון דיווחים
+		store('mwl_reports_sync', new Date().toLocaleString('he-IL'));
+		if (typeof updateSyncStatus === 'function') updateSyncStatus();
+		
+		return data.reports.length;
+	  } catch (e) { 
     console.warn('[syncFromSheet Delta Failure]', e); 
     return 0; 
   }
@@ -3611,9 +3615,13 @@ async function syncProjects(){
     const toAdd=remote.filter(p=>!local.includes(p));
     const final=[...local,...toAdd];
     store(K.proj,final);projLoad();projChipsRender();
-    for(const p of local.filter(pp=>!remote.includes(pp)))await pushProjectToSheet(p);
-    toast(t('toastProjectSynced')||'✅ פרויקטים סונכרנו','success');
-  }catch(_){toast(t('toastSyncError'),'error');}
+	for(const p of local.filter(pp=>!remote.includes(pp)))await pushProjectToSheet(p);
+		toast(t('toastProjectSynced')||'✅ פרויקטים סונכרנו','success');
+		
+		// עדכון חותמת זמן לסנכרון פרויקטים
+		store('mwl_projects_sync', new Date().toLocaleString('he-IL'));
+		if (typeof updateSyncStatus === 'function') updateSyncStatus();
+	  } catch (_) { toast(t('toastSyncError'), 'error'); }
 }
 
 function swInit(){
