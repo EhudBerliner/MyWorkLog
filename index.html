@@ -2012,7 +2012,7 @@ function menuInit(){
   document.querySelectorAll('.menu-item[data-tab]').forEach(el=>el.addEventListener('click',()=>switchTab(el.dataset.tab)));
   updateMenuSheetLink();
   $('menu-wstandard-btn')?.addEventListener('click',()=>{menuClose();openWorkcalSettings();});
-}
+
 function updateMenuSheetLink(){
   const su=store(K.sheetUrl);
   const el=$('menu-sheet-link');
