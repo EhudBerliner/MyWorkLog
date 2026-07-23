@@ -1793,46 +1793,71 @@ function vBadgeInit(){
   let clicks = 0;
   let timer;
   
-  const handleBadgeClick = (e) => {
-    // מניעת התנהגות ברירת מחדל של הדפדפן (כמו בחירת טקסט או זום כפול בזמן הקלקות מהירות)
-    e.preventDefault(); 
-    
-    clicks++;
-    clearTimeout(timer);
-    
-    if (clicks >= 5) {
-      clicks = 0;
-      try { menuClose(); } catch(err){}
-      
-      // הגנה למקרה שפונקציות העזר לא אותחלו במלואן
-      if (typeof buzz === 'function') buzz([20, 30, 20]);
-      if (typeof openM === 'function') openM('modal-reset');
-    } else {
-      if (clicks >= 2) {
-        const remaining = 5 - clicks;
-        toast(`עוד ${remaining} לחיצות לאיפוס האפליקציה`, 'info', 1000);
-      }
-      // איפוס המונה אם המשתמש הפסיק להקליק למשך שניה וחצי
-      timer = setTimeout(() => { clicks = 0; }, 1500);
-    }
-  };
-
-  [$('version-badge'), $('menu-vbadge')].forEach(el => {
+  // שליפה ישירה ומאובטחת של האלמנטים ללא תלות בפונקציית $ חיצונית
+  const badges = [
+    document.getElementById('version-badge'),
+    document.getElementById('menu-vbadge')
+  ];
+  
+  badges.forEach(el => {
     if (!el) return;
     
-    // הזרקת הגדרות CSS ישירות לטובת חווית מגע חלקה ומניעת סימון כחול על האלמנט
+    // הגנות CSS מובנות למניעת בעיות מגע וסימון במובייל
     el.style.userSelect = 'none';
     el.style.webkitUserSelect = 'none';
-    el.style.touchAction = 'manipulation'; 
+    el.style.touchAction = 'manipulation';
     
-    // האזנה לאירוע הקלקה
-    el.addEventListener('click', handleBadgeClick);
+    el.addEventListener('click', () => {
+      clicks++;
+      clearTimeout(timer);
+      
+      if (clicks >= 5) {
+        clicks = 0;
+        
+        // 1. סגירת תפריט הצד (אם הוא פתוח)
+        try {
+          const sideMenu = document.getElementById('side-menu');
+          const menuOverlay = document.getElementById('menu-overlay');
+          sideMenu?.classList.remove('open');
+          menuOverlay?.classList.add('hidden');
+          sideMenu?.setAttribute('aria-hidden', 'true');
+        } catch(e) {}
+        
+        // 2. פתיחה ישירה וכפויה של מודאל האיפוס
+        const modal = document.getElementById('modal-reset');
+        if (modal) {
+          modal.classList.remove('hidden');
+          document.body.style.overflow = 'hidden'; // מניעת גלילת רקע
+        }
+        
+        // 3. הפעלת רטט (במידה וקיים במערכת)
+        if (typeof buzz === 'function') {
+          try { buzz([20, 30, 20]); } catch(e) {}
+        }
+      } else {
+        if (clicks >= 2) {
+          if (typeof toast === 'function') {
+            toast(`עוד ${5 - clicks} לחיצות לאיפוס האפליקציה`, 'info', 1000);
+          }
+        }
+        timer = setTimeout(() => { clicks = 0; }, 1200);
+      }
+    });
   });
   
-  // מאזינים לסגירת ואישור מודאל האירוע
-  $('btn-close-reset')?.addEventListener('click', () => closeM('modal-reset'));
-  $('btn-reset-cancel')?.addEventListener('click', () => closeM('modal-reset'));
-  $('btn-reset-confirm')?.addEventListener('click', hardReset);
+  // פונקציה פנימית לסגירה ישירה של מודאל האיפוס
+  const closeResetModal = () => {
+    const modal = document.getElementById('modal-reset');
+    if (modal) modal.classList.add('hidden');
+    document.body.style.overflow = '';
+  };
+  
+  // חיבור ישיר של כפתורי הסגירה והביטול במודאל האיפוס
+  document.getElementById('btn-close-reset')?.addEventListener('click', closeResetModal);
+  document.getElementById('btn-reset-cancel')?.addEventListener('click', closeResetModal);
+  document.getElementById('btn-reset-confirm')?.addEventListener('click', () => {
+    if (typeof hardReset === 'function') hardReset();
+  });
 }
 
 async function hardReset(){
