@@ -1789,20 +1789,62 @@ function migrateData(prevVer){
   if(store(K.rounding)===null) store(K.rounding,0);
 }
 
-function vBadgeInit(){
-  // חיבור התגים לפתיחת המודאל בלחיצה בודדת (קליק אחד) באמצעות פונקציות המערכת המקוריות
-  [$('version-badge'), $('menu-vbadge'), $('btn-open-reset-about')].forEach(el => {
-    if (!el) return;
-    el.addEventListener('click', () => {
+function vBadgeInit() {
+  // חטיפת אירוע ההקלקה ברמת המסמך כדי להבטיח עדיפות עליונה
+  document.addEventListener('click', (e) => {
+    
+    // 1. זיהוי ניסיון פתיחה של מסך האיפוס
+    const targetOpen = e.target.closest('#version-badge, #menu-vbadge, #btn-open-reset-about');
+    if (targetOpen) {
+      e.preventDefault();
+      e.stopPropagation(); // 👈 עוצר באגרסיביות כל סקריפט אחר מלהתערב בלחיצה
+      
       if (typeof buzz === 'function') buzz([20, 30, 20]);
-      if (typeof openM === 'function') openM('modal-reset');
-    });
-  });
+      
+      // ניקוי מוחלט וישיר של כל מסך רקע פתוח (תפריט או הגדרות) כדי למנוע חסימת חזית
+      const sideMenu = document.getElementById('side-menu');
+      if (sideMenu) {
+        sideMenu.classList.remove('open');
+        sideMenu.setAttribute('aria-hidden', 'true');
+      }
+      
+      ['menu-overlay', 'modal-settings'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.classList.add('hidden');
+      });
 
-  // חיבור כפתורי הסגירה והביטול המקוריים של המודאל
-  $('btn-close-reset').addEventListener('click', () => closeM('modal-reset'));
-  $('btn-reset-cancel').addEventListener('click', () => closeM('modal-reset'));
-  $('btn-reset-confirm').addEventListener('click', hardReset);
+      // כפיית תצוגת חלון האיפוס על ידי מניפולציית DOM ישירה
+      const resetModal = document.getElementById('modal-reset');
+      if (resetModal) {
+        resetModal.classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+        try { history.pushState({ui: 'modal', id: 'modal-reset'}, ''); } catch(err) {}
+      }
+      return; // סיום הטיפול
+    }
+
+    // 2. זיהוי לחיצה על כפתורי הסגירה/ביטול של מודאל האיפוס
+    const targetClose = e.target.closest('#btn-close-reset, #btn-reset-cancel');
+    if (targetClose) {
+      e.preventDefault();
+      e.stopPropagation();
+      const resetModal = document.getElementById('modal-reset');
+      if (resetModal) {
+        resetModal.classList.add('hidden');
+        document.body.style.overflow = ''; // החזרת הגלילה למסך
+      }
+      return;
+    }
+
+    // 3. זיהוי לחיצה על אישור סופי של האיפוס
+    const targetConfirm = e.target.closest('#btn-reset-confirm');
+    if (targetConfirm) {
+      e.preventDefault();
+      e.stopPropagation();
+      if (typeof hardReset === 'function') hardReset();
+    }
+    
+  }, true); // 👈 הארגומנט 'true' מפעיל את המאזין בשלב ה-Capture!
 }
 
 async function hardReset(){
