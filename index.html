@@ -55,7 +55,7 @@ html,body{height:100%;background:var(--bg0);color:var(--text);
 .workday-chip input{position:absolute;opacity:0;width:0;height:0}
 .workday-chip:has(input:checked){background:var(--limeDim);border-color:var(--lime);color:var(--lime)}
 
-/* ── NOTIFICATION SYSTEM v4.4.3 ── */
+/* ── NOTIFICATION SYSTEM v4.4.2 ── */
 .offline-banner{position:fixed;top:0;left:0;right:0;
   background:var(--red,#ef4444);color:#fff;text-align:center;
   padding:calc(var(--safeT,0px)+8px) 16px 8px;
@@ -590,29 +590,25 @@ details summary::-webkit-details-marker{display:none}
       <span class="menu-appname">MyWorkLog</span>
       <button class="ibtn" id="btn-close-menu" data-i18n="menuClose" data-i18n-attr="aria-label" aria-label="סגור">✕</button>
     </div>
-
-<nav class="menu-nav">
-      <!-- ניווט ראשי -->
+    <nav class="menu-nav">
       <button class="menu-item" data-tab="report"  data-i18n="menuReport">דיווח</button>
       <button class="menu-item" data-tab="history" data-i18n="menuHistory">היסטוריה</button>
       <button class="menu-item" data-tab="summary" data-i18n="menuSummary">סיכום</button>
-      
       <hr class="menu-div"/>
-      
-      <!-- פעולות מהירות -->
-      <button class="menu-item" id="menu-master-sync-btn" style="color: var(--lime); font-weight: 600;">🔄 סנכרון נתונים מלא</button>
-      
+      <button class="menu-item" id="menu-theme-btn"data-i18n="menuThemeDark">🌙 מצב כהה</button>
       <hr class="menu-div"/>
-      
-      <!-- הגדרות ומערכת -->
-      <button class="menu-item" id="menu-theme-btn" data-i18n="menuThemeDark">🌙 מצב כהה</button>
       <button class="menu-item" id="menu-settings-btn" data-i18n="menuSettings">⚙️ הגדרות</button>
+      <button class="menu-item" id="menu-help-btn"data-i18n="menuHelp2">📄 עזרה — Apps Script</button>
+      <button class="menu-item" id="menu-gs-btn"data-i18n="menuGS">🔗 קוד google-apps-script.gs</button>
+      <button class="menu-item" id="menu-import-btn" data-i18n="menuImport">📥 טעינת נתונים</button>
+      <hr class="menu-div"/>
+      <button class="menu-item" id="menu-wstandard-btn"data-i18n="menuWorkstandard">📊 תקן שעות — WorkStandard</button>
     </nav>
     <div class="menu-foot" style="display:flex;flex-direction:column;gap:8px">
       <a id="menu-sheet-link" href="#" target="_blank" rel="noopener" style="display:none;align-items:center;gap:7px;font-size:.8rem;color:var(--blue);text-decoration:none;padding:3px 2px">
-        <span data-i18n="menuOpenSheet">📊 פתח גיליון Google</span>
+        <span data-i18n="menuOpenSheet">📊 פתח גיליון הדיווחים</span>
       </a>
-      <span id="menu-vbadge" class="vbadge" data-i18n-attr="title" data-i18n="menuVersionTooltip" title="לחץ לאיפוס">v4.4.3</span>
+      <span id="menu-vbadge" class="vbadge" data-i18n-attr="title" data-i18n="menuVersionTooltip" title="לחץ לאיפוס">v3.7.0</span>
     </div>
   </aside>
 
@@ -674,6 +670,7 @@ details summary::-webkit-details-marker{display:none}
         <div class="fg">
           <label class="flbl" data-i18n="labelProject">פרויקט <span style="color:var(--red);font-size:.75rem">*</span></label>
           <input type="text" id="task-project" class="fi" list="projects-list"
+            data-i18n="placeholderProj" data-i18n-attr="placeholder"
             data-i18n="placeholderProjRequired" data-i18n-attr="placeholder" placeholder="שם הFprojected (חובה)"/>
           <datalist id="projects-list"></datalist>
         </div>
@@ -1537,12 +1534,12 @@ details summary::-webkit-details-marker{display:none}
 /* BOOT */
 
 /* ═══════════════════════════════════════════════════════
-   NOTIFICATION SYSTEM  v4.4.3
+   NOTIFICATION SYSTEM  v4.4.2
    Manages: Offline banner · PWA Install · Update Prompt · Toast
    ═══════════════════════════════════════════════════════ */
 const NotificationSystem = {
   settings: { showNetworkStatus: true },
-  currentVersion: '4.4.3',
+  currentVersion: '4.4.2',
   deferredInstallPrompt: null,
   _wasOffline: false,   // track previous state for auto-cleanup
 
@@ -1727,7 +1724,7 @@ document.addEventListener('DOMContentLoaded',()=>{
     fixStoredDates();
   netInit();netQInit();projLoad();histRender();
   importInit();
-    NotificationSystem.init(VER);  // v4.4.3
+    NotificationSystem.init(VER);  // v4.4.2
     updateSessionBanner();
     flushDeleteQueue();
     menuInit();vBadgeInit();swipeInit();ptrInit();swInit();installInit();scrollInit();
@@ -1979,26 +1976,6 @@ function switchTab(name){
 
 /* MENU */
 function menuInit(){
-  $('btn-hamburger').addEventListener('click',menuOpen);
-  $('btn-close-menu').addEventListener('click',menuClose);
-  $('menu-overlay').addEventListener('click',menuClose);
-  $('menu-settings-btn').addEventListener('click',()=>{menuClose();openM('modal-settings')});
-  
-  // מאזין ללחצן הסנכרון המלא החדש (ללא הלוגיקה המלאה עדיין)
-  $('menu-master-sync-btn')?.addEventListener('click', () => {
-    menuClose();
-    buzz([20]);
-    toast('לחצן סנכרון מוכן – לוגיקה תיושם בשלב הבא', 'info');
-  });
-
-  $('menu-theme-btn').addEventListener('click',()=>{
-    applyTheme(document.body.classList.contains('light')?'dark':'light');buzz([20]);
-  });
-  
-  document.querySelectorAll('.menu-item[data-tab]').forEach(el=>el.addEventListener('click',()=>switchTab(el.dataset.tab)));
-  updateMenuSheetLink();
-}
-
   $('btn-hamburger').addEventListener('click',menuOpen);
   $('btn-close-menu').addEventListener('click',menuClose);
   $('menu-overlay').addEventListener('click',menuClose);
