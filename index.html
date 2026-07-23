@@ -1790,73 +1790,19 @@ function migrateData(prevVer){
 }
 
 function vBadgeInit(){
-  // רשימת האלמנטים שיפתחו את חלון האיפוס בלחיצה בודדת
-  const badges = [
-    document.getElementById('version-badge'),
-    document.getElementById('menu-vbadge'),
-    document.getElementById('btn-open-reset-about') // גיבוי: הכפתור האדום מתוך מסך האודות בהגדרות
-  ];
-  
-  const openResetModal = (e) => {
-    if (e) {
-      e.preventDefault();
-      e.stopPropagation();
-    }
-    
-    // 1. סגירת תפריטים ומודאלים פתוחים ברקע כדי למנוע התנגשויות
-    try {
-      document.getElementById('side-menu')?.classList.remove('open');
-      document.getElementById('menu-overlay')?.classList.add('hidden');
-      document.getElementById('modal-settings')?.classList.add('hidden');
-    } catch(err) {}
-    
-    // 2. פתיחה כפויה וישירה של מודאל האיפוס (בלחיצה בודדת!)
-    const modal = document.getElementById('modal-reset');
-    if (modal) {
-      modal.classList.remove('hidden');
-      modal.style.setProperty('display', 'flex', 'important'); // עקיפת הגדרות CSS עיקשות
-      document.body.style.overflow = 'hidden'; // מניעת גלילה של הרקע
-    }
-    
-    if (typeof buzz === 'function') {
-      try { buzz([40]); } catch(err) {}
-    }
-  };
-
-  // הצמדת אירועים אגרסיבית לכל תגי הגרסה והכפתורים
-  badges.forEach(el => {
+  // חיבור התגים לפתיחת המודאל בלחיצה בודדת (קליק אחד) באמצעות פונקציות המערכת המקוריות
+  [$('version-badge'), $('menu-vbadge'), $('btn-open-reset-about')].forEach(el => {
     if (!el) return;
-    
-    // הגדרות מגע חלקות ומניעת "זיופים" של המקלדת במובייל
-    el.style.userSelect = 'none';
-    el.style.webkitUserSelect = 'none';
-    el.style.touchAction = 'manipulation';
-    el.style.cursor = 'pointer';
-    
-    // תמיכה כפולה - גם למחשב (click) וגם לטלפון (touchstart)
-    el.addEventListener('click', openResetModal);
-    el.addEventListener('touchstart', openResetModal, { passive: false });
+    el.addEventListener('click', () => {
+      if (typeof buzz === 'function') buzz([20, 30, 20]);
+      if (typeof openM === 'function') openM('modal-reset');
+    });
   });
-  
-  // פונקציית סגירה מאובטחת
-  const closeResetModal = (e) => {
-    if (e) e.preventDefault();
-    const modal = document.getElementById('modal-reset');
-    if (modal) {
-      modal.classList.add('hidden');
-      modal.style.display = 'none';
-    }
-    document.body.style.overflow = '';
-  };
-  
-  // חיבור כפתורי הביטול והסגירה בתוך מודאל האיפוס
-  document.getElementById('btn-close-reset')?.addEventListener('click', closeResetModal);
-  document.getElementById('btn-reset-cancel')?.addEventListener('click', closeResetModal);
-  document.getElementById('btn-reset-confirm')?.addEventListener('click', () => {
-    if (typeof hardReset === 'function') {
-      try { hardReset(); } catch(err) { console.error(err); }
-    }
-  });
+
+  // חיבור כפתורי הסגירה והביטול המקוריים של המודאל
+  $('btn-close-reset').addEventListener('click', () => closeM('modal-reset'));
+  $('btn-reset-cancel').addEventListener('click', () => closeM('modal-reset'));
+  $('btn-reset-confirm').addEventListener('click', hardReset);
 }
 
 async function hardReset(){
