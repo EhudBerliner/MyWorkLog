@@ -1683,14 +1683,15 @@ document.addEventListener('DOMContentLoaded',()=>{
 /* SPLASH */
 function splashInit(){
   setTimeout(()=>{
-    $('splash')?.classList.add('out');
+    $('splash').classList.add('out');
     setTimeout(()=>{
-      try{$('splash')?.remove();}catch(_){}
-      try{$('app')?.classList.remove('hidden');}catch(_){}
+      try{$('splash').remove();}catch(_){}
+      try{$('app').classList.remove('hidden');}catch(_){}
       try{applyLang(window._lang||'he');}catch(_){}
       try{summaryRender();}catch(e){console.error('[summaryRender]',e);}
       try{updateMenuSheetLink();}catch(_){}
-      setTimeout(()=>{try{bgSync();}catch(_){}}, 2000);
+      // Background sync: projects + WorkStandard on every launch
+      setTimeout(()=>{try{bgSync();}catch(_){}}, 1500);
     },420);
   },900);
 }
