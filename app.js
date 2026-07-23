@@ -1,8 +1,9 @@
 /* ═══════════════════════════════════════════════════════
-   MyWorkLog · App Core  v4.4.2
+   MyWorkLog · App Core  v4.4.3
    ═══════════════════════════════════════════════════════ */
 
-const VER = '4.4.2';
+// תיקון: עדכון הגרסה המערכתית לסינכרון מלא מול ה-UI וה-Service Worker
+const VER = '4.4.3';
 
 /* ── Storage keys ── */
 const K = {
@@ -53,6 +54,76 @@ const fmtT   = tt => {
 };
 const catLbl = cat => t({ entry:'catEntry', exit:'catExit', task:'catTask' }[cat]) || cat;
 
-/* toast() moved to index.html — bridges to NotificationSystem v3.8.0 */
+/* toast() moved to index.html — bridges to NotificationSystem v4.4.2 */
+
+/* ── CONFLICT RESOLUTION (Offline vs Sheet) ── */
+function mergeSheetAndOfflineData(sheetData) {
+  // שליפת תור הדיווחים המקומיים הממתינים לשליחה (באמצעות המפתח הקיים באפליקציה)
+  const offlineQueue = store(K.q) || [];
+  
+  // אם תור האופליין ריק, אין התנגשויות - נחזיר את נתוני הגיליון כפי שהם
+  if (offlineQueue.length === 0) {
+    return sheetData;
+  }
+
+  // יצירת סט מזהים של כל דיווחי האופליין הממתינים
+  const offlineIds = new Set(offlineQueue.map(item => String(item.id)));
+
+  // סינון נתוני הגיליון המרוחק: כל דיווח שקיים לו עדכון אופליין באפליקציה - מוסר
+  const filteredSheetData = sheetData.filter(report => report.id && !offlineIds.has(String(report.id)));
+
+  // חיבור הנתונים: דיווחי האופליין גוברים ומתווספים לנתונים הנקיים מהגיליון
+  const finalMergedData = [...filteredSheetData, ...offlineQueue];
+
+  // מיון כרונולוגי יורד (מהחדש לישן) לפי תאריך ושעה, כפי שנדרש בהיסטוריה של המערכת
+  return finalMergedData.sort((a, b) => {
+    const keyA = (a.report_date || '') + 'T' + (a.report_time && !a.report_time.includes('-') ? a.report_time : '00:00');
+    const keyB = (b.report_date || '') + 'T' + (b.report_time && !b.report_time.includes('-') ? b.report_time : '00:00');
+    return keyB.localeCompare(keyA);
+  });
+}
 
 /* ── BOOT ── */
+
+/**
+ * פונקציית האתחול המרכזית של נתוני האפליקציה.
+ * מציגה מיד נתונים מקומיים ומעדכנת את באנר הסשן (שעת כניסה) ללא תלות ברשת.
+ */
+async function initApp() {
+  // 1. שליפה ורינדור מיידי של הנתונים המקומיים כדי למנוע מסך ריק באופליין
+  histRender();
+  if (typeof summaryRender === 'function') summaryRender();
+  
+  // 🛡️ עדכון מיידי של באנר הסשן (שעת הכניסה) ישירות מתוך ה-LocalStorage
+  updateSessionBanner(); 
+
+  // 2. אם אין אינטרנט - עוצרים כאן ומתבססים על המידע המקומי בלבד
+  if (!navigator.onLine) {
+    return;
+  }
+
+  // 3. במידה ויש תקשורת, מריצים סנכרון רקע מבוקר דלתא
+  const ep = store(K.ep);
+  if (!ep) return;
+
+  try {
+    // הגנת הצפה: דילוג אם בוצע סנכרון מלא או חלקי ב-3 הדקות האחרונות
+    const lastFull = store('mwl_last_full_sync');
+    if (lastFull && (Date.now() - Number(lastFull)) < 3 * 60 * 1000) return;
+
+    // משיכת תאריך חלון 60 יום
+    if (typeof getDeltaStartDate !== 'function') return;
+    const deltaDate = getDeltaStartDate();
+
+    // משיכת דיווחים ותקן שעות מהשרת בחלון הזמן הממוקד
+    await syncFromSheet(deltaDate);
+    if (typeof syncWStandardDelta === 'function') {
+      await syncWStandardDelta(deltaDate);
+    }
+
+    // סימון סנכרון מוצלח
+    store('mwl_last_full_sync', String(Date.now()));
+  } catch (error) {
+    console.warn('[initApp Delta Sync Failure]', error);
+  }
+}
