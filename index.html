@@ -1790,68 +1790,79 @@ function migrateData(prevVer){
 }
 
 function vBadgeInit() {
-  const resetTriggers = ['version-badge', 'menu-vbadge', 'btn-open-reset-about'];
+  // רשימת כפתורי האיפוס
+  const triggers = ['version-badge', 'menu-vbadge', 'btn-open-reset-about'];
   
-  // שימוש ב-true מחבר את המאזין לשלב ה-Capture, הראשון בתור לפני כל סקריפט אחר
-  document.addEventListener('click', (e) => {
+  triggers.forEach(id => {
+    const btn = document.getElementById(id);
+    if (!btn) return;
+
+    // הסרת מאזינים ישנים (אם קיימים) כדי למנוע כפילויות
+    btn.replaceWith(btn.cloneNode(true));
     
-    // 1. פתיחת מסך האיפוס
-    const triggerOpen = e.target.closest('#' + resetTriggers.join(', #'));
-    if (triggerOpen) {
-      // חניקת האירוע: מונע מ-app.js לזהות לחיצה "מחוץ למודאל" ולסגור אותו
+    // תפיסת האלמנט החדש לאחר השיבוט
+    const cleanBtn = document.getElementById(id);
+    if (!cleanBtn) return;
+
+    cleanBtn.addEventListener('click', (e) => {
+      // עצירת האירוע מקומית בלבד - לא גלובלית!
       e.preventDefault();
       e.stopPropagation();
-      e.stopImmediatePropagation();
-      
+
       if (typeof buzz === 'function') buzz([20, 30, 20]);
-      
-      // סגירה כפויה וישירה של כל מסך אחר פתוח
-      ['side-menu', 'menu-overlay', 'modal-settings', 'modal-help'].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) {
-          el.classList.add('hidden');
-          el.classList.remove('open');
+
+      // שימוש ב-setTimeout כדי לתת לכל מנגנוני הבועה של app.js להסתיים,
+      // ורק אז להזריק את פתיחת המודאל בפריים הבא של הדפדפן
+      setTimeout(() => {
+        // 1. סגירה כפויה מוחלטת של תפריט הצד והמסכים האחרים
+        ['side-menu', 'menu-overlay', 'modal-settings'].forEach(mId => {
+          const el = document.getElementById(mId);
+          if (el) {
+            el.classList.add('hidden');
+            el.classList.remove('open');
+            el.style.display = 'none'; // כפיית הסתרה
+          }
+        });
+
+        // 2. פתיחה אבסולוטית של מודאל האיפוס
+        const resetModal = document.getElementById('modal-reset');
+        if (resetModal) {
+          resetModal.classList.remove('hidden');
+          resetModal.style.setProperty('display', 'flex', 'important'); // שבירת כל חוק CSS
+          document.body.style.overflow = 'hidden';
+          
+          try { history.pushState({ui: 'modal', id: 'modal-reset'}, ''); } catch(err) {}
+        }
+      }, 50); // השהייה טקטית של 50 מילישניות
+    });
+  });
+
+  // חיבור כפתורי הסגירה של המודאל (ביטול / X)
+  ['btn-close-reset', 'btn-reset-cancel'].forEach(id => {
+    const btn = document.getElementById(id);
+    if (btn) {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const resetModal = document.getElementById('modal-reset');
+        if (resetModal) {
+          resetModal.classList.add('hidden');
+          resetModal.style.display = 'none';
+          document.body.style.overflow = '';
         }
       });
-      
-      // פתיחה כפויה ואבסולוטית של מודאל האיפוס (עם גיבוי inline style)
-      const resetModal = document.getElementById('modal-reset');
-      if (resetModal) {
-        resetModal.classList.remove('hidden');
-        resetModal.style.display = 'flex'; // עוקף כל בעיית CSS specificity
-        document.body.style.overflow = 'hidden';
-        
-        // עדכון היסטוריה שקוף כדי שכפתור החזור באנדרואיד יעבוד תקין
-        try { history.pushState({ui: 'modal', id: 'modal-reset'}, ''); } catch(err) {}
-      }
-      return;
     }
+  });
 
-    // 2. סגירת מסך האיפוס
-    const triggerClose = e.target.closest('#btn-close-reset, #btn-reset-cancel');
-    if (triggerClose) {
-      e.preventDefault();
-      e.stopPropagation();
-      e.stopImmediatePropagation();
-      
-      const resetModal = document.getElementById('modal-reset');
-      if (resetModal) {
-        resetModal.classList.add('hidden');
-        resetModal.style.display = ''; // ניקוי הגיבוי
-        document.body.style.overflow = '';
-      }
-      return;
-    }
-
-    // 3. אישור וביצוע איפוס מוחלט
-    const triggerConfirm = e.target.closest('#btn-reset-confirm');
-    if (triggerConfirm) {
+  // כפתור אישור איפוס סופי
+  const confirmBtn = document.getElementById('btn-reset-confirm');
+  if (confirmBtn) {
+    confirmBtn.addEventListener('click', (e) => {
       e.preventDefault();
       e.stopPropagation();
       if (typeof hardReset === 'function') hardReset();
-    }
-    
-  }, true); // מאזין ברמת ה-Capture האגרסיבית
+    });
+  }
 }
 
 async function hardReset(){
