@@ -1580,7 +1580,7 @@ const NotificationSystem = {
     });
   },
 
-	async checkRemoteVersion() {
+async checkRemoteVersion() {
     if (!navigator.onLine || this._updateShown) return;
     try {
       const res = await fetch('./version.json?t=' + Date.now(), {
@@ -1592,10 +1592,11 @@ const NotificationSystem = {
       if (data.version && data.version !== this.currentVersion) {
         this._updateShown = true;
         
-        // הוספת פונקציית ה-callback ששולחת את פקודת ההחלפה ל-SW החדש
         this.showUpdatePrompt(data.version, () => {
-          if (window.ST && ST.swReg && ST.swReg.waiting) {
-            ST.swReg.waiting.postMessage({type: 'SKIP_WAITING'});
+          // גישה בטוחה ל-ST כדי למנוע שגיאות במקרה שאינו על ה-window
+          const swReg = (typeof ST !== 'undefined' ? ST.swReg : (window.ST ? window.ST.swReg : null));
+          if (swReg && swReg.waiting) {
+            swReg.waiting.postMessage({type: 'SKIP_WAITING'});
           }
         });
       }
@@ -1609,12 +1610,20 @@ const NotificationSystem = {
 
     document.getElementById('updateNowBtn').onclick = async () => {
       el.classList.remove('visible');
-      if (onUpdate) onUpdate();
+      
+      // 1. מחיקת הקאש כדי לוודא טעינה נקייה
       if ('caches' in window) {
         const keys = await caches.keys();
         await Promise.all(keys.map(k => caches.delete(k)));
       }
-      window.location.reload();
+      
+      // 2. הפעלת עדכון ה-Service Worker (שליחת פקודת ה-SKIP_WAITING)
+      if (onUpdate) onUpdate();
+      
+      // 3. הוספת דיליי קטן כדי לאפשר ל-SW להשתלט לפני שהעמוד מתרענן
+      setTimeout(() => {
+        window.location.reload();
+      }, 500);
     };
   }
 }
