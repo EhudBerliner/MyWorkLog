@@ -1790,73 +1790,72 @@ function migrateData(prevVer){
 }
 
 function vBadgeInit(){
-  let clicks = 0;
-  let timer;
-  
-  // שליפה ישירה ומאובטחת של האלמנטים ללא תלות בפונקציית $ חיצונית
+  // רשימת האלמנטים שיפתחו את חלון האיפוס בלחיצה בודדת
   const badges = [
     document.getElementById('version-badge'),
-    document.getElementById('menu-vbadge')
+    document.getElementById('menu-vbadge'),
+    document.getElementById('btn-open-reset-about') // גיבוי: הכפתור האדום מתוך מסך האודות בהגדרות
   ];
   
+  const openResetModal = (e) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    
+    // 1. סגירת תפריטים ומודאלים פתוחים ברקע כדי למנוע התנגשויות
+    try {
+      document.getElementById('side-menu')?.classList.remove('open');
+      document.getElementById('menu-overlay')?.classList.add('hidden');
+      document.getElementById('modal-settings')?.classList.add('hidden');
+    } catch(err) {}
+    
+    // 2. פתיחה כפויה וישירה של מודאל האיפוס (בלחיצה בודדת!)
+    const modal = document.getElementById('modal-reset');
+    if (modal) {
+      modal.classList.remove('hidden');
+      modal.style.setProperty('display', 'flex', 'important'); // עקיפת הגדרות CSS עיקשות
+      document.body.style.overflow = 'hidden'; // מניעת גלילה של הרקע
+    }
+    
+    if (typeof buzz === 'function') {
+      try { buzz([40]); } catch(err) {}
+    }
+  };
+
+  // הצמדת אירועים אגרסיבית לכל תגי הגרסה והכפתורים
   badges.forEach(el => {
     if (!el) return;
     
-    // הגנות CSS מובנות למניעת בעיות מגע וסימון במובייל
+    // הגדרות מגע חלקות ומניעת "זיופים" של המקלדת במובייל
     el.style.userSelect = 'none';
     el.style.webkitUserSelect = 'none';
     el.style.touchAction = 'manipulation';
+    el.style.cursor = 'pointer';
     
-    el.addEventListener('click', () => {
-      clicks++;
-      clearTimeout(timer);
-      
-      if (clicks >= 5) {
-        clicks = 0;
-        
-        // 1. סגירת תפריט הצד (אם הוא פתוח)
-        try {
-          const sideMenu = document.getElementById('side-menu');
-          const menuOverlay = document.getElementById('menu-overlay');
-          sideMenu?.classList.remove('open');
-          menuOverlay?.classList.add('hidden');
-          sideMenu?.setAttribute('aria-hidden', 'true');
-        } catch(e) {}
-        
-        // 2. פתיחה ישירה וכפויה של מודאל האיפוס
-        const modal = document.getElementById('modal-reset');
-        if (modal) {
-          modal.classList.remove('hidden');
-          document.body.style.overflow = 'hidden'; // מניעת גלילת רקע
-        }
-        
-        // 3. הפעלת רטט (במידה וקיים במערכת)
-        if (typeof buzz === 'function') {
-          try { buzz([20, 30, 20]); } catch(e) {}
-        }
-      } else {
-        if (clicks >= 2) {
-          if (typeof toast === 'function') {
-            toast(`עוד ${5 - clicks} לחיצות לאיפוס האפליקציה`, 'info', 1000);
-          }
-        }
-        timer = setTimeout(() => { clicks = 0; }, 1200);
-      }
-    });
+    // תמיכה כפולה - גם למחשב (click) וגם לטלפון (touchstart)
+    el.addEventListener('click', openResetModal);
+    el.addEventListener('touchstart', openResetModal, { passive: false });
   });
   
-  // פונקציה פנימית לסגירה ישירה של מודאל האיפוס
-  const closeResetModal = () => {
+  // פונקציית סגירה מאובטחת
+  const closeResetModal = (e) => {
+    if (e) e.preventDefault();
     const modal = document.getElementById('modal-reset');
-    if (modal) modal.classList.add('hidden');
+    if (modal) {
+      modal.classList.add('hidden');
+      modal.style.display = 'none';
+    }
     document.body.style.overflow = '';
   };
   
-  // חיבור ישיר של כפתורי הסגירה והביטול במודאל האיפוס
+  // חיבור כפתורי הביטול והסגירה בתוך מודאל האיפוס
   document.getElementById('btn-close-reset')?.addEventListener('click', closeResetModal);
   document.getElementById('btn-reset-cancel')?.addEventListener('click', closeResetModal);
   document.getElementById('btn-reset-confirm')?.addEventListener('click', () => {
-    if (typeof hardReset === 'function') hardReset();
+    if (typeof hardReset === 'function') {
+      try { hardReset(); } catch(err) { console.error(err); }
+    }
   });
 }
 
