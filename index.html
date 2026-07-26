@@ -601,6 +601,7 @@ details summary::-webkit-details-marker{display:none}
       <button class="menu-item" id="menu-help-btn"data-i18n="menuHelp2">📄 עזרה — Apps Script</button>
       <button class="menu-item" id="menu-gs-btn"data-i18n="menuGS">🔗 קוד google-apps-script.gs</button>
       <button class="menu-item" id="menu-import-btn" data-i18n="menuImport">📥 טעינת נתונים</button>
+	
       <hr class="menu-div"/>
       <button class="menu-item" id="menu-wstandard-btn"data-i18n="menuWorkstandard">📊 תקן שעות — WorkStandard</button>
     </nav>
@@ -864,6 +865,7 @@ details summary::-webkit-details-marker{display:none}
         <button class="stab-btn"        data-stab="connection">🔗 חיבור</button>
         <button class="stab-btn"        data-stab="data">📦 נתונים</button>
         <button class="stab-btn"        data-stab="about">ℹ️ אודות</button>
+		<button class="stab-btn"         data-stab="advanced">⚙️ מתקדם</button>
       </div>
     </div>
 
@@ -1134,6 +1136,8 @@ details summary::-webkit-details-marker{display:none}
                 <span class="about-val" id="about-data-count">—</span>
               </div>
               <div class="about-row">
+		
+			<div class="about-row">
                 <span class="about-lbl">סנכרון אחרון</span>
                 <span class="about-val" id="about-last-sync">—</span>
               </div>
@@ -1157,7 +1161,21 @@ details summary::-webkit-details-marker{display:none}
 
       </div><!-- /stab-about -->
 
+      <!-- ══ TAB: ADVANCED ══ -->
+      <div class="stab-pnl" id="stab-advanced">
+        <div class="sset-group">
+          <div class="sset-label">⚙️ הגדרות מתקדמות</div>
+          <div class="sset-block">
+            <div class="sset-row">
+              <span class="sset-row-label">אפשרות מתקדמת ראשונה</span>
+              <div class="sset-row-sub">כאן תוכל למקם אלמנטים נוספים בהמשך.</div>
+            </div>
+          </div>
+        </div>
+      </div><!-- /stab-advanced -->
+
     </div><!-- /mbody -->
+	
     <div class="mfoot">
       <button class="btn-p" id="btn-save-settings" data-i18n="btnSaveSettings">שמור הגדרות</button>
     </div>
