@@ -4020,8 +4020,29 @@ async function buildReportWorkbook(fromDate, toDate){
   /* Build and return { wb, attRows, taskRows, wsRows, wlRows, projRows, filename }
      Throws on error — callers handle catch. */
   await loadSheetJS();
-  const reps       = store(K.reps)||[];
-  const periodReps = reps.filter(r=>r.report_date>=fromDate&&r.report_date<=toDate);
+  
+  let periodReps = [];
+  const ep = store(K.ep);
+  
+  // משיכת נתונים היסטוריים מלאים מהשרת כדי לעקוף את מגבלת 300 הרשומות הלוקאלית
+  if (ep && navigator.onLine) {
+    try {
+      const res = await fetch(`${ep}?action=getReports&fromDate=${fromDate}&t=${Date.now()}`);
+      const data = await res.json();
+      if (data && Array.isArray(data.reports)) {
+        periodReps = data.reports.filter(r => r.report_date >= fromDate && r.report_date <= toDate);
+      }
+    } catch(e) {
+      console.warn('[buildReportWorkbook] Failed to fetch remote history', e);
+    }
+  }
+
+  // Fallback למטמון המקומי במקרה של שגיאה או עבודה באופליין
+  if (!periodReps.length) {
+    const reps = store(K.reps) || [];
+    periodReps = reps.filter(r => r.report_date >= fromDate && r.report_date <= toDate);
+  }
+
   if(!periodReps.length) throw new Error('no_data');
 
   /* ── Sheet 1: Attendance ──────────────────────────────── */
