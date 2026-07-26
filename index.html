@@ -468,6 +468,7 @@ textarea.fi{resize:vertical;min-height:72px}
 .wc-legend-dot.vacation{background:var(--amber)}
 .wc-legend-dot.sick{background:var(--purple)}
 .wc-legend-dot.sabbatical{background:#63cab7}
+.wc-legend-dot.sabbatical{background:#63cab7}
 .wc-sect-lbl{font-size:.67rem;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:1.5px;margin:2px 0 6px}
 .workcal-hint{font-size:.72rem;color:var(--text3);text-align:center;padding:6px 0}
 details summary::-webkit-details-marker{display:none}
@@ -491,6 +492,14 @@ details summary::-webkit-details-marker{display:none}
 .add-row .btn-g{padding:8px 12px;font-size:.8rem}
 
 /* ─ CRM TASKS TAB ─ */
+
+
+
+
+
+
+
+
 
 
 
@@ -665,6 +674,7 @@ details summary::-webkit-details-marker{display:none}
         <div class="fg">
           <label class="flbl" data-i18n="labelDescription">תיאור <span style="color:var(--text3);font-weight:400">(אופציונלי)</span></label>
           <textarea id="task-desc" class="fi" rows="3"
+            data-i18n="placeholderDesc" data-i18n-attr="placeholder"
             data-i18n="placeholderDesc" data-i18n-attr="placeholder" placeholder="מה בוצע..."></textarea>
         </div>
         <div class="fg">
@@ -1127,6 +1137,7 @@ details summary::-webkit-details-marker{display:none}
 					<span class="about-lbl">סנכרון אחרון</span>
 					<span class="about-val" id="about-last-sync">—</span>
 				</div>
+            </div>
           </div>
         </div>
 
@@ -1146,61 +1157,18 @@ details summary::-webkit-details-marker{display:none}
 
       </div><!-- /stab-about -->
 
-<!-- ══ TAB: ADVANCED ══ -->
-<div class="stab-pnl" id="stab-advanced">
-  
-  <!-- מחיקת נתונים מקומיים -->
-  <div class="sset-group">
-    <div class="sset-label">📦 ניהול נתונים מקומי</div>
-    <div class="sset-block">
-      <div class="sset-row">
-        <div class="sset-row-sub" style="margin-bottom:8px">מחיקה מהירה של ערכי הליבה השמורים במכשיר. האפליקציה תישאר שמישה באופליין.</div>
-        <button class="btn-d sm" id="btn-clear-data-advanced" style="width:100%">🗑 מחק כל הנתונים המקומיים</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- איפוס אפליקציה מלא (hardReset) -->
-  <div class="sset-group" style="margin-top:10px">
-    <div class="sset-label" style="color:var(--red)">⚠️ איפוס אפליקציה מלא (hardReset)</div>
-    <div class="sset-block">
-      <div class="sset-row" style="background:var(--redDim); border-bottom:1px solid var(--border)">
-        <div style="font-size:.82rem; color:var(--text2); line-height:1.6">
-          פעולה זו מוחקת קבצי קוד פגומים, מטמון (Cache) וקוקיז, ומסירה את ה-Service Worker. <strong>דורש חיבור לאינטרנט לאחר הביצוע.</strong> בחר אילו נתונים לשמור:
+      <!-- ══ TAB: ADVANCED ══ -->
+      <div class="stab-pnl" id="stab-advanced">
+        <div class="sset-group">
+          <div class="sset-label">⚙️ הגדרות מתקדמות</div>
+          <div class="sset-block">
+            <div class="sset-row">
+              <span class="sset-row-label">אפשרות מתקדמת ראשונה</span>
+              <div class="sset-row-sub">כאן תוכל למקם אלמנטים נוספים בהמשך.</div>
+            </div>
+          </div>
         </div>
-      </div>
-      
-      <div class="pref-list">
-        <label class="pref-row">
-          <span class="pref-row-icon">📋</span>
-          <span class="pref-row-body">
-            <span class="pref-row-label">היסטוריית דיווחים</span>
-          </span>
-          <input type="checkbox" id="adv-keep-reports" class="ptog" checked/>
-        </label>
-        <label class="pref-row">
-          <span class="pref-row-icon">⚙️</span>
-          <span class="pref-row-body">
-            <span class="pref-row-label">הגדרות (endpoint, פרויקטים, עיגול)</span>
-          </span>
-          <input type="checkbox" id="adv-keep-settings" class="ptog" checked/>
-        </label>
-        <label class="pref-row">
-          <span class="pref-row-icon">⏳</span>
-          <span class="pref-row-body">
-            <span class="pref-row-label">תור ממתין לשליחה</span>
-          </span>
-          <input type="checkbox" id="adv-keep-queue" class="ptog"/>
-        </label>
-      </div>
-
-      <div class="sset-row" style="border-top:1px solid var(--border)">
-        <button class="btn-d" id="btn-adv-reset-confirm" style="width:100%">🗑 בצע איפוס מערכת מלא</button>
-      </div>
-    </div>
-  </div>
-
-</div><!-- /stab-advanced -->
+      </div><!-- /stab-advanced -->
 
     </div><!-- /mbody -->
 	
@@ -1603,14 +1571,14 @@ document.addEventListener('DOMContentLoaded',()=>{
       btn.disabled=false;btn.textContent='↻ משוך WorkStandard מגיליון';
       wstdSyncStatusInline();updateSyncStatus();
     });
-$('btn-now').addEventListener('click',()=>{
-	  const n=new Date();
-	  $('report-date').value=isoD(n);
-	  // Apply rounding to "now" time
-	  $('report-time').value = applyRounding(timeS(n));
-	  toast(t('toastNowUpdated'));
-	  buzz([20]);
-	});
+    $('btn-now').addEventListener('click',()=>{
+      const n=new Date();
+      $('report-date').value=isoD(n);
+      // Apply rounding to "now" time
+$('report-time').value = applyRounding(timeS(n));
+    toast(t('toastNowUpdated'));
+    buzz([20]);
+  });
 
   fixStoredDates();
   netInit();
@@ -1799,29 +1767,24 @@ function vBadgeInit(){
   $('btn-reset-confirm').addEventListener('click',hardReset);
 }
 async function hardReset(){
-  // קריאה מתיבות הסימון החדשות בלשונית המתקדמת
-  const kR=$('adv-keep-reports').checked, kS=$('adv-keep-settings').checked, kQ=$('adv-keep-queue').checked;
-  
+  const kR=$('reset-keep-reports').checked,kS=$('reset-keep-settings').checked,kQ=$('reset-keep-queue').checked;
   // Preserve data BEFORE wiping localStorage
   const sR=kR?store(K.reps):null;
-  const sE=kS?store(K.ep):null, sSU=kS?store(K.sheetUrl):null;
-  const sP=kS?store(K.proj):null, sTH=kS?store(K.theme):null, sLN=kS?store(K.lang):null, sPR=kS?store(K.prefs):null;
-  const sRO=kS?store(K.rounding):null; // גיבוי הגדרת עיגול השעות
+  const sE=kS?store(K.ep):null,sSU=kS?store(K.sheetUrl):null;
+  const sP=kS?store(K.proj):null,sTH=kS?store(K.theme):null,sLN=kS?store(K.lang):null,sPR=kS?store(K.prefs):null;
+  const sRO=kS?store(K.rounding):null; // גיבוי הגדרת עיגול השעות האוטומטי
   const sQ=kQ?store(K.q):null;
-  
   localStorage.clear();sessionStorage.clear();
   document.cookie.split(';').forEach(c=>document.cookie=c.replace(/^ +/,'').replace(/=.*/,'=;expires='+new Date().toUTCString()+';path=/'));
   if('serviceWorker'in navigator)(await navigator.serviceWorker.getRegistrations()).forEach(r=>r.unregister());
   if('caches'in window)await Promise.all((await caches.keys()).map(k=>caches.delete(k)));
   if('indexedDB'in window){const dbs=await(indexedDB.databases?.()??Promise.resolve([]));dbs.forEach(db=>indexedDB.deleteDatabase(db.name))}
-  
   // Restore preserved data
   if(sR)store(K.reps,sR);
   if(sE)store(K.ep,sE);if(sSU)store(K.sheetUrl,sSU);
   if(sP)store(K.proj,sP);if(sTH)store(K.theme,sTH);if(sLN)store(K.lang,sLN);if(sPR)store(K.prefs,sPR);
-  if(sRO!==null)store(K.rounding,sRO); // שחזור הגדרת עיגול השעות
+  if(sRO!==null)store(K.rounding,sRO); // שחזור הגדרת עיגול השעות האוטומטי
   if(sQ)store(K.q,sQ);
-  
   buzz([100,50,100]);window.location.reload(true);
 }
 
@@ -1888,11 +1851,7 @@ function menuInit(){
   $('btn-close-menu').addEventListener('click',menuClose);
   $('menu-overlay').addEventListener('click',menuClose);
   $('menu-settings-btn').addEventListener('click',()=>{menuClose();openM('modal-settings')});
-  $('menu-help-btn').addEventListener('click',()=>{
-    menuClose();
-    openM('modal-help');
-    if(typeof renderHelpContent === 'function') renderHelpContent();
-  });  
+  $('menu-help-btn').addEventListener('click',()=>{menuClose();openM('modal-help')});
   $('menu-gs-btn').addEventListener('click',()=>{menuClose();downloadGS();});
   $('menu-import-btn').addEventListener('click',()=>{menuClose();openImportModal();}); // keep in menu too
   $('menu-theme-btn').addEventListener('click',()=>{
@@ -3440,23 +3399,6 @@ function settingsInit(){
     document.querySelectorAll('.seg-btn[data-lang]').forEach(b=>b.classList.remove('active'));
     btn.classList.add('active');applyLang(btn.dataset.lang);buzz([20]);
   }));
-// האזנה לכפתור מחיקת הנתונים המקומיים החדש בטאב המתקדם
-$('btn-clear-data-advanced')?.addEventListener('click', () => {
-  if(confirm(t('confirmClearData') || 'האם למחוק את כל הנתונים המקומיים?')){
-    Object.values(K).forEach(k=>localStorage.removeItem(k));
-    toast(t('toastDataCleared'),'success');
-    closeM('modal-settings');
-    histRender();
-    pendUI();
-  }
-});
-
-// האזנה לכפתור ה-hardReset הסופי בטאב המתקדם
-$('btn-adv-reset-confirm')?.addEventListener('click', () => {
-  if(confirm('⚠️ אזהרה: האפליקציה תתאפס לחלוטין ותיטען מחדש מהשרת. האם להמשיך?')) {
-    hardReset();
-  }
-});  
 }
 function openM(id){
   $(id).classList.remove('hidden');document.body.style.overflow='hidden';
@@ -3610,50 +3552,38 @@ async function syncFromSheet(fromDate = '') {
       if (m) return `${m[3]}-${m[2].padStart(2, '0')}-${m[1].padStart(2, '0')}`;
       const d = new Date(s); return isNaN(d) ? t : `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
     };
-    data.reports.forEach(r => { 
-      r.report_date = normDate(r.report_date); 
-      if (r.category === 'entry' || r.category === 'exit') r.report_time = normTimeStr(r.report_time); 
-    });
+    data.reports.forEach(r => { r.report_date = normDate(r.report_date); if (r.category === 'entry' || r.category === 'exit') r.report_time = normTimeStr(r.report_time); });
 
-    if (fromDate) {
-      // 1. נפריד מהלוקאל רשומות מחוץ לחלון הבדיקה (לפני ה-60 יום) - נשמרות כמו שהן
-      const olderThanWindow = local.filter(r => r.report_date < fromDate);
+if (fromDate) {
+      // 🛡️ לוגיקת מיזוג דלתא חכמה המונעת "רשומות רפאים":
+      // א. מסננים מהלוקאל את כל מה שקטן מחלון ה-60 יום
+      let unexaminedLocal = local.filter(r => r.report_date < fromDate);
       
-      // 2. נפרק את הרשומות שנמצאות בתוך חלון ה-60 יום
-      const localInWindow = local.filter(r => r.report_date >= fromDate);
+      // ב. הגנה מפני מחיקות היסטוריות (פתרון הרגרסיה):
+      // מנקים מהלוקאל הישן רשומות שכבר לא קיימות פיזית בגיליון
+      if (Array.isArray(data.allSheetIds)) {
+        const sheetIdsSet = new Set(data.allSheetIds.map(String));
+        unexaminedLocal = unexaminedLocal.filter(r => !r.sent || sheetIdsSet.has(String(r.id)));
+      }
       
-      // מזהים שהגיעו כעת מהשרת לעדכון
-      const remoteIds = new Set(data.reports.map(r => String(r.id)));
+      // ג. הגנה מפני איבוד נתונים: שמירה על דיווחים חדשים מקומיים (בתוך חלון 60 הימים) שטרם סונכרנו לשרת
+      const localNewUnsent = local.filter(r => r.report_date >= fromDate && !r.sent);
       
-      // 3. נסנן מהלוקאל שבתוך החלון רשומות שכבר קיימות בשרת (כדי שהשרת ידרוס אותן) 
-      // או רשומות שסונכרנו בעבר (sent) אך נמחקו מהשרת (אינן מופיעות ב-allSheetIds)
-      const sheetIdsSet = Array.isArray(data.allSheetIds) ? new Set(data.allSheetIds.map(String)) : null;
+      // ד. מיזוג של הנתונים החדשים מהשרת, הרשומות המקומיות שטרם סונכרנו, וההיסטוריה המנוקה
+      const merged = [...data.reports, ...localNewUnsent, ...unexaminedLocal];
       
-      const preservedLocalInWindow = localInWindow.filter(r => {
-        // אם הרשומה מעודכנת כעת מהשרת, נסיר אותה מהלוקאל כדי שהגרסה מהשרת תיקח פיקוד
-        if (remoteIds.has(String(r.id))) return false;
-        
-        // הגנה מפני מחיקות: אם הרשומה כבר סונכרנה (sent) אך לא קיימת בגיליון בחלון הזמן - היא נמחקה בשרת
-		if (r.sent && r.report_date >= fromDate && sheetIdsSet && !sheetIdsSet.has(String(r.id))) return false;
-        
-        return true;
-      });
-      
-      // 4. מיזוג סופי: שרת + מקומיים שמורים בחלון + היסטוריה ישנה שלא נגענו בה
-      const merged = [...data.reports, ...preservedLocalInWindow, ...olderThanWindow];
-      
-      // הסרת כפילויות מבוססת מזהה (ID) לביטחון מקסימלי
+      // ה. הסרת כפילויות מבוססת מזהה (ID) לביטחון מקסימלי
       const seenIds = new Set();
       const deduped = merged.filter(r => {
-        if (!r.id || seenIds.has(String(r.id))) return false;
-        seenIds.add(String(r.id));
+        if (seenIds.has(r.id)) return false;
+        seenIds.add(r.id);
         return true;
       });
 
       deduped.sort((a, b) => (b.timestamp || b.report_date || '').localeCompare(a.timestamp || a.report_date || ''));
       store(K.reps, deduped.slice(0, 300));
     }
-    else {
+	else {
       // סנכרון מלא (מיועד ללחיצה הידנית בלשונית הגדרות)
       const sheetIds = new Set(data.reports.map(r => String(r.id)).filter(Boolean));
       const pruned = local.filter(r => !r.sent || sheetIds.has(String(r.id)));
@@ -3668,15 +3598,10 @@ async function syncFromSheet(fromDate = '') {
     if (Array.isArray(data.projects)) {
       const localP = store(K.proj) || [];
       const toAdd = data.projects.filter(p => !localP.includes(p));
-      if (toAdd.length) { 
-        store(K.proj, [...localP, ...toAdd]); 
-        projLoad(); 
-        projChipsRender(); 
-      }
+      if (toAdd.length) { store(K.proj, [...localP, ...toAdd]); projLoad(); projChipsRender(); }
     }
 
-    histRender(); 
-    updateSessionBanner();
+    histRender(); updateSessionBanner();
     return data.reports.length;
   } catch (e) { 
     console.warn('[syncFromSheet Delta Failure]', e); 
@@ -3796,60 +3721,14 @@ function ptrInit(){
 }
 
 
-/* ─ HELP TABS & DYNAMIC CONTENT ─ */
-function renderHelpContent() {
-  const body = $('help-dynamic-body');
-  if (!body || body.innerHTML.trim() !== '') return;
-  
-  body.innerHTML = `
-    <div id="htab-guide" class="htab-pnl" style="display:flex;">
-      <div class="card">
-        <div class="card-lbl">איך מתחילים?</div>
-        <p style="font-size:0.85rem;color:var(--text2);line-height:1.5;">
-          1. הזינו את כתובת ה-Apps Script בלשונית "חיבור".<br>
-          2. בצעו "סנכרון דיווחים" כדי למשוך היסטוריה.<br>
-          3. התחילו לדווח כניסה/יציאה ומשימות.
-        </p>
-      </div>
-    </div>
-    <div id="htab-types" class="htab-pnl" style="display:none;">
-      <div class="card">
-        <div class="card-lbl">סוגי דיווחים</div>
-        <ul style="font-size:0.85rem;color:var(--text2);line-height:1.6;padding-right:15px;">
-          <li><b style="color:var(--lime)">🟢 כניסה:</b> תחילת יום העבודה.</li>
-          <li><b style="color:var(--red)">🔴 יציאה:</b> סיום יום העבודה.</li>
-          <li><b style="color:var(--blue)">📋 משימה:</b> דיווח פעילות בתוך טווח הזמן.</li>
-        </ul>
-      </div>
-    </div>
-    <div id="htab-setup" class="htab-pnl" style="display:none;">
-      <div class="card">
-        <div class="card-lbl">אופליין (ללא אינטרנט)</div>
-        <p style="font-size:0.85rem;color:var(--text2);line-height:1.5;">
-          הדיווחים יישמרו במכשיר ויועלו אוטומטית כשהחיבור יחזור, או בלחיצה על "שלח".
-        </p>
-      </div>
-    </div>
-    <div id="htab-sheets" class="htab-pnl" style="display:none;">
-      <div class="card">
-        <div class="card-lbl">חיבור לגיליון</div>
-        <p style="font-size:0.85rem;color:var(--text2);line-height:1.5;">
-          הנתונים מסונכרנים ל-Google Sheets שלכם ללא שרתי צד שלישי.
-        </p>
-      </div>
-    </div>
-  `;
-}
-
+/* ─ HELP TABS ─ */
 function hTab(btn){
-  renderHelpContent();
   const id=btn.dataset.htab;
   document.querySelectorAll('.htab-btn').forEach(b=>b.classList.toggle('active',b===btn));
   document.querySelectorAll('.htab-pnl').forEach(p=>p.style.display='none');
   const panel=document.getElementById('htab-'+id);
   if(panel){panel.style.display='flex';}
 }
-
 /* DOWNLOAD GS — fetches from companion google-apps-script.gs file */
 async function downloadGS(){
   try{
@@ -4317,10 +4196,8 @@ function aboutTabRender(){
   // Last sync
   const lsEl=$('about-last-sync');
   if(lsEl){const ls=store('mwl_last_full_sync');lsEl.textContent=ls?new Date(Number(ls)).toLocaleString('he-IL'):'לא סונכרן';}
-// Reset button in about - Navigation to Advanced Tab
-  $('btn-open-reset-about')?.addEventListener('click', () => { 
-    switchSettingsTab('advanced'); 
-  });
+  // Reset button in about
+  $('btn-open-reset-about')?.addEventListener('click',()=>{closeM('modal-settings');openM('modal-reset');},{once:true});
 }
 
 /* ═══════════════════════════════════════════════════════
