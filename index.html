@@ -398,8 +398,7 @@ textarea.fi{resize:vertical;min-height:72px}
 .toast.show{opacity:1;transform:translateY(0)}
 .toast.success{background:var(--lime,#10b981);color:var(--bg0,#0d0f1a)}
 .toast.error{background:var(--red,#ef4444)}
-.toast.warn,.toast
-.toast.info{background:var(--blue,#4dabff)}
+.toast.warn, .toast.info {background:var(--blue,#4dabff)}
 
 /* ─ CLOCK UI ─ */
 .clock-ui{display:flex;flex-direction:column;align-items:center;gap:12px;padding:8px 0}
@@ -438,7 +437,6 @@ textarea.fi{resize:vertical;min-height:72px}
 .wc-cell.deficit .wc-day-num{color:var(--red)}
 .wc-cell.vacation .wc-day-num{color:var(--amber)}
 .wc-cell.sick .wc-day-num{color:var(--purple)}
-.wc-cell.sabbatical .wc-day-num{color:#63cab7}
 .wc-cell.sabbatical .wc-day-num{color:#63cab7}
 .wc-actual{font-family:'Syne',monospace;font-size:.57rem;font-weight:700;color:var(--text3);line-height:1}
 .wc-cell.ok .wc-actual{color:rgba(200,241,53,.75)}
@@ -670,9 +668,7 @@ details summary::-webkit-details-marker{display:none}
         <div class="card-lbl" data-i18n="labelTaskDetails">פרטי משימה</div>
         <div class="fg">
           <label class="flbl" data-i18n="labelProject">פרויקט <span style="color:var(--red);font-size:.75rem">*</span></label>
-          <input type="text" id="task-project" class="fi" list="projects-list"
-            data-i18n="placeholderProj" data-i18n-attr="placeholder"
-            data-i18n="placeholderProjRequired" data-i18n-attr="placeholder" placeholder="שם הFprojected (חובה)"/>
+			<input type="text" id="task-project" class="fi" list="projects-list" data-i18n="placeholderProj" data-i18n-attr="placeholder" required autocomplete="off" />
           <datalist id="projects-list"></datalist>
         </div>
         <div class="fg">
@@ -784,15 +780,15 @@ details summary::-webkit-details-marker{display:none}
           <button class="btn-g sm" id="btn-share-range"  style="font-size:.75rem;display:none" title="שתף דוח">📤 שתף</button>
         </div>
       </div>
-      <div class="stats-grid">
-        <div class="stat-card"><div class="stat-lbl" data-i18n="statEntries">&#1499;&#1504;&#1497;&#1505;&#1493;&#1514;</div><div class="stat-val" id="stat-entries">0</div></div>
-        <div class="stat-card"><div class="stat-lbl" data-i18n="statExits">&#1497;&#1510;&#1497;&#1488;&#1493;&#1514;</div><div class="stat-val" id="stat-exits">0</div></div>
-        <div class="stat-card"><div class="stat-lbl" data-i18n="statTasks">&#1502;&#1513;&#1497;&#1502;&#1493;&#1514;</div><div class="stat-val" id="stat-tasks">0</div></div>
-        <div class="stat-card"><div class="stat-lbl" data-i18n="statHours">&#1513;&#1506;&#1493;&#1514; &#1502;&#1513;&#1497;&#1502;&#1493;&#1514;</div><div class="stat-val" id="stat-hours">0</div></div>
-        <div class="stat-card" id="stat-workday-card"><div class="stat-lbl" data-i18n="statWorkday">&#1502;&#1513;&#1498; &#1497;&#1493;&#1501;</div><div class="stat-val" id="stat-workday" style="font-size:1.4rem">-</div></div>
-        <div class="stat-card" id="stat-achievement-card" style="display:none"><div class="stat-lbl">&#1506;&#1502;&#1497;&#1491;&#1492; &#1489;&#1497;&#1506;&#1491;</div><div class="stat-val" id="stat-achievement" style="font-size:1.4rem">&#8212;</div></div>
-        <div class="stat-card" id="stat-days-card" style="display:none"><div class="stat-lbl" data-i18n="statDays">&#1497;&#1502;&#1497;&#1501; &#1508;&#1506;&#1497;&#1500;&#1497;&#1501;</div><div class="stat-val" id="stat-days">0</div></div>
-      </div>
+		<div class="stats-grid">
+		  <div class="stat-card"><div class="stat-lbl" data-i18n="statEntries">כניסות</div><div class="stat-val" id="stat-entries">0</div></div>
+		  <div class="stat-card"><div class="stat-lbl" data-i18n="statExits">יציאות</div><div class="stat-val" id="stat-exits">0</div></div>
+		  <div class="stat-card"><div class="stat-lbl" data-i18n="statTasks">משימות</div><div class="stat-val" id="stat-tasks">0</div></div>
+		  <div class="stat-card"><div class="stat-lbl" data-i18n="statHours">שעות משימות</div><div class="stat-val" id="stat-hours">0</div></div>
+		  <div class="stat-card" id="stat-workday-card"><div class="stat-lbl" data-i18n="statWorkday">משך יום</div><div class="stat-val" id="stat-workday" style="font-size:1.4rem">-</div></div>
+		  <div class="stat-card" id="stat-achievement-card" style="display:none"><div class="stat-lbl">עמידה ביעד</div><div class="stat-val" id="stat-achievement" style="font-size:1.4rem">—</div></div>
+		  <div class="stat-card" id="stat-days-card" style="display:none"><div class="stat-lbl" data-i18n="statDays">ימים פעילים</div><div class="stat-val" id="stat-days">0</div></div>
+		</div>
             <!-- Daily status (day view only) -->
       <div id="day-wc-section" class="card" style="display:none">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
@@ -1137,10 +1133,10 @@ details summary::-webkit-details-marker{display:none}
               </div>
               <div class="about-row">
 		
-			<div class="about-row">
-                <span class="about-lbl">סנכרון אחרון</span>
-                <span class="about-val" id="about-last-sync">—</span>
-              </div>
+				<div class="about-row">
+					<span class="about-lbl">סנכרון אחרון</span>
+					<span class="about-val" id="about-last-sync">—</span>
+				</div>
             </div>
           </div>
         </div>
@@ -1294,23 +1290,18 @@ details summary::-webkit-details-marker{display:none}
   </div>
 </div>
 
-<!-- CHANGELOG MODAL  v3.7.0 -->
+<!-- CHANGELOG MODAL -->
 <div id="modal-changelog" class="moverlay hidden" role="dialog" aria-modal="true">
   <div class="mbox" style="max-height:88dvh;display:flex;flex-direction:column">
     <div class="mhdr" style="position:sticky;top:0;background:var(--bg1);z-index:2">
-      <h2 style="font-size:1rem">&#128203; מה חדש?</h2>
-      <button class="ibtn" id="btn-close-changelog">&#10005;</button>
+      <h2 style="font-size:1rem">📋 מה חדש?</h2>
+      <button class="ibtn" id="btn-close-changelog">✕</button>
     </div>
-    <div class="mbody" style="flex:1;overflow-y:auto;gap:0;padding:0" id="changelog-body">
-      <div style="padding:4px 0 8px">
-        <div class="changelog-ver"><div class="changelog-badge">v3.7.0</div><div class="changelog-items"><div class="changelog-item new">&#9999;&#65039; &#1506;&#1512;&#1497;&#1499;&#1514; &#1491;&#1497;&#1493;&#1493;&#1495;&#1497;&#1501; &#1511;&#1497;&#1497;&#1502;&#1497;&#1501;</div><div class="changelog-item new">&#128203; Change Log</div></div></div>
-        <div class="changelog-ver"><div class="changelog-badge">v3.6.0</div><div class="changelog-items"><div class="changelog-item">&#127796; &#1513;&#1489;&#1514;&#1493;&#1503;</div><div class="changelog-item">&#128221; &#1514;&#1497;&#1488;&#1493;&#1512; &#1500;&#1505;&#1497;&#1493;&#1493;&#1490; &#1497;&#1493;&#1501;</div><div class="changelog-item">&#128197; &#1497;&#1497;&#1510;&#1493;&#1488; Excel &#1500;&#1514;&#1511;&#1493;&#1508;&#1492;</div></div></div>
-        <div class="changelog-ver"><div class="changelog-badge">v3.5.0</div><div class="changelog-items"><div class="changelog-item">&#128203; &#1492;&#1490;&#1491;&#1512;&#1493;&#1514; &#1502;&#1513;&#1497;&#1502;&#1493;&#1514; &#1490;&#1500;&#1493;&#1489;&#1500;&#1497;&#1493;&#1514;</div><div class="changelog-item">&#128279; &#1505;&#1504;&#1499;&#1512;&#1493;&#1503; &#1502;&#1513;&#1497;&#1502;&#1493;&#1514;</div></div></div>
-        <div class="changelog-ver"><div class="changelog-badge">v3.3.0 &#8211; v3.4.0</div><div class="changelog-items"><div class="changelog-item">&#127959; &#1502;&#1504;&#1492;&#1500; &#1508;&#1512;&#1493;&#1497;&#1511;&#1496;&#1497;&#1501; &#1493;&#1500;&#1511;&#1493;&#1495;&#1493;&#1514;</div><div class="changelog-item">&#128027; &#1514;&#1497;&#1511;&#1493;&#1504;&#1497; &#1489;&#1488;&#1490;&#1497;&#1501;</div></div></div>
-        <div class="changelog-ver"><div class="changelog-badge">v3.0.0 &#8211; v3.2.0</div><div class="changelog-items"><div class="changelog-item">&#128202; WorkStandard &#8212; &#1514;&#1511;&#1503; &#1513;&#1506;&#1493;&#1514;</div><div class="changelog-item">&#9881;&#65039; &#1512;&#1508;&#1511;&#1496;&#1493;&#1512; &#1492;&#1490;&#1491;&#1512;&#1493;&#1514;</div></div></div>
-      </div></div>
+    <div class="mbody" style="flex:1;overflow-y:auto;padding:20px;text-align:center;" id="changelog-body">
+      <!-- התוכן הסטטי נמחק. הגרסה הנוכחית תוזרק לכאן דינמית -->
+    </div>
     <div class="mfoot">
-      <button class="btn-p sm" id="btn-close-changelog2">הבנתי &#10003;</button>
+      <button class="btn-p sm" id="btn-close-changelog2">הבנתי ✓</button>
     </div>
   </div>
 </div>
@@ -1378,166 +1369,14 @@ details summary::-webkit-details-marker{display:none}
 
     <!-- help tab bar -->
     <div id="help-tabbar" style="display:flex;border-bottom:1px solid var(--border);background:var(--bg1);flex-shrink:0">
-      <button class="htab-btn active" data-htab="guide"  onclick="hTab(this)" data-i18n="helpTabGuide">מדריך</button>
-      <button class="htab-btn"        data-htab="types"  onclick="hTab(this)" data-i18n="helpTabTypes">סוגי דיווח</button>
-      <button class="htab-btn"        data-htab="setup"  onclick="hTab(this)" data-i18n="helpTabSetup">הגדרה</button>
-      <button class="htab-btn"        data-htab="sheets" onclick="hTab(this)" data-i18n="helpTabSheets">גיליונות</button>
+      <button class="htab-btn active" data-htab="guide"   onclick="hTab(this)" data-i18n="helpTabGuide">מדריך</button>
+      <button class="htab-btn"        data-htab="types"   onclick="hTab(this)" data-i18n="helpTabTypes">סוגי דיווח</button>
+      <button class="htab-btn"        data-htab="setup"   onclick="hTab(this)" data-i18n="helpTabSetup">הגדרה</button>
+      <button class="htab-btn"        data-htab="sheets"  onclick="hTab(this)" data-i18n="helpTabSheets">גיליונות</button>
     </div>
 
-    <div class="mbody" style="flex:1;overflow-y:auto;gap:8px;padding:14px 16px">
-
-      <!-- ══ TAB: GUIDE ══ -->
-      <div id="htab-guide" class="htab-pnl">
-
-        <div style="font-size:.7rem;font-weight:700;color:var(--lime);text-transform:uppercase;letter-spacing:1.5px;margin:10px 0 6px 0">איך משתמשים</div>
-        <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--rs);padding:11px 13px;font-size:.81rem;color:var(--text2);line-height:1.65">
-          <strong style="color:var(--text)">1. בחר סוג דיווח</strong> — כניסה / יציאה / משימה<br/>
-          <strong style="color:var(--text)">2. בדוק תאריך ושעה</strong> — ברירת מחדל: עכשיו. לחץ <em>עכשיו</em> לעדכון<br/>
-          <strong style="color:var(--text)">3. למשימה</strong> — בחר פרויקט (חובה) והוסף תיאור<br/>
-          <strong style="color:var(--text)">4. לחץ שלח</strong> — הדיווח נשמר ונשלח לגיליון
-        </div>
-
-        <div style="font-size:.7rem;font-weight:700;color:var(--lime);text-transform:uppercase;letter-spacing:1.5px;margin:10px 0 6px 0">לוגיקות מרכזיות</div>
-        <div style="display:flex;flex-direction:column;gap:6px">
-
-          <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--rs);padding:11px 13px;font-size:.81rem;color:var(--text2);line-height:1.65">
-            <span style="color:var(--amber);font-weight:700">⏱ חישוב משך יום</span><br/>
-            כניסה ויציאה <strong>לאותו תאריך</strong> נכתבות בגיליון Attendance באותה שורה. משך היום מחושב אוטומטית: יציאה פחות כניסה (פורמט HH:MM).
-          </div>
-
-          <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--rs);padding:11px 13px;font-size:.81rem;color:var(--text2);line-height:1.65">
-            <span style="color:var(--amber);font-weight:700">📴 מצב לא מקוון</span><br/>
-            דיווחים שנכשלו נשמרים בתור מקומי. בחזרת חיבור — מסונכרנים אוטומטית. לחץ <strong>סנכרן</strong> לסנכרון ידני.
-          </div>
-
-          <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--rs);padding:11px 13px;font-size:.81rem;color:var(--text2);line-height:1.65">
-            <span style="color:var(--amber);font-weight:700">🗑 מחיקה</span><br/>
-            מחיקה בהיסטוריה מוחקת מהאפליקציה <em>ומהגיליון</em>. אם אין חיבור — המחיקה בגיליון תבוצע בחיבור הבא.
-          </div>
-
-          <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--rs);padding:11px 13px;font-size:.81rem;color:var(--text2);line-height:1.65">
-            <span style="color:var(--amber);font-weight:700">🔄 איפוס אפליקציה</span><br/>
-            לחיצה על מספר הגרסה פותחת תפריט איפוס. ניתן לבחור מה לשמור: היסטוריה, הגדרות (Endpoint, גיליון, פרויקטים) ותור ממתין.
-          </div>
-
-          <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--rs);padding:11px 13px;font-size:.81rem;color:var(--text2);line-height:1.65">
-            <span style="color:var(--amber);font-weight:700">📋 פרויקטים</span><br/>
-            פרויקטים נשמרים אוטומטית בהזנתם. לניהול הרשימה: הגדרות → פרויקטים שמורים.
-          </div>
-
-          <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--rs);padding:11px 13px;font-size:.81rem;color:var(--text2);line-height:1.65">
-            <span style="color:var(--amber);font-weight:700">💾 שמירה מקומית</span><br/>
-            כל הדיווחים נשמרים תמיד במכשיר (localStorage). הגיליון הוא סנכרון נוסף — לא תאבד נתונים אם אין חיבור.
-          </div>
-        </div>
-
-        <div style="font-size:.7rem;font-weight:700;color:var(--lime);text-transform:uppercase;letter-spacing:1.5px;margin:10px 0 6px 0">ניווט</div>
-        <div style="display:flex;flex-direction:column;gap:5px">
-          <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--rs);padding:11px 13px;font-size:.81rem;color:var(--text2);line-height:1.65"><strong style="color:var(--text)">☰ תפריט</strong> — ניווט בין לשוניות, מצב כהה/בהיר, הגדרות, עזרה</div>
-          <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--rs);padding:11px 13px;font-size:.81rem;color:var(--text2);line-height:1.65"><strong style="color:var(--text)">היסטוריה</strong> — 30 יום אחרונים, עד 200 דיווחים, עם מחיקה</div>
-          <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--rs);padding:11px 13px;font-size:.81rem;color:var(--text2);line-height:1.65"><strong style="color:var(--text)">סיכום</strong> — נתונים יומיים/חודשיים: כניסות, יציאות, משימות, שעות</div>
-          <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--rs);padding:11px 13px;font-size:.81rem;color:var(--text2);line-height:1.65"><strong style="color:var(--text)">החלקה</strong> — החלק ימינה/שמאלה בין לשוניות</div>
-        </div>
-      </div>
-
-      <!-- ══ TAB: REPORT TYPES ══ -->
-      <div id="htab-types" class="htab-pnl" style="display:none">
-
-        <div style="background:var(--limeDim);border:1px solid rgba(200,241,53,.3);border-radius:var(--rs);padding:12px;font-size:.82rem">
-          <div style="font-weight:700;color:var(--lime);font-size:.88rem;margin-bottom:5px">🟢 כניסה</div>
-          <div style="color:var(--text2);line-height:1.65">
-            דיווח תחילת יום עבודה.<br/>
-            נרשם ב-<strong>WorkLog</strong> וב-<strong>Attendance</strong> בעמודת שעת הכניסה לאותו תאריך.
-          </div>
-        </div>
-
-        <div style="background:var(--redDim);border:1px solid rgba(255,77,106,.3);border-radius:var(--rs);padding:12px;font-size:.82rem">
-          <div style="font-weight:700;color:var(--red);font-size:.88rem;margin-bottom:5px">🔴 יציאה</div>
-          <div style="color:var(--text2);line-height:1.65">
-            דיווח סיום יום עבודה.<br/>
-            נרשם ב-<strong>Attendance</strong> בשורה של אותו תאריך ומחשב אוטומטית <strong>משך היום</strong>.
-          </div>
-        </div>
-
-        <div style="background:var(--blueDim);border:1px solid rgba(77,171,255,.3);border-radius:var(--rs);padding:12px;font-size:.82rem">
-          <div style="font-weight:700;color:var(--blue);font-size:.88rem;margin-bottom:5px">📋 משימה</div>
-          <div style="color:var(--text2);line-height:1.65">
-            דיווח עבודה על משימה ספציפית.<br/>
-            <strong>פרויקט</strong> — חובה. <strong>תיאור</strong> — אופציונלי.<br/>
-            <strong>משך זמן</strong> — שעות ודקות (00:15 עד 24:00).<br/>
-            <strong>טווח שעות</strong> — שעת התחלה &#8592; שעת סיום.<br/>
-            נרשם ב-<strong>WorkLog</strong> וב-<strong>Tasks</strong>.
-          </div>
-        </div>
-
-        <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--rs);padding:11px 13px;font-size:.81rem;color:var(--text2);line-height:1.65">
-          <span style="color:var(--amber);font-weight:700">📅 דיווח רטרואקטיבי</span><br/>
-          שנה את התאריך והשעה לפני השליחה כדי לדווח על פעולה שהתרחשה בעבר.
-        </div>
-      </div>
-
-      <!-- ══ TAB: SETUP ══ -->
-      <div id="htab-setup" class="htab-pnl" style="display:none">
-
-        <div style="font-size:.7rem;font-weight:700;color:var(--lime);text-transform:uppercase;letter-spacing:1.5px;margin:10px 0 6px 0">שלבי הגדרת Google Apps Script</div>
-        <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--rs);padding:11px 13px;font-size:.81rem;color:var(--text2);line-height:1.65;padding:12px 13px">
-          <ol style="padding-right:18px;display:flex;flex-direction:column;gap:5px;margin:0">
-            <li>פתח <strong style="color:var(--text)">Google Sheets</strong> חדש</li>
-            <li>לחץ <strong style="color:var(--text)">Extensions → Apps Script</strong></li>
-            <li>מחק קוד קיים — הדבק קוד מהקובץ <code style="background:var(--bg0);padding:1px 5px;border-radius:3px;color:var(--lime);font-size:.76rem">google-apps-script.gs</code></li>
-            <li>שמור (Ctrl+S)</li>
-            <li><strong style="color:var(--text)">Deploy → New deployment</strong></li>
-            <li>Type: <em>Web App</em></li>
-            <li>Execute as: <strong style="color:var(--text)">Me</strong></li>
-            <li>Who has access: <strong style="color:var(--text)">Anyone</strong></li>
-            <li>לחץ <strong style="color:var(--text)">Deploy</strong> ← אשר הרשאות</li>
-            <li>העתק את <strong style="color:var(--lime)">Web App URL</strong></li>
-            <li>הגדרות אפליקציה → הדבק URL → שמור</li>
-          </ol>
-        </div>
-
-        <div style="background:var(--amberDim);border:1px solid var(--amber);border-radius:var(--rs);padding:10px 12px;font-size:.78rem;color:var(--amber);display:flex;gap:8px">
-          <span style="flex-shrink:0">⚠️</span>
-          <span>לאחר שינוי קוד — יש ליצור <strong>New Deployment</strong> ולא לעדכן קיים. ה-URL ישתנה!</span>
-        </div>
-
-        <button onclick="downloadGS()" class="btn-p sm" style="text-align:center;width:100%">
-          <span data-i18n="helpBtnDownloadGS">⬇️ הורד google-apps-script.gs</span>
-        </button>
-      </div>
-
-      <!-- ══ TAB: SHEETS ══ -->
-      <div id="htab-sheets" class="htab-pnl" style="display:none">
-
-        <div style="font-size:.7rem;font-weight:700;color:var(--lime);text-transform:uppercase;letter-spacing:1.5px;margin:10px 0 6px 0">גיליונות שנוצרים אוטומטית</div>
-
-        <div style="display:flex;flex-direction:column;gap:8px">
-          <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--rs);padding:11px 13px;font-size:.81rem;color:var(--text2);line-height:1.65;padding:12px 13px">
-            <div style="font-weight:700;color:var(--lime);margin-bottom:5px">📋 WorkLog</div>
-            כל הדיווחים — כניסה, יציאה ומשימות.<br/>
-            <span style="font-size:.76rem;color:var(--text3)">עמודות: Timestamp · Report_Date · Report_Time · Category · Description · Project · Record_ID</span>
-          </div>
-          <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--rs);padding:11px 13px;font-size:.81rem;color:var(--text2);line-height:1.65;padding:12px 13px">
-            <div style="font-weight:700;color:var(--blue);margin-bottom:5px">🕐 Attendance</div>
-            כניסה + יציאה לכל יום — <strong>באותה שורה</strong>. משך היום מחושב אוטומטית.<br/>
-            <span style="font-size:.76rem;color:var(--text3)">עמודות: Report_Date · שעת כניסה · שעת יציאה · משך יום עבודה</span>
-          </div>
-          <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--rs);padding:11px 13px;font-size:.81rem;color:var(--text2);line-height:1.65;padding:12px 13px">
-            <div style="font-weight:700;color:var(--amber);margin-bottom:5px">✅ Tasks</div>
-            דיווחי משימות בלבד.<br/>
-            <span style="font-size:.76rem;color:var(--text3)">עמודות: Report_Date · משך/טווח · Project · Description</span>
-          </div>
-        </div>
-
-        <div style="font-size:.7rem;font-weight:700;color:var(--lime);text-transform:uppercase;letter-spacing:1.5px;margin:10px 0 6px 0">זרימת נתונים</div>
-        <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--rs);padding:11px 13px;font-size:.81rem;color:var(--text2);line-height:1.65">
-          דיווח <strong>כניסה/יציאה</strong> → WorkLog + Attendance (אותה שורה לפי תאריך)<br/>
-          דיווח <strong>משימה</strong> → WorkLog + Tasks<br/>
-          <strong>מחיקה</strong> → מוחק מ-WorkLog ומהגיליון המתאים
-        </div>
-      </div>
-
-    </div><!-- /mbody -->
+    <!-- קונטיינר ריק לקבלת התוכן הדינמי -->
+    <div class="mbody" style="flex:1;overflow-y:auto;gap:8px;padding:14px 16px" id="help-dynamic-body"></div>
   </div>
 </div>
 
@@ -1736,26 +1575,37 @@ document.addEventListener('DOMContentLoaded',()=>{
       const n=new Date();
       $('report-date').value=isoD(n);
       // Apply rounding to "now" time
-      $('report-time').value=applyRounding(timeS(n));
-      toast(t('toastNowUpdated'));buzz([20]);
-    });
-    fixStoredDates();
-  netInit();netQInit();projLoad();histRender();
+$('report-time').value = applyRounding(timeS(n));
+    toast(t('toastNowUpdated'));
+    buzz([20]);
+  });
+
+  fixStoredDates();
+  netInit();
+  netQInit();
+  projLoad();
+  histRender();
   importInit();
-    NotificationSystem.init(VER);  // v4.4.2
-    updateSessionBanner();
-    flushDeleteQueue();
-    menuInit();vBadgeInit();swipeInit();ptrInit();swInit();installInit();scrollInit();
-    backBtnInit();
-    history.replaceState({ui:'tab',name:'report'},'');
-    window.clearTimeout(_failsafe);
-  }catch(err){
-    console.error('[boot]',err);
-    // Show app even on error
-    try{document.getElementById('splash')?.remove();}catch(_){}
-    try{document.getElementById('app')?.classList.remove('hidden');}catch(_){}
-    window.clearTimeout(_failsafe);
-  }
+  NotificationSystem.init(VER); 
+  updateSessionBanner();
+  flushDeleteQueue();
+  menuInit();
+  vBadgeInit();
+  swipeInit();
+  ptrInit();
+  swInit();
+  installInit();
+  scrollInit();
+  backBtnInit();
+history.replaceState({ui:'tab',name:'report'}, '');
+  window.clearTimeout(_failsafe);
+} catch(err) {
+  console.error('[boot]', err);
+  // Show app even on error
+  try{document.getElementById('splash')?.remove();}catch(_){}
+  try{document.getElementById('app')?.classList.remove('hidden');}catch(_){}
+  window.clearTimeout(_failsafe);
+}
 });
 
 /* SPLASH */
@@ -2715,7 +2565,21 @@ function changelogInit(){
   $('btn-close-changelog')?.addEventListener('click',()=>closeM('modal-changelog'));
   $('btn-close-changelog2')?.addEventListener('click',()=>closeM('modal-changelog'));
   $('modal-changelog')?.addEventListener('click',e=>{if(e.target===$('modal-changelog'))closeM('modal-changelog');});
-  $('btn-open-changelog')?.addEventListener('click',()=>openM('modal-changelog'));
+  
+  $('btn-open-changelog')?.addEventListener('click',()=>{
+    // הזרקת סטטוס נקי עם משתנה הגרסה הקיים במערכת שלך (VER)
+    const currentVer = typeof VER !== 'undefined' ? VER : '3.7.0';
+    const body = $('changelog-body');
+    if(body){
+      body.innerHTML = `
+        <div style="padding:20px 0;">
+          <div class="changelog-badge" style="display:inline-block; margin-bottom:10px;">v${currentVer}</div>
+          <p style="color:var(--text2); font-size:0.9rem;">האפליקציה מעודכנת לגרסה האחרונה.</p>
+        </div>
+      `;
+    }
+    openM('modal-changelog');
+  });
 }
 
 
@@ -3076,7 +2940,8 @@ function renderDayWCStatus(ds,reports){
 
 /* Called from "ערוך תקן" button in daily view */
 function editTodayStd(){
-  const ds=$('day-wc-section').dataset.date||isoD(new Date());
+  const section = $('day-wc-section');
+  const ds = (section && section.dataset.date) ? section.dataset.date : isoD(new Date());
   editDayConfig(ds);
 }
 
@@ -3196,13 +3061,16 @@ function editDayConfig(ds){
 
 async function saveDayConfig(){
   if(!_editDs)return;
-  const stdHours=$('dayedit-stdhours').value===''?0:Number($('dayedit-stdhours').value);
-  const notes=$('dayedit-notes').value.trim();
-  const description=($('dayedit-description')?.value||'').trim();
-  const btn=$('btn-dayedit-save');
-  btn.disabled=true;btn.textContent='...';
-  await setDayStd(_editDs,stdHours,notes,description);
-  btn.disabled=false;btn.textContent=t('btnSaveSync');
+  const rawHours = parseFloat($('dayedit-stdhours').value);
+  const stdHours = isNaN(rawHours) ? 0 : rawHours; // הגנה מפני קלט לא חוקי
+  const notes = $('dayedit-notes').value.trim();
+  const description = ($('dayedit-description')?.value||'').trim();
+  const btn = $('btn-dayedit-save');
+  btn.disabled = true;
+  btn.textContent = '...';
+  await setDayStd(_editDs, stdHours, notes, description);
+  btn.disabled = false;
+  btn.textContent = t('btnSaveSync') || 'שמור וסנכרן';
   closeM('modal-dayedit');
   buzz([20,20]);
 }
@@ -3684,7 +3552,7 @@ async function syncFromSheet(fromDate = '') {
     };
     data.reports.forEach(r => { r.report_date = normDate(r.report_date); if (r.category === 'entry' || r.category === 'exit') r.report_time = normTimeStr(r.report_time); });
 
-    if (fromDate) {
+if (fromDate) {
       // 🛡️ לוגיקת מיזוג דלתא חכמה המונעת "רשומות רפאים":
       // א. מסננים מהלוקאל את כל מה שקטן מחלון ה-60 יום
       let unexaminedLocal = local.filter(r => r.report_date < fromDate);
@@ -3696,11 +3564,24 @@ async function syncFromSheet(fromDate = '') {
         unexaminedLocal = unexaminedLocal.filter(r => !r.sent || sheetIdsSet.has(String(r.id)));
       }
       
-      // ג. מיזוג של הנתונים החדשים מהחלון יחד עם הנתונים ההיסטוריים שעברו ניקוי
-      const merged = [...data.reports, ...unexaminedLocal];
-      merged.sort((a, b) => (b.timestamp || b.report_date || '').localeCompare(a.timestamp || a.report_date || ''));
-      store(K.reps, merged.slice(0, 300));
-    } else {
+      // ג. הגנה מפני איבוד נתונים: שמירה על דיווחים חדשים מקומיים (בתוך חלון 60 הימים) שטרם סונכרנו לשרת
+      const localNewUnsent = local.filter(r => r.report_date >= fromDate && !r.sent);
+      
+      // ד. מיזוג של הנתונים החדשים מהשרת, הרשומות המקומיות שטרם סונכרנו, וההיסטוריה המנוקה
+      const merged = [...data.reports, ...localNewUnsent, ...unexaminedLocal];
+      
+      // ה. הסרת כפילויות מבוססת מזהה (ID) לביטחון מקסימלי
+      const seenIds = new Set();
+      const deduped = merged.filter(r => {
+        if (seenIds.has(r.id)) return false;
+        seenIds.add(r.id);
+        return true;
+      });
+
+      deduped.sort((a, b) => (b.timestamp || b.report_date || '').localeCompare(a.timestamp || a.report_date || ''));
+      store(K.reps, deduped.slice(0, 300));
+    }
+	else {
       // סנכרון מלא (מיועד ללחיצה הידנית בלשונית הגדרות)
       const sheetIds = new Set(data.reports.map(r => String(r.id)).filter(Boolean));
       const pruned = local.filter(r => !r.sent || sheetIds.has(String(r.id)));
