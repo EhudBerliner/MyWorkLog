@@ -1,6 +1,6 @@
-// MyWorkLog Service Worker v4.4.3
+// MyWorkLog Service Worker v4.4.2
 // Strategy: Cache-First for app shell, Network-First for GAS API calls
-const APP_VERSION = '4.4.3';
+const APP_VERSION = '4.4.2';
 const CACHE_SHELL = `mwl-shell-${APP_VERSION}`;
 const CACHE_DATA  = `mwl-data-${APP_VERSION}`;
 
@@ -20,7 +20,7 @@ self.addEventListener('install', e => {
       .then(c => Promise.allSettled(
         SHELL_ASSETS.map(u => c.add(u).catch(() => {}))
       ))
-      .then(() => self.skipWaiting()) // Force activation instantly
+      .then(() => self.skipWaiting())
   );
 });
 
@@ -52,25 +52,24 @@ self.addEventListener('fetch', e => {
   // Skip non-GET
   if (e.request.method !== 'GET') return;
 
-  // 1. GAS endpoint calls — Network only
+  // GAS endpoint calls — Network only (external domain, no-cors)
+  // These are always opaque responses; don't cache them
   if (url.hostname.includes('script.google.com') ||
       url.hostname.includes('googleapis.com')) {
-    return; 
+    return; // let browser handle normally
   }
 
-  // 2. STARK EXCLUSION: version.json must NEVER touch any cache (Network Only)
-  if (url.pathname.endsWith('version.json') || url.pathname.endsWith('version_2.json')) {
-    e.respondWith(fetch(e.request).catch(() => new Response('Offline', { status: 503 })));
-    return;
-  }
-
-  // 3. Same-origin app assets — Cache first, fallback to network
+  // Same-origin app assets — Cache first, fallback to network
+  // EXCEPT version.json — always network so update check is accurate
   if (url.origin === self.location.origin) {
+    if (url.pathname.endsWith('version.json')) {
+      e.respondWith(networkFirstStrategy(e.request, CACHE_DATA));
+      return;
+    }
     e.respondWith(cacheFirstStrategy(e.request));
     return;
   }
-
-  // 4. External fonts / CDN — Network first, cache fallback
+  // External fonts / CDN — Network first, cache fallback
   if (url.hostname.includes('fonts.g') || url.hostname.includes('cdnjs')) {
     e.respondWith(networkFirstStrategy(e.request, CACHE_DATA));
   }
@@ -87,6 +86,7 @@ async function cacheFirstStrategy(req) {
     }
     return res;
   } catch (_) {
+    // Offline fallback: return index.html for navigation requests
     if (req.mode === 'navigate') {
       return caches.match('./index.html') || new Response('Offline', { status: 503 });
     }
@@ -108,12 +108,6 @@ async function networkFirstStrategy(req, cacheName) {
 }
 
 // ── Messages from app ─────────────────────────────────────────
-// Fixed: Handles both object payload types and direct string actions from the UI button
 self.addEventListener('message', e => {
-  if (!e.data) return;
-  
-  const action = e.data.type || e.data.action || e.data;
-  if (action === 'SKIP_WAITING' || action === 'skipWaiting') {
-    self.skipWaiting();
-  }
+  if (e.data?.type === 'SKIP_WAITING') self.skipWaiting();
 });
