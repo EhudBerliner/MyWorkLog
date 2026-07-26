@@ -1603,14 +1603,14 @@ document.addEventListener('DOMContentLoaded',()=>{
       btn.disabled=false;btn.textContent='↻ משוך WorkStandard מגיליון';
       wstdSyncStatusInline();updateSyncStatus();
     });
-    $('btn-now').addEventListener('click',()=>{
-      const n=new Date();
-      $('report-date').value=isoD(n);
-      // Apply rounding to "now" time
-$('report-time').value = applyRounding(timeS(n));
-    toast(t('toastNowUpdated'));
-    buzz([20]);
-  });
+$('btn-now').addEventListener('click',()=>{
+	  const n=new Date();
+	  $('report-date').value=isoD(n);
+	  // Apply rounding to "now" time
+	  $('report-time').value = applyRounding(timeS(n));
+	  toast(t('toastNowUpdated'));
+	  buzz([20]);
+	});
 
   fixStoredDates();
   netInit();
