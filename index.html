@@ -1956,7 +1956,8 @@ function prefsSave(){
 }
 
 /* DATE/TIME */
-function dtInit(){const n=new Date();$('report-date').value=isoD(n);$('report-time').value=applyRounding(timeS(n))}
+/* DATE/TIME */
+function dtInit(){$('report-date').value='';$('report-time').value='';}
 
 /* TABS */
 function tabsInit(){document.querySelectorAll('.tab-btn').forEach(b=>b.addEventListener('click',()=>switchTab(b.dataset.tab)))}
@@ -2394,10 +2395,10 @@ function resetForm(){
   $('range-mode').style.display='none';
   const rs=$('range-start'),re=$('range-end');
   if(rs)rs.value='';if(re)re.value='';
-  // Reset date/time to now
-  const n=new Date();
-  $('report-date').value=isoD(n);
-  $('report-time').value=timeS(n);
+ 
+   // Clear date/time for manual input
+  $('report-date').value='';
+  $('report-time').value='';
 }
 function submitInit(){
   $('btn-submit').addEventListener('click',async()=>{
