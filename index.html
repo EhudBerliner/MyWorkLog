@@ -1888,7 +1888,11 @@ function menuInit(){
   $('btn-close-menu').addEventListener('click',menuClose);
   $('menu-overlay').addEventListener('click',menuClose);
   $('menu-settings-btn').addEventListener('click',()=>{menuClose();openM('modal-settings')});
-  $('menu-help-btn').addEventListener('click',()=>{menuClose();openM('modal-help')});
+  $('menu-help-btn').addEventListener('click',()=>{
+    menuClose();
+    openM('modal-help');
+    if(typeof renderHelpContent === 'function') renderHelpContent();
+  });  
   $('menu-gs-btn').addEventListener('click',()=>{menuClose();downloadGS();});
   $('menu-import-btn').addEventListener('click',()=>{menuClose();openImportModal();}); // keep in menu too
   $('menu-theme-btn').addEventListener('click',()=>{
@@ -3792,14 +3796,60 @@ function ptrInit(){
 }
 
 
-/* ─ HELP TABS ─ */
+/* ─ HELP TABS & DYNAMIC CONTENT ─ */
+function renderHelpContent() {
+  const body = $('help-dynamic-body');
+  if (!body || body.innerHTML.trim() !== '') return;
+  
+  body.innerHTML = `
+    <div id="htab-guide" class="htab-pnl" style="display:flex;">
+      <div class="card">
+        <div class="card-lbl">איך מתחילים?</div>
+        <p style="font-size:0.85rem;color:var(--text2);line-height:1.5;">
+          1. הזינו את כתובת ה-Apps Script בלשונית "חיבור".<br>
+          2. בצעו "סנכרון דיווחים" כדי למשוך היסטוריה.<br>
+          3. התחילו לדווח כניסה/יציאה ומשימות.
+        </p>
+      </div>
+    </div>
+    <div id="htab-types" class="htab-pnl" style="display:none;">
+      <div class="card">
+        <div class="card-lbl">סוגי דיווחים</div>
+        <ul style="font-size:0.85rem;color:var(--text2);line-height:1.6;padding-right:15px;">
+          <li><b style="color:var(--lime)">🟢 כניסה:</b> תחילת יום העבודה.</li>
+          <li><b style="color:var(--red)">🔴 יציאה:</b> סיום יום העבודה.</li>
+          <li><b style="color:var(--blue)">📋 משימה:</b> דיווח פעילות בתוך טווח הזמן.</li>
+        </ul>
+      </div>
+    </div>
+    <div id="htab-setup" class="htab-pnl" style="display:none;">
+      <div class="card">
+        <div class="card-lbl">אופליין (ללא אינטרנט)</div>
+        <p style="font-size:0.85rem;color:var(--text2);line-height:1.5;">
+          הדיווחים יישמרו במכשיר ויועלו אוטומטית כשהחיבור יחזור, או בלחיצה על "שלח".
+        </p>
+      </div>
+    </div>
+    <div id="htab-sheets" class="htab-pnl" style="display:none;">
+      <div class="card">
+        <div class="card-lbl">חיבור לגיליון</div>
+        <p style="font-size:0.85rem;color:var(--text2);line-height:1.5;">
+          הנתונים מסונכרנים ל-Google Sheets שלכם ללא שרתי צד שלישי.
+        </p>
+      </div>
+    </div>
+  `;
+}
+
 function hTab(btn){
+  renderHelpContent();
   const id=btn.dataset.htab;
   document.querySelectorAll('.htab-btn').forEach(b=>b.classList.toggle('active',b===btn));
   document.querySelectorAll('.htab-pnl').forEach(p=>p.style.display='none');
   const panel=document.getElementById('htab-'+id);
   if(panel){panel.style.display='flex';}
 }
+
 /* DOWNLOAD GS — fetches from companion google-apps-script.gs file */
 async function downloadGS(){
   try{
@@ -4267,8 +4317,10 @@ function aboutTabRender(){
   // Last sync
   const lsEl=$('about-last-sync');
   if(lsEl){const ls=store('mwl_last_full_sync');lsEl.textContent=ls?new Date(Number(ls)).toLocaleString('he-IL'):'לא סונכרן';}
-  // Reset button in about
-  $('btn-open-reset-about')?.addEventListener('click',()=>{closeM('modal-settings');openM('modal-reset');},{once:true});
+// Reset button in about - Navigation to Advanced Tab
+  $('btn-open-reset-about')?.addEventListener('click', () => { 
+    switchSettingsTab('advanced'); 
+  });
 }
 
 /* ═══════════════════════════════════════════════════════
