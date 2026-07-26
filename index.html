@@ -1772,6 +1772,7 @@ async function hardReset(){
   const sR=kR?store(K.reps):null;
   const sE=kS?store(K.ep):null,sSU=kS?store(K.sheetUrl):null;
   const sP=kS?store(K.proj):null,sTH=kS?store(K.theme):null,sLN=kS?store(K.lang):null,sPR=kS?store(K.prefs):null;
+  const sRO=kS?store(K.rounding):null; // גיבוי הגדרת עיגול השעות האוטומטי
   const sQ=kQ?store(K.q):null;
   localStorage.clear();sessionStorage.clear();
   document.cookie.split(';').forEach(c=>document.cookie=c.replace(/^ +/,'').replace(/=.*/,'=;expires='+new Date().toUTCString()+';path=/'));
@@ -1782,6 +1783,7 @@ async function hardReset(){
   if(sR)store(K.reps,sR);
   if(sE)store(K.ep,sE);if(sSU)store(K.sheetUrl,sSU);
   if(sP)store(K.proj,sP);if(sTH)store(K.theme,sTH);if(sLN)store(K.lang,sLN);if(sPR)store(K.prefs,sPR);
+  if(sRO!==null)store(K.rounding,sRO); // שחזור הגדרת עיגול השעות האוטומטי
   if(sQ)store(K.q,sQ);
   buzz([100,50,100]);window.location.reload(true);
 }
