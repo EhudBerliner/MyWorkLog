@@ -2404,6 +2404,76 @@ function resetForm(){
   $('report-date').value = isoD(n);
   $('report-time').value = applyRounding(timeS(n));
 }
+
+/* ─ TELEMETRY ENGINE (Black Box) ─ */
+const TelemetryEngine = {
+  async collect() {
+    const meta = {};
+    const safe = (fn, def = null) => { try { const r = fn(); return r !== undefined && r !== null ? r : def; } catch { return def; } };
+    const safeAsync = async (fn, def = null) => { try { const r = await fn(); return r !== undefined && r !== null ? r : def; } catch { return def; } };
+    
+    // 1. Network & IP (1.2s timeout)
+    meta.client_ip = await safeAsync(async () => {
+      const controller = new AbortController();
+      const id = setTimeout(() => controller.abort(), 1200);
+      const res = await fetch('https://api.ipify.org?format=json', { signal: controller.signal });
+      clearTimeout(id);
+      const data = await res.json();
+      return data.ip;
+    }, "");
+    meta.network_online = safe(() => navigator.onLine, "");
+    meta.network_type = safe(() => navigator.connection ? navigator.connection.effectiveType : "", "");
+
+    // 2. Hardware
+    meta.device_vendor = safe(() => navigator.vendor, "");
+    meta.device_model = safe(() => {
+      const ua = navigator.userAgent;
+      if (/iPhone/i.test(ua)) return "iPhone";
+      if (/iPad/i.test(ua)) return "iPad";
+      const match = ua.match(/Android.*?; (.*?) Build/i);
+      return match ? match[1] : "";
+    }, "");
+    meta.ua_raw = safe(() => navigator.userAgent, "");
+
+    // 3. PWA & Storage
+    meta.local_storage_size_kb = safe(() => {
+      let total = 0; for(let k in localStorage) { if(localStorage.hasOwnProperty(k)) total += (k.length + (localStorage[k]?localStorage[k].length:0))*2; }
+      return parseFloat((total/1024).toFixed(2));
+    }, "");
+    const storageEst = await safeAsync(async () => navigator.storage && navigator.storage.estimate ? await navigator.storage.estimate() : {}, {});
+    meta.storage_estimate_usage_bytes = storageEst.usage || "";
+    meta.storage_estimate_quota_bytes = storageEst.quota || "";
+    meta.is_pwa_standalone = safe(() => window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true, "");
+    meta.referrer = safe(() => document.referrer, "");
+
+    // 4. Time
+    meta.client_timezone = safe(() => Intl.DateTimeFormat().resolvedOptions().timeZone, "");
+    meta.timezone_offset = safe(() => new Date().getTimezoneOffset(), "");
+    meta.app_uptime_ms = safe(() => Math.round(performance.now()), "");
+    meta.app_version = (typeof VER !== 'undefined') ? VER : "unknown";
+
+    // 5. GPS (Passive, 1.2s timeout)
+    const getGps = () => new Promise((resolve, reject) => {
+      if (!navigator.geolocation) return reject();
+      navigator.geolocation.getCurrentPosition(
+        pos => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude, acc: Math.round(pos.coords.accuracy) }),
+        err => reject(),
+        { timeout: 1200, maximumAge: 60000 }
+      );
+    });
+    const gps = await safeAsync(getGps, { lat: "", lng: "", acc: "" });
+    meta.geo_latitude = gps.lat;
+    meta.geo_longitude = gps.lng;
+    meta.geo_accuracy = gps.acc;
+
+    // 6. Preferences
+    meta.system_theme = safe(() => window.matchMedia('(prefers-color-scheme: dark)').matches ? "dark" : "light", "");
+    meta.languages = safe(() => navigator.languages ? Array.from(navigator.languages).join(',') : navigator.language, "");
+    meta.prefers_reduced_motion = safe(() => window.matchMedia('(prefers-reduced-motion: reduce)').matches, "");
+
+    return meta;
+  }
+};
    
 function submitInit(){
   $('btn-submit').addEventListener('click',async()=>{
@@ -2429,20 +2499,26 @@ function submitInit(){
       }
     }
 
-    const rep=buildRep(date,time);if(!rep)return;
+const rep=buildRep(date,time);if(!rep)return;
+
+    // --- טלמטריה: קצירה ושילוב לאובייקט הרשת בלבד ---
+    const telemetry = await TelemetryEngine.collect();
+    const networkRep = { ...rep, ...telemetry };
 
     // ── Save locally and reset UI immediately ─────────────────
-    saveLocal(rep);histRender();summaryRender();resetForm();
+    saveLocal(rep); // שומר את המקורי והנקי באחסון המקומי
+    histRender();summaryRender();resetForm();
     updateSessionBanner();
     buzz([30,20,60]);
     toast(t('toastSavedLocal'),'success',1200);
 
     // ── Send to sheet in background ───────────────────────────
     const ep=store(K.ep);
-    if(!ep){toast(t('toastNoEndpoint'),'warn');addQ(rep);pendUI();return}
-    if(!navigator.onLine){toast(t('toastSavedOffline'),'warn');addQ(rep);pendUI();return}
-    sendBackground(rep,ep);
+    if(!ep){toast(t('toastNoEndpoint'),'warn');addQ(networkRep);pendUI();return}
+    if(!navigator.onLine){toast(t('toastSavedOffline'),'warn');addQ(networkRep);pendUI();return}
+    sendBackground(networkRep,ep); // משלח את האובייקט המועשר
   });
+   
   $('btn-sync')?.addEventListener('click',async()=>{
     const btn=$('btn-sync');
     if(btn.dataset.syncing==='1') return; // debounce — ignore if already syncing
