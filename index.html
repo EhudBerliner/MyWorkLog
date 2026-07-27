@@ -1899,6 +1899,7 @@ function vBadgeInit(){
   $('btn-reset-cancel').addEventListener('click',()=>closeM('modal-reset'));
   $('btn-reset-confirm').addEventListener('click',hardReset);
 }
+   
 async function hardReset(){
   const kR=$('reset-keep-reports').checked,kS=$('reset-keep-settings').checked,kQ=$('reset-keep-queue').checked;
   // Preserve data BEFORE wiping localStorage
@@ -1906,16 +1907,27 @@ async function hardReset(){
   const sE=kS?store(K.ep):null,sSU=kS?store(K.sheetUrl):null;
   const sP=kS?store(K.proj):null,sTH=kS?store(K.theme):null,sLN=kS?store(K.lang):null,sPR=kS?store(K.prefs):null;
   const sQ=kQ?store(K.q):null;
+  
+  // ── הוספת השורות הבאות לשמירת ההגדרות החדשות ──
+  const sRO=kS?store(K.rounding):null;
+  const sPR2=kS?store(K.profile):null;
+
   localStorage.clear();sessionStorage.clear();
   document.cookie.split(';').forEach(c=>document.cookie=c.replace(/^ +/,'').replace(/=.*/,'=;expires='+new Date().toUTCString()+';path=/'));
   if('serviceWorker'in navigator)(await navigator.serviceWorker.getRegistrations()).forEach(r=>r.unregister());
   if('caches'in window)await Promise.all((await caches.keys()).map(k=>caches.delete(k)));
   if('indexedDB'in window){const dbs=await(indexedDB.databases?.()??Promise.resolve([]));dbs.forEach(db=>indexedDB.deleteDatabase(db.name))}
+  
   // Restore preserved data
   if(sR)store(K.reps,sR);
   if(sE)store(K.ep,sE);if(sSU)store(K.sheetUrl,sSU);
   if(sP)store(K.proj,sP);if(sTH)store(K.theme,sTH);if(sLN)store(K.lang,sLN);if(sPR)store(K.prefs,sPR);
   if(sQ)store(K.q,sQ);
+  
+  // ── שחזור הנתונים שנשמרו ──
+  if(sRO!==null)store(K.rounding,sRO);
+  if(sPR2)store(K.profile,sPR2);
+
   buzz([100,50,100]);window.location.reload(true);
 }
 
