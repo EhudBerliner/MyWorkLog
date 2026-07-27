@@ -1,4 +1,4 @@
-//  MyWorkLog – Google Apps Script  v6.10 (Server-Side Deduplication + Paid Absence Compensation)
+//  MyWorkLog – Google Apps Script  v6.11 (Server-Side Deduplication + Paid Absence Compensation)
 //  הדבק קוד זה ב-Apps Script של הגיליון שלך
 //  לאחר מכן: Deploy > New deployment > Web App
 //  ✅ הרשאות: Anyone (אנונימי) / Execute as: Me
@@ -12,7 +12,8 @@ const SHEET_WSTANDARD   = 'WorkStandard';
 const SHEET_CLIENTS     = 'Clients';
 const SHEET_CLI_PROJ    = 'ClientProjects';
 
-const HEADERS           = ['Timestamp','Report_Date','Report_Time','Category','Description','Project','Record_ID'];
+const HEADERS           = ['Timestamp','Report_Date','Report_Time','Category','Description','Project','Record_ID',
+                           'GPS_Location','Cluster_Network','Cluster_Hardware','Cluster_PWA','Cluster_Time'];
 const TASK_LOG_HEADERS  = ['Report_Date','משך משימה','Project','Description'];
 const PROJECT_HEADERS   = ['Project_Name','Created_At'];
 const WSTANDARD_HEADERS = ['Date','WeekDay','Day_Standard_Hours','Notes','Description'];
@@ -54,10 +55,20 @@ function doPost(e) {
       }
     }
 
-    const ts   = new Date().toLocaleString('he-IL', { timeZone: 'Asia/Jerusalem' });
+const ts   = new Date().toLocaleString('he-IL', { timeZone: 'Asia/Jerusalem' });
+
+    // יצירת קלסטרים של מטא-דאטה מופרדים ב-Pipe
+    const gpsCol = data.geo_latitude ? `${data.geo_latitude} | ${data.geo_longitude} | ${data.geo_accuracy}` : '';
+    const netCol = [data.client_ip, data.network_online, data.network_type].map(v => v !== undefined && v !== "" ? v : '-').join(' | ');
+    const hwCol = [data.device_vendor, data.device_model, data.ua_raw].map(v => v !== undefined && v !== "" ? v : '-').join(' | ');
+    const pwaCol = [data.local_storage_size_kb, data.storage_estimate_usage_bytes, data.storage_estimate_quota_bytes, data.is_pwa_standalone, data.referrer].map(v => v !== undefined && v !== "" ? v : '-').join(' | ');
+    const timeCol = [data.client_timezone, data.timezone_offset, data.app_uptime_ms, data.app_version].map(v => v !== undefined && v !== "" ? v : '-').join(' | ');
+
     main.appendRow([ts, data.report_date||'', data.report_time||'',
-      translateCategory(data.category)||'', data.description||'', data.project||'', data.id||'']);
+      translateCategory(data.category)||'', data.description||'', data.project||'', data.id||'',
+      gpsCol, netCol, hwCol, pwaCol, timeCol]);
     autoFormatLastRow(main, HEADERS.length);
+
 
     if (data.category === 'entry' || data.category === 'exit') rebuildDayAttendance(ss, data.report_date);
     if (data.category === 'task') updateTasksLog(ss, data);
