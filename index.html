@@ -3598,7 +3598,7 @@ async function flushDeleteQueue(){
 }
 
 /* ═══════════════════════════════════════════════════════
-   DELTA SYNC FUNCTIONS — 60 DAYS TIME WINDOW
+   DELTA SYNC FUNCTIONS — 60 DAYS TIME WINDOW (FIXED)
    ═══════════════════════════════════════════════════════ */
 
 /* חישוב תאריך נוכחי פחות 60 ימים בפורמט YYYY-MM-DD */
@@ -3613,11 +3613,10 @@ async function bgSync() {
   const ep = store(K.ep);
   if (!ep || !navigator.onLine) return;
 
-  // הגנת הצפה: דילוג אם בוצע סנכרון מוצלח ב-3 הדקות האחרונות
   const lastFull = store('mwl_last_full_sync');
   if (lastFull && (Date.now() - Number(lastFull)) < 3 * 60 * 1000) return;
 
-  // 1. איסוף וטאטוא דיווחים מקומיים שלא נשלחו אל השרת
+  // 1. איסוף דיווחים מקומיים שלא נשלחו
   const reps = store(K.reps) || [];
   const q = store(K.q) || [];
   const qIds = new Set(q.map(r => r.id));
@@ -3627,33 +3626,32 @@ async function bgSync() {
     pendUI();
   }
 
-  // 2. ריקון תור ההוצאה (דיווחים ומחיקות שממתינים)
+  // 2. ריקון תור ההוצאה
   await flushWStandardQueue();
   await syncQ_silent();
 
-  // 3. הרצת סנכרון דלתא (60 ימים אחורה ועד אינסוף)
+  // 3. הרצת סנכרון דלתא (60 ימים אחורה)
   const deltaDate = getDeltaStartDate();
-  await syncFromSheet(deltaDate);
+  const success = await syncFromSheet(deltaDate);
 
-  // 4. משיכת WorkStandard ממוקד של 60 ימים
+  // 4. משיכת WorkStandard ממוקד
   await syncWStandardDelta(deltaDate);
 
-  // 5. חותמת זמן לסנכרון מוצלח
-  store('mwl_last_full_sync', String(Date.now()));
+  if (success >= 0) {
+    store('mwl_last_full_sync', String(Date.now()));
+  }
   summaryRender();
 }
 
-/* פונקציית משיכת דיווחים מהגיליון — תומכת כעת בפרמטר Delta ובסינון מחיקות היסטוריות */
+/* פונקציית משיכת דיווחים מהגיליון — מתוקנת למיון ומיזוג נכון */
 async function syncFromSheet(fromDate = '') {
   const ep = store(K.ep);
   if (!ep || !navigator.onLine) return 0;
   try {
     const headers = {};
-    // אם זה סנכרון רקע רגיל (דלתא), נבטל זמנית את ה-ETag כדי לא לפספס שינויים ממוקדים
     const etag = fromDate ? null : store('mwl_etag_reports');
     if (etag) headers['If-None-Match'] = etag;
 
-    // בניית ה-URL עם פרמטר הסינון במידה וקיים
     let url = ep + '?action=getReports';
     if (fromDate) url += `&fromDate=${fromDate}&t=${Date.now()}`;
     else url += `&t=${Date.now()}`;
@@ -3671,7 +3669,7 @@ async function syncFromSheet(fromDate = '') {
 
     let local = store(K.reps) || [];
 
-    // נרמול תאריכים ושעות מהשרת
+    // נרמול תאריכים ושעות
     const normDate = s => {
       if (!s) return ''; const t = String(s).trim();
       if (/^\d{4}-\d{2}-\d{2}/.test(t)) return t.slice(0, 10);
@@ -3679,36 +3677,46 @@ async function syncFromSheet(fromDate = '') {
       if (m) return `${m[3]}-${m[2].padStart(2, '0')}-${m[1].padStart(2, '0')}`;
       const d = new Date(s); return isNaN(d) ? t : `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
     };
-    data.reports.forEach(r => { r.report_date = normDate(r.report_date); if (r.category === 'entry' || r.category === 'exit') r.report_time = normTimeStr(r.report_time); });
+
+    data.reports.forEach(r => { 
+      r.report_date = normDate(r.report_date); 
+      if (r.category === 'entry' || r.category === 'exit') r.report_time = normTimeStr(r.report_time); 
+    });
+
+    // ✨ מפתח מיון כרונולוגי יורד מדויק (YYYY-MM-DDTHH:MM)
+    const getSortKey = r => {
+      const d = r.report_date || '0000-00-00';
+      const t = (r.report_time && !r.report_time.includes('-')) ? r.report_time : '00:00';
+      return `${d}T${t}`;
+    };
 
     if (fromDate) {
-      // 🛡️ לוגיקת מיזוג דלתא חכמה המונעת "רשומות רפאים":
-      // א. מסננים מהלוקאל את כל מה שקטן מחלון ה-60 יום
-      let unexaminedLocal = local.filter(r => r.report_date < fromDate);
-      
-      // ב. הגנה מפני מחיקות היסטוריות (פתרון הרגרסיה):
-      // מנקים מהלוקאל הישן רשומות שכבר לא קיימות פיזית בגיליון
+      // א. שמירת נתונים היסטוריים הישנים מחלון ה-60 יום
+      let olderLocal = local.filter(r => r.report_date < fromDate);
       if (Array.isArray(data.allSheetIds)) {
         const sheetIdsSet = new Set(data.allSheetIds.map(String));
-        unexaminedLocal = unexaminedLocal.filter(r => !r.sent || sheetIdsSet.has(String(r.id)));
+        olderLocal = olderLocal.filter(r => !r.sent || sheetIdsSet.has(String(r.id)));
       }
       
-      // ג. מיזוג של הנתונים החדשים מהחלון יחד עם הנתונים ההיסטוריים שעברו ניקוי
-      const merged = [...data.reports, ...unexaminedLocal];
-      merged.sort((a, b) => (b.timestamp || b.report_date || '').localeCompare(a.timestamp || a.report_date || ''));
-      store(K.reps, merged.slice(0, 300));
+      // ב. שמירת רשומות אופליין מקומיות שטרם נשלחו בתוך החלון
+      const unsentLocalInWindow = local.filter(r => r.report_date >= fromDate && !r.sent);
+      const serverReportIds = new Set(data.reports.map(r => String(r.id)));
+      const unsentToKeep = unsentLocalInWindow.filter(r => !serverReportIds.has(String(r.id)));
+
+      // ג. מיזוג הנתונים החדשים מהשרת + אופליין שלא נשלח + נתונים ישנים
+      const merged = [...data.reports, ...unsentToKeep, ...olderLocal];
+      merged.sort((a, b) => getSortKey(b).localeCompare(getSortKey(a)));
+      store(K.reps, merged.slice(0, 500));
     } else {
-      // סנכרון מלא (מיועד ללחיצה הידנית בלשונית הגדרות)
+      // סנכרון מלא
       const sheetIds = new Set(data.reports.map(r => String(r.id)).filter(Boolean));
-      const pruned = local.filter(r => !r.sent || sheetIds.has(String(r.id)));
-      const localIds = new Set(pruned.map(r => String(r.id)));
-      const toImport = data.reports.filter(r => !localIds.has(String(r.id)));
-      const merged = [...toImport, ...pruned];
-      merged.sort((a, b) => (b.timestamp || b.report_date || '').localeCompare(a.timestamp || a.report_date || ''));
-      store(K.reps, merged.slice(0, 300));
+      const localUnsent = local.filter(r => !r.sent && !sheetIds.has(String(r.id)));
+      
+      const merged = [...data.reports, ...localUnsent];
+      merged.sort((a, b) => getSortKey(b).localeCompare(getSortKey(a)));
+      store(K.reps, merged.slice(0, 500));
     }
 
-    // מיזוג פרויקטים
     if (Array.isArray(data.projects)) {
       const localP = store(K.proj) || [];
       const toAdd = data.projects.filter(p => !localP.includes(p));
@@ -3718,7 +3726,7 @@ async function syncFromSheet(fromDate = '') {
     histRender(); updateSessionBanner();
     return data.reports.length;
   } catch (e) { 
-    console.warn('[syncFromSheet Delta Failure]', e); 
+    console.warn('[syncFromSheet Failure]', e); 
     return 0; 
   }
 }
@@ -3733,7 +3741,6 @@ async function syncWStandardDelta(fromDate) {
     const data = await res.json();
     if (!Array.isArray(data.workStandard)) return false;
 
-    // מיזוג נתוני התקן: שומרים את הישנים שלפני ה-60 יום ומעדכנים את החדשים
     let localWStd = store(K.wstandard) || [];
     localWStd = localWStd.filter(r => r.date < fromDate);
     
@@ -3745,6 +3752,12 @@ async function syncWStandardDelta(fromDate) {
     return false; 
   }
 }
+
+
+
+
+
+
 
 /* Push a new project to GAS */
 async function pushProjectToSheet(name){
