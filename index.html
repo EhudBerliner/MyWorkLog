@@ -56,7 +56,7 @@ html,body{height:100%;background:var(--bg0);color:var(--text);
 .workday-chip input{position:absolute;opacity:0;width:0;height:0}
 .workday-chip:has(input:checked){background:var(--limeDim);border-color:var(--lime);color:var(--lime)}
 
-/* ── NOTIFICATION SYSTEM v4.4.6 ── */
+/* ── NOTIFICATION SYSTEM v4.4.5 ── */
 .offline-banner{position:fixed;top:0;left:0;right:0;
   background:var(--red,#ef4444);color:#fff;text-align:center;
   padding:calc(var(--safeT,0px)+8px) 16px 8px;
@@ -1532,12 +1532,12 @@ details summary::-webkit-details-marker{display:none}
 /* BOOT */
 
 /* ═══════════════════════════════════════════════════════
-   NOTIFICATION SYSTEM  v4.4.6
+   NOTIFICATION SYSTEM  v4.4.5
    Manages: Offline banner · PWA Install · Update Prompt · Toast
    ═══════════════════════════════════════════════════════ */
 const NotificationSystem = {
   settings: { showNetworkStatus: true },
-  currentVersion: '4.4.6',
+  currentVersion: '4.4.5',
   deferredInstallPrompt: null,
   _wasOffline: false,   // track previous state for auto-cleanup
 
@@ -1722,7 +1722,7 @@ document.addEventListener('DOMContentLoaded',()=>{
     fixStoredDates();
   netInit();netQInit();projLoad();histRender();
   importInit();
-    NotificationSystem.init(VER);  // v4.4.6
+    NotificationSystem.init(VER);  // v4.4.5
     updateSessionBanner();
     flushDeleteQueue();
     menuInit();vBadgeInit();swipeInit();ptrInit();swInit();installInit();scrollInit();
@@ -3613,9 +3613,9 @@ async function bgSync() {
   const ep = store(K.ep);
   if (!ep || !navigator.onLine) return;
 
-  // הוקטן ל-30 שניות כדי לאפשר סנכרון אמיתי במעבר מהיר בין מכשירים
+  // הגנת הצפה: דילוג אם בוצע סנכרון מוצלח ב-3 הדקות האחרונות
   const lastFull = store('mwl_last_full_sync');
-  if (lastFull && (Date.now() - Number(lastFull)) < 30 * 1000) return;
+  if (lastFull && (Date.now() - Number(lastFull)) < 3 * 60 * 1000) return;
 
   // 1. איסוף וטאטוא דיווחים מקומיים שלא נשלחו אל השרת
   const reps = store(K.reps) || [];
@@ -3627,7 +3627,7 @@ async function bgSync() {
     pendUI();
   }
 
-  // 2. ריקון תור ההוצאה
+  // 2. ריקון תור ההוצאה (דיווחים ומחיקות שממתינים)
   await flushWStandardQueue();
   await syncQ_silent();
 
@@ -3638,11 +3638,9 @@ async function bgSync() {
   // 4. משיכת WorkStandard ממוקד של 60 ימים
   await syncWStandardDelta(deltaDate);
 
-  // 5. חותמת זמן לסנכרון מוצלח ורענון הממשק כך שיציג מיד את הנתונים החדשים!
+  // 5. חותמת זמן לסנכרון מוצלח
   store('mwl_last_full_sync', String(Date.now()));
-  histRender();
   summaryRender();
-  updateSessionBanner();
 }
 
 /* פונקציית משיכת דיווחים מהגיליון — תומכת כעת בפרמטר Delta ובסינון מחיקות היסטוריות */
@@ -3651,9 +3649,11 @@ async function syncFromSheet(fromDate = '') {
   if (!ep || !navigator.onLine) return 0;
   try {
     const headers = {};
+    // אם זה סנכרון רקע רגיל (דלתא), נבטל זמנית את ה-ETag כדי לא לפספס שינויים ממוקדים
     const etag = fromDate ? null : store('mwl_etag_reports');
     if (etag) headers['If-None-Match'] = etag;
 
+    // בניית ה-URL עם פרמטר הסינון במידה וקיים
     let url = ep + '?action=getReports';
     if (fromDate) url += `&fromDate=${fromDate}&t=${Date.now()}`;
     else url += `&t=${Date.now()}`;
@@ -3671,6 +3671,7 @@ async function syncFromSheet(fromDate = '') {
 
     let local = store(K.reps) || [];
 
+    // נרמול תאריכים ושעות מהשרת
     const normDate = s => {
       if (!s) return ''; const t = String(s).trim();
       if (/^\d{4}-\d{2}-\d{2}/.test(t)) return t.slice(0, 10);
@@ -3681,21 +3682,33 @@ async function syncFromSheet(fromDate = '') {
     data.reports.forEach(r => { r.report_date = normDate(r.report_date); if (r.category === 'entry' || r.category === 'exit') r.report_time = normTimeStr(r.report_time); });
 
     if (fromDate) {
-      // Delta Sync - 60 days
+      // 🛡️ לוגיקת מיזוג דלתא חכמה המונעת "רשומות רפאים":
+      // א. מסננים מהלוקאל את כל מה שקטן מחלון ה-60 יום
       let unexaminedLocal = local.filter(r => r.report_date < fromDate);
+      
+      // ב. הגנה מפני מחיקות היסטוריות (פתרון הרגרסיה):
+      // מנקים מהלוקאל הישן רשומות שכבר לא קיימות פיזית בגיליון
       if (Array.isArray(data.allSheetIds)) {
         const sheetIdsSet = new Set(data.allSheetIds.map(String));
         unexaminedLocal = unexaminedLocal.filter(r => !r.sent || sheetIdsSet.has(String(r.id)));
       }
-      // שימוש בפונקציית המיזוג כדי לקבל עדכונים ולהגן על אופליין
-      const merged = mergeSheetAndOfflineData([...data.reports, ...unexaminedLocal]);
+      
+      // ג. מיזוג של הנתונים החדשים מהחלון יחד עם הנתונים ההיסטוריים שעברו ניקוי
+      const merged = [...data.reports, ...unexaminedLocal];
+      merged.sort((a, b) => (b.timestamp || b.report_date || '').localeCompare(a.timestamp || a.report_date || ''));
       store(K.reps, merged.slice(0, 300));
     } else {
-      // Full Sync - תיקון הבאג: השרת הוא מקור האמת, משתמשים בפונקציית המיזוג כדי להחיל עריכות
-      const merged = mergeSheetAndOfflineData(data.reports);
+      // סנכרון מלא (מיועד ללחיצה הידנית בלשונית הגדרות)
+      const sheetIds = new Set(data.reports.map(r => String(r.id)).filter(Boolean));
+      const pruned = local.filter(r => !r.sent || sheetIds.has(String(r.id)));
+      const localIds = new Set(pruned.map(r => String(r.id)));
+      const toImport = data.reports.filter(r => !localIds.has(String(r.id)));
+      const merged = [...toImport, ...pruned];
+      merged.sort((a, b) => (b.timestamp || b.report_date || '').localeCompare(a.timestamp || a.report_date || ''));
       store(K.reps, merged.slice(0, 300));
     }
 
+    // מיזוג פרויקטים
     if (Array.isArray(data.projects)) {
       const localP = store(K.proj) || [];
       const toAdd = data.projects.filter(p => !localP.includes(p));
@@ -3705,7 +3718,7 @@ async function syncFromSheet(fromDate = '') {
     histRender(); updateSessionBanner();
     return data.reports.length;
   } catch (e) { 
-    console.warn('[syncFromSheet Failure]', e); 
+    console.warn('[syncFromSheet Delta Failure]', e); 
     return 0; 
   }
 }
