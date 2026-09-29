@@ -782,13 +782,8 @@ details summary::-webkit-details-marker{display:none}
         </div>
       </div>
       <div class="stats-grid">
-        <div class="stat-card"><div class="stat-lbl" data-i18n="statEntries">&#1499;&#1504;&#1497;&#1505;&#1493;&#1514;</div><div class="stat-val" id="stat-entries">0</div></div>
-        <div class="stat-card"><div class="stat-lbl" data-i18n="statExits">&#1497;&#1510;&#1497;&#1488;&#1493;&#1514;</div><div class="stat-val" id="stat-exits">0</div></div>
-        <div class="stat-card"><div class="stat-lbl" data-i18n="statTasks">&#1502;&#1513;&#1497;&#1502;&#1493;&#1514;</div><div class="stat-val" id="stat-tasks">0</div></div>
-        <div class="stat-card"><div class="stat-lbl" data-i18n="statHours">&#1513;&#1506;&#1493;&#1514; &#1502;&#1513;&#1497;&#1502;&#1493;&#1514;</div><div class="stat-val" id="stat-hours">0</div></div>
-        <div class="stat-card" id="stat-workday-card"><div class="stat-lbl" data-i18n="statWorkday">&#1502;&#1513;&#1498; &#1497;&#1493;&#1501;</div><div class="stat-val" id="stat-workday" style="font-size:1.4rem">-</div></div>
-        <div class="stat-card" id="stat-achievement-card" style="display:none"><div class="stat-lbl">&#1506;&#1502;&#1497;&#1491;&#1492; &#1489;&#1497;&#1506;&#1491;</div><div class="stat-val" id="stat-achievement" style="font-size:1.4rem">&#8212;</div></div>
-        <div class="stat-card" id="stat-days-card" style="display:none"><div class="stat-lbl" data-i18n="statDays">&#1497;&#1502;&#1497;&#1501; &#1508;&#1506;&#1497;&#1500;&#1497;&#1501;</div><div class="stat-val" id="stat-days">0</div></div>
+        <div class="stat-card"><div class="stat-lbl" data-i18n="statEntries">כניסות</div><div class="stat-val" id="stat-entries">0</div></div>
+        <div class="stat-card"><div class="stat-lbl" data-i18n="statExits">יציאות</div><div class="stat-val" id="stat-exits">0</div></div>
       </div>
             <!-- Daily status (day view only) -->
       <div id="day-wc-section" class="card" style="display:none">
@@ -3434,6 +3429,9 @@ function summaryInit(){
   $('btn-range-go')?.addEventListener('click',()=>summaryRender());
   workcalInit();
 }
+
+
+   
 function goToday(){ST.sumOff=0;summaryRender();}
 function summaryRender(){
   const rs=store(K.reps)||[],now=new Date();let fil=[],lbl='';
