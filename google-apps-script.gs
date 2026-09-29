@@ -1,5 +1,5 @@
-//  MyWorkLog – Google Apps Script  v6.11 (Server-Side Deduplication + Paid Absence Compensation)
-//  הדבק קוד זה ב-Apps Script של הגיליון שלך
+//  MyWorkLog – Google Apps Script  v6.13 (Full Version + Fixes for Edit & Deduplication)
+//  הדבק קוד זה ב-Apps Script של הגיליון שלך (מחק את הקוד הישן לחלוטין)
 //  לאחר מכן: Deploy > New deployment > Web App
 //  ✅ הרשאות: Anyone (אנונימי) / Execute as: Me
 // ============================================================
@@ -24,14 +24,16 @@ const ATT_HEADERS = ['Date','Entry','Exit','Duration','Daily Standard','Deviatio
 const ATT_NCOLS   = ATT_HEADERS.length;
 
 // ─────────────────────────────────────────────────────────────────────────────
-//  doPost - WITH SERVER-SIDE DEDUPLICATION
+//  doPost - WITH FIXED SERVER-SIDE DEDUPLICATION & EDIT ROUTING
 // ─────────────────────────────────────────────────────────────────────────────
 function doPost(e) {
   try {
     const data = JSON.parse(e.postData.contents);
+    
+    // פעולות מיוחדות ומעקף Deduplication עבור עריכות ומחיקות
     if (data.action === 'setDayStandard')       return ok(updateWorkStandard(data.date, data.weekDay, data.stdHours, data.notes||'', data.description||''));
-    if (data.action === 'addProject')           return ok(addProject(data.project));
-    if (data.action === 'deleteProject')        return ok(deleteProject(data.project));
+    if (data.action === 'addProject')            return ok(addProject(data.project));
+    if (data.action === 'deleteProject')         return ok(deleteProject(data.project));
     if (data.action === 'addClient')            return ok(addClient(data.id, data.name));
     if (data.action === 'deleteClient')         return ok(deleteClient(data.id));
     if (data.action === 'addClientProject')     return ok(addClientProject(data.id, data.clientId, data.name));
@@ -42,7 +44,7 @@ function doPost(e) {
     const ss   = SpreadsheetApp.getActiveSpreadsheet();
     const main = getOrCreateSheet(ss, SHEET_NAME, HEADERS);
     
-    // 🛡️ חסימת כפילויות בצד שרת (Server-Side Deduplication)
+    // 🛡️ חסימת כפילויות בצד שרת (Server-Side Deduplication) - רלוונטי להוספה חדשה בלבד
     if (data.id) {
       const lastRow = main.getLastRow();
       if (lastRow > 1) {
@@ -55,7 +57,7 @@ function doPost(e) {
       }
     }
 
-const ts   = new Date().toLocaleString('he-IL', { timeZone: 'Asia/Jerusalem' });
+    const ts   = new Date().toLocaleString('he-IL', { timeZone: 'Asia/Jerusalem' });
 
     // יצירת קלסטרים של מטא-דאטה מופרדים ב-Pipe
     const gpsCol = data.geo_latitude ? `${data.geo_latitude} | ${data.geo_longitude} | ${data.geo_accuracy}` : '';
@@ -69,7 +71,6 @@ const ts   = new Date().toLocaleString('he-IL', { timeZone: 'Asia/Jerusalem' });
       gpsCol, netCol, hwCol, pwaCol, timeCol]);
     autoFormatLastRow(main, HEADERS.length);
 
-
     if (data.category === 'entry' || data.category === 'exit') rebuildDayAttendance(ss, data.report_date);
     if (data.category === 'task') updateTasksLog(ss, data);
     return ok('נשמר');
@@ -81,7 +82,6 @@ const ts   = new Date().toLocaleString('he-IL', { timeZone: 'Asia/Jerusalem' });
 // ─────────────────────────────────────────────────────────────────────────────
 function doGet(e) {
   const action = (e && e.parameter && e.parameter.action) || '';
-  // קריאת פרמטר התאריך מהלקוח (אם נשלח)
   const fromDate = (e && e.parameter && e.parameter.fromDate) || '';
 
   if (action === 'getWorkStandard') {
@@ -97,7 +97,6 @@ function doGet(e) {
       description:String(r[4]||'').trim()
     })).filter(r=>r.date);
 
-    // סינון Delta: אם נשלח תאריך, נחזיר רק ממנו והלאה
     if (fromDate) {
       result = result.filter(r => r.date >= fromDate);
     }
@@ -112,23 +111,20 @@ function doGet(e) {
     return jsonResp({ projects: sheet.getDataRange().getValues().slice(1).map(r=>String(r[0]).trim()).filter(Boolean) });
   }
 
-if (action === 'getReports') {
+  if (action === 'getReports') {
     const ss    = SpreadsheetApp.getActiveSpreadsheet();
     const sheet = ss.getSheetByName(SHEET_NAME);
     if (!sheet) return jsonResp({ reports: [], projects: [], allSheetIds: [] });
     
     const allRows = sheet.getDataRange().getValues().slice(1);
-    
-    // מפה מלאה של מזהים בלבד (לצורך סנכרון מחיקות היסטוריות)
     const allSheetIds = allRows.map(r => String(r[6]||'').trim()).filter(Boolean);
 
     let reports = allRows.map(r=>({
       timestamp:fmtDateCell(r[0])||String(r[0]||''), report_date:fmtDateCell(r[1]),
       report_time:parseTimeCell(r[2]), category:reverseCategory(String(r[3]||'')),
       description:String(r[4]||''), project:String(r[5]||''), id:String(r[6]||''), sent:true
-    })).filter(r=>r.id);
+    })).filter(r=>r.id && r.report_date);
 
-    // סינון Delta לחלון הזמן המבוקש
     if (fromDate) {
       reports = reports.filter(r => r.report_date >= fromDate);
     }
@@ -144,7 +140,7 @@ if (action === 'getReports') {
     return ok('Attendance rebuilt');
   }
 
-  return jsonResp({ status:'ok', app:'MyWorkLog', version:'6.7' });
+  return jsonResp({ status:'ok', app:'MyWorkLog', version:'6.13' });
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -314,10 +310,8 @@ function rebuildAllAttendance() {
   const dateMap = {}; 
   const seenIds = new Set();
 
-  // לקבלת תאריך היום הנוכחי בפורמט YYYY-MM-DD לפי שעון ישראל
   const todayStr = Utilities.formatDate(new Date(), "Asia/Jerusalem", "yyyy-MM-dd");
 
-  // 1. איסוף דיווחים קיימים מ-WorkLog
   if (main && main.getLastRow() > 1) {
     const worklogRows = main.getDataRange().getValues().slice(1);
     worklogRows.forEach(r => {
@@ -337,7 +331,6 @@ function rebuildAllAttendance() {
     });
   }
 
-  // 2. משיכת נתוני תקן מ-WorkStandard ובניית מפת התקן
   const wss = ss.getSheetByName(SHEET_WSTANDARD);
   const stdMap = {};
   if (wss && wss.getLastRow() > 1) {
@@ -354,7 +347,6 @@ function rebuildAllAttendance() {
         classification: [notes, desc].filter(Boolean).join(' — ')
       };
 
-      // ✨ תיקון: מייצרים יום מפוצה ב-dateMap אך ורק אם יש בו שעות תקן מעל 0 (h > 0)
       const isPaidAbsence = /חופש|מחלה|חלה|sick|vacation|חג|שבתון|sabbatical/.test(notes.toLowerCase());
       if (isPaidAbsence && h > 0 && d <= todayStr && !dateMap[d]) {
         dateMap[d] = { entries: new Set(), exits: new Set() };
@@ -364,7 +356,6 @@ function rebuildAllAttendance() {
 
   const allRows = [];
   
-  // 3. מעבר על כל התאריכים הרלוונטיים
   Object.keys(dateMap).sort().forEach(dateStr => {
     const arrEntries = Array.from(dateMap[dateStr].entries).sort();
     const arrExits = Array.from(dateMap[dateStr].exits).sort();
@@ -380,7 +371,7 @@ function rebuildAllAttendance() {
     });
     
     const pairedEntries = new Set(pairs.map(p=>p.entry));
-    const pairedExits  = new Set(pairs.map(p=>p.exit));
+    const pairedExits   = new Set(pairs.map(p=>p.exit));
     const openEntry       = arrEntries.find(e=>!pairedEntries.has(e)) || null;
     const unmatchedExits  = arrExits.filter(x=>!pairedExits.has(x));
 
@@ -388,16 +379,13 @@ function rebuildAllAttendance() {
     const stdMins  = Math.round(std.stdHours * 60);
     let totalMins = pairs.reduce((s,p)=>s+p.durationMins, 0);
 
-    // בדיקה האם מדובר ביום היעדרות מוצדק *שיש בו תקן שעות בפועל*
     const isPaidAbsence = /חופש|מחלה|חלה|sick|vacation|חג|שבתון|sabbatical/.test(String(std.classification||'').toLowerCase());
     const hasValidStandard = stdMins > 0;
 
-    // מנגנון הפיצוי בשעות ירוץ רק אם יש תקן שעות מוגדר
     if (isPaidAbsence && hasValidStandard && dateStr <= todayStr && totalMins < stdMins) {
       totalMins = stdMins;
     }
 
-    // ✨ תיקון: אם אין דיווחים וזה יום ללא תקן שעות (גם אם כתוב חג/שבתון) — מדלגים לחלוטין ולא מייצרים שורה
     if (pairs.length === 0 && !openEntry && unmatchedExits.length === 0 && !(isPaidAbsence && hasValidStandard)) return;
 
     const devMins  = stdMins > 0 ? totalMins - stdMins : null;
@@ -420,7 +408,6 @@ function rebuildAllAttendance() {
     }
   });
 
-  // 4. כתיבה מחדש לגיליון Attendance
   const sheet = getOrCreateAttSheet(ss);
   if (sheet.getLastRow() > 1) sheet.deleteRows(2, sheet.getLastRow()-1);
 
@@ -481,6 +468,9 @@ function formatAttRows(sheet, startRow, rows) {
   });
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+//  editReport - FIXED RANGE TO MATCH ALL 12 HEADERS
+// ─────────────────────────────────────────────────────────────────────────────
 function editReport(data) {
   if (!data.id) return 'no id';
   const ss   = SpreadsheetApp.getActiveSpreadsheet();
@@ -491,6 +481,13 @@ function editReport(data) {
   for (let i = rows.length - 1; i >= 1; i--) {
     if (String(rows[i][6]) === String(data.id)) {
       const ts = rows[i][0]; 
+      // שמירה על הקלסטרים הקיימים אם לא סופקו חדשים
+      const gpsCol = rows[i][7] || '';
+      const netCol = rows[i][8] || '';
+      const hwCol  = rows[i][9] || '';
+      const pwaCol = rows[i][10] || '';
+      const timeCol= rows[i][11] || '';
+
       main.getRange(i + 1, 1, 1, HEADERS.length).setValues([[
         ts,
         data.report_date  || '',
@@ -498,8 +495,10 @@ function editReport(data) {
         translateCategory(data.category) || '',
         data.description  || '',
         data.project      || '',
-        data.id
+        data.id,
+        gpsCol, netCol, hwCol, pwaCol, timeCol
       ]]);
+
       if (data.category === 'entry' || data.category === 'exit') {
         rebuildDayAttendance(ss, data.report_date);
       }
@@ -511,9 +510,18 @@ function editReport(data) {
       return 'updated';
     }
   }
+
+  // במידה וה-ID לא נמצא - ייווצר כדיווח חדש
   const ts2 = new Date().toLocaleString('he-IL', { timeZone: 'Asia/Jerusalem' });
+  const gpsCol = data.geo_latitude ? `${data.geo_latitude} | ${data.geo_longitude} | ${data.geo_accuracy}` : '';
+  const netCol = [data.client_ip, data.network_online, data.network_type].map(v => v !== undefined && v !== "" ? v : '-').join(' | ');
+  const hwCol = [data.device_vendor, data.device_model, data.ua_raw].map(v => v !== undefined && v !== "" ? v : '-').join(' | ');
+  const pwaCol = [data.local_storage_size_kb, data.storage_estimate_usage_bytes, data.storage_estimate_quota_bytes, data.is_pwa_standalone, data.referrer].map(v => v !== undefined && v !== "" ? v : '-').join(' | ');
+  const timeCol = [data.client_timezone, data.timezone_offset, data.app_uptime_ms, data.app_version].map(v => v !== undefined && v !== "" ? v : '-').join(' | ');
+
   main.appendRow([ts2, data.report_date||'', data.report_time||'',
-    translateCategory(data.category)||'', data.description||'', data.project||'', data.id||'']);
+    translateCategory(data.category)||'', data.description||'', data.project||'', data.id||'',
+    gpsCol, netCol, hwCol, pwaCol, timeCol]);
   autoFormatLastRow(main, HEADERS.length);
   if (data.category === 'entry' || data.category === 'exit') rebuildDayAttendance(ss, data.report_date);
   return 'appended';
@@ -570,6 +578,7 @@ function addProject(name) {
   sheet.appendRow([name.trim(), new Date().toLocaleString('he-IL',{timeZone:'Asia/Jerusalem'})]);
   autoFormatLastRow(sheet, PROJECT_HEADERS.length); return 'added';
 }
+
 function deleteProject(name) {
   if (!name) return 'no name';
   const ss    = SpreadsheetApp.getActiveSpreadsheet();
@@ -587,6 +596,7 @@ function addClient(id,name){
   sheet.appendRow([id,name.trim(),new Date().toLocaleString('he-IL',{timeZone:'Asia/Jerusalem'})]);
   autoFormatLastRow(sheet,CLIENTS_HEADERS.length);return'added';
 }
+
 function deleteClient(id){
   if(!id)return'no id';
   const ss=SpreadsheetApp.getActiveSpreadsheet();
@@ -598,6 +608,7 @@ function deleteClient(id){
   }
   return'deleted';
 }
+
 function addClientProject(id,clientId,name){
   if(!id||!clientId||!name||!name.trim())return'empty';
   const ss=SpreadsheetApp.getActiveSpreadsheet(),sheet=getOrCreateSheet(ss,SHEET_CLI_PROJ,CLI_PROJ_HEADERS);
@@ -606,6 +617,7 @@ function addClientProject(id,clientId,name){
   autoFormatLastRow(sheet,CLI_PROJ_HEADERS.length);
   addProject(name.trim());return'added';
 }
+
 function deleteClientProject(id){
   if(!id)return'no id';
   deleteRowById(SpreadsheetApp.getActiveSpreadsheet(),SHEET_CLI_PROJ,id,0);return'deleted';
@@ -632,11 +644,12 @@ function setupSheets() {
   }
   getOrCreateAttSheet(ss); 
   SpreadsheetApp.getUi().alert(
-    'MyWorkLog v6.7 — גיליונות מוכנים!\n\n' +
-    'חסימת כפילויות צד שרת הופעלה.\n\n' +
+    'MyWorkLog v6.13 — גיליונות מוכנים!\n\n' +
+    'תוקן מנגנון עריכת הדיווחים וחסימת הכפילויות.\n\n' +
     'Deploy → New deployment לאחר השמירה!'
   );
 }
+
 function setupWorkStandard() { setupSheets(); }
 
 function deleteRowById(ss, sheetName, id, col) {
@@ -670,9 +683,9 @@ function fmtDateCell(v) {
     let yr = parseInt(slash[3], 10);
     if (yr < 100) yr += (yr < 50 ? 2000 : 1900);
     let day, mon;
-    if (p1 > 12 && p2 <= 12) { day = p1; mon = p2; }      
-    else if (p2 > 12 && p1 <= 12) { day = p2; mon = p1; } 
-    else { day = p1; mon = p2; }                             
+    if (p1 > 12) { day = p1; mon = p2; }
+    else if (p2 > 12) { day = p2; mon = p1; }
+    else { day = p1; mon = p2; }
     return `${yr}-${String(mon).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
   }
   const dot = s.match(/^(\d{1,2})\.(\d{1,2})\.(\d{2,4})$/);
@@ -683,6 +696,7 @@ function fmtDateCell(v) {
   }
   return s; 
 }
+
 function parseTimeCell(v) {
   if(!v)return'';
   if(v instanceof Date)return String(v.getHours()).padStart(2,'0')+':'+String(v.getMinutes()).padStart(2,'0');
@@ -692,10 +706,12 @@ function parseTimeCell(v) {
   if(!isNaN(n)&&n>=0&&n<1){const tot=Math.round(n*1440);return String(Math.floor(tot/60)).padStart(2,'0')+':'+String(tot%60).padStart(2,'0');}
   const dm=s.match(/(\d{1,2}):(\d{2})/);if(dm)return dm[1].padStart(2,'0')+':'+dm[2];return s;
 }
+
 function pad(n)       { return String(n).padStart(2,'0'); }
 function ok(msg)      { return ContentService.createTextOutput(JSON.stringify({status:'ok',message:msg})).setMimeType(ContentService.MimeType.JSON); }
 function errResp(msg) { return ContentService.createTextOutput(JSON.stringify({status:'error',message:msg})).setMimeType(ContentService.MimeType.JSON); }
 function jsonResp(o)  { return ContentService.createTextOutput(JSON.stringify(o)).setMimeType(ContentService.MimeType.JSON); }
+
 function getOrCreateSheet(ss, name, headers) {
   let sheet = ss.getSheetByName(name);
   if (!sheet) {
@@ -711,8 +727,10 @@ function getOrCreateSheet(ss, name, headers) {
   sheet.setFrozenRows(1);
   return sheet;
 }
+
 function autoFormatLastRow(sheet, colCount) {
   const r=sheet.getLastRow();if(r%2===0)sheet.getRange(r,1,1,colCount).setBackground('#f8f9fa');
 }
+
 function translateCategory(c) { return{entry:'כניסה',exit:'יציאה',task:'משימה'}[c]||c; }
 function reverseCategory(h)   { return{'כניסה':'entry','יציאה':'exit','משימה':'task'}[h]||h; }
