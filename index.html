@@ -444,6 +444,9 @@ textarea.fi{resize:vertical;min-height:72px}
 .wc-actual{font-family:'Syne',monospace;font-size:.57rem;font-weight:700;color:var(--text3);line-height:1}
 .wc-cell.ok .wc-actual{color:rgba(200,241,53,.75)}
 .wc-cell.deficit .wc-actual{color:rgba(255,77,106,.8)}
+.wc-cell.sick .wc-actual{color:rgba(167,139,250,.8)}
+.wc-cell.vacation .wc-actual{color:rgba(255,184,48,.8)}
+.wc-cell.sabbatical .wc-actual{color:rgba(99,202,183,.8)}
 .wc-vac-icon{font-size:.6rem;line-height:1}
 .wc-stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;padding:2px 1px}
 .wc-stat{background:var(--bg3);border:1px solid var(--border);border-radius:var(--rs);
@@ -3034,12 +3037,15 @@ function renderDayWCStatus(ds,reports){
   }
   $('day-wc-section').dataset.date=ds;
   let html='';
-  if(status==='vacation'||status==='sick'||status==='holiday'||status==='sabbatical'||status==='weekend'){
-    const dtLabel=dayTypeLabels[status]||('📝 '+notes);
-    const dtColor=dayTypeColors[status]||'var(--amber)';
-    html+=`<span class="day-status-badge ${status}">${dtLabel}</span>`;
-    html+=`<span style="font-size:.78rem;color:var(--text3)">${t('wcDayNotCount')}</span>`;
-  }else if(status==='nostandard'){
+   if((status==='vacation'||status==='sick'||status==='holiday'||status==='sabbatical') && minMins > 0){
+       const dtLabel=dayTypeLabels[status]||('📝 '+notes);
+       html+=`<span class="day-status-badge ${status}">${dtLabel} — מפוצה מלא</span>`;
+       html+=`<span style="font-size:.82rem;color:var(--text2);display:block;margin-top:6px">${t('wcStandardLabel')} <strong style="color:var(--text)">${minsToHHMM(minMins)}</strong> (הושלם אוטומטית)</span>`;
+     }else if(status==='vacation'||status==='sick'||status==='holiday'||status==='sabbatical'||status==='weekend'){
+       const dtLabel=dayTypeLabels[status]||('📝 '+notes);
+       html+=`<span class="day-status-badge ${status}">${dtLabel}</span>`;
+       html+=`<span style="font-size:.78rem;color:var(--text3)">${t('wcDayNotCount')}</span>`;
+     }else if(status==='nostandard'){
     html=`<span class="day-status-badge nodata">${t('wcNoStandard')}</span><span style="font-size:.75rem;color:var(--text3)">${t('wcEditHint')}</span>`;
   }else{
     // Show day-type badge alongside work status if relevant
