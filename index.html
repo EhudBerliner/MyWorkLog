@@ -1754,6 +1754,20 @@ function splashInit(){
   },900);
 }
 
+// ── טריגר לסנכרון אוטומטי בחזרה מפעילות ברקע ──
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') {
+    // השהייה קלה כדי לתת לדפדפן לרענן את הממשק לפני פעולת הרשת
+    setTimeout(() => {
+      try {
+        if (typeof bgSync === 'function') bgSync();
+      } catch (err) {
+        console.error('[visibilitychange sync error]', err);
+      }
+    }, 500); 
+  }
+});
+
 
 /* Silent queue flush — no UI, no toast, just sends pending reports */
 async function syncQ_silent(){
