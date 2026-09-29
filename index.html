@@ -2756,12 +2756,19 @@ function saveWStandardLocal(arr){ store(K.wstandard,arr); }
 /* Return standard for a specific date-string YYYY-MM-DD */
 /* Classify Notes field → 'vacation' | 'sick' | 'holiday' | 'normal' */
 function classifyNotes(notes){
-  if(!notes)return'normal';
-  const n=notes.trim().toLowerCase();
-  if(/שבתון|sabbatical|לא זמין|חופשה ממושכת/.test(n))return'sabbatical';
-  if(/חופש|vacation|holiday|חג|פסח|שבועות|ראש השנה|יום כיפור|סוכות|שמחת תורה|חנוכה|פורים|יום עצמאות/.test(n))return'vacation';
-  if(/מחלה|חולה|sick|ill/.test(n))return'sick';
-  return'normal';
+  if(!notes) return 'normal';
+  const n = notes.trim().toLowerCase();
+  
+  // זיהוי שבתון / חופשה ממושכת
+  if (/שבתון|sabbatical|לא זמין|חופשה ממושכת/.test(n)) return 'sabbatical';
+  
+  // זיהוי חופשה וחגים
+  if (/חופש|vacation|holiday|חג|פסח|שבועות|ראש השנה|יום כיפור|סוכות|שמחת תורה|חנוכה|פורים|יום עצמאות/.test(n)) return 'vacation';
+  
+  // זיהוי מחלה - כולל 'מחלה', 'חלה', 'חולה', 'sick', 'ill'
+  if (/מחלה|חלה|חולה|sick|ill/.test(n)) return 'sick';
+  
+  return 'normal';
 }
 
 function getDayStd(ds){
