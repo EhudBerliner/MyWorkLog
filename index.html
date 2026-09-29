@@ -442,11 +442,11 @@ textarea.fi{resize:vertical;min-height:72px}
 .wc-cell.sabbatical .wc-day-num{color:#63cab7}
 .wc-cell.sabbatical .wc-day-num{color:#63cab7}
 .wc-actual{font-family:'Syne',monospace;font-size:.57rem;font-weight:700;color:var(--text3);line-height:1}
-.wc-cell.ok .wc-actual{color:rgba(200,241,53,.75)}
-.wc-cell.deficit .wc-actual{color:rgba(255,77,106,.8)}
-.wc-cell.sick .wc-actual{color:rgba(167,139,250,.8)}
-.wc-cell.vacation .wc-actual{color:rgba(255,184,48,.8)}
-.wc-cell.sabbatical .wc-actual{color:rgba(99,202,183,.8)}
+.wc-cell.ok .wc-actual{color:rgba(200,241,53,.9)}
+.wc-cell.deficit .wc-actual{color:var(--red)}
+.wc-cell.sick .wc-actual{color:var(--purple)}
+.wc-cell.vacation .wc-actual{color:var(--amber)}
+.wc-cell.sabbatical .wc-actual{color:#63cab7}
 .wc-vac-icon{font-size:.6rem;line-height:1}
 .wc-stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;padding:2px 1px}
 .wc-stat{background:var(--bg3);border:1px solid var(--border);border-radius:var(--rs);
@@ -3354,7 +3354,8 @@ function renderAnnualStats(year, reports){
       if(dayType==='vacation'||dayType==='holiday')vac++;
       if(dayType==='sick')sick++;
       if(dayType==='sabbatical')vac++; // count sabbatical with special days
-      if(status==='nostandard'||status==='vacation'||status==='sick'||status==='holiday'||status==='sabbatical'||status==='weekend')continue;
+      if(status==='nostandard'||status==='weekend')continue;
+      if(['vacation','sick','holiday','sabbatical'].includes(dayType) && minMins===0) continue;
       wDays++;req+=minMins;act+=am;
       const diff=am-minMins;
       if(diff>=0){surplus+=diff;okD++;}else{deficit+=Math.abs(diff);defD++;}
@@ -3421,7 +3422,8 @@ function renderRangeStats(from, to, reports){
     const{status,actualMins:am,minMins,dayType}=getDayStatus(ds,reports);
     if(dayType==='vacation'||dayType==='holiday')vac++;
     if(dayType==='sick')sick++;
-    if(status==='nostandard'||status==='vacation'||status==='sick'||status==='holiday')continue;
+    if(status==='nostandard'||status==='weekend')continue;
+    if(['vacation','sick','holiday','sabbatical'].includes(dayType) && minMins===0) continue;
     wDays++;req+=minMins;act+=am;
     const diff=am-minMins;
     if(diff>=0){surplus+=diff;okD++;}else{deficit+=Math.abs(diff);defD++;}
@@ -4153,25 +4155,31 @@ async function buildReportWorkbook(fromDate, toDate){
 
   if(!periodReps.length) throw new Error('no_data');
 
-  /* ── Sheet 1: Attendance ──────────────────────────────── */
-  const ATT_COLS=['Date','Entry','Exit','Duration','Daily Standard','Deviation'];
-  const attDates=[...new Set(periodReps
-    .filter(r=>r.category==='entry'||r.category==='exit')
-    .map(r=>r.report_date))].sort();
+/* ── Sheet 1: Attendance ──────────────────────────────── */
+  const ATT_COLS=['Date','Entry','Exit','Duration','Daily Standard','Deviation','Note'];
   const attRows=[];
-  for(const ds of attDates){
-    const{stdHours}=getDayStd(ds);
-    const stdMins=Math.round(stdHours*60);
-    const stdStr=stdMins>0?minsToHHMM(stdMins):'';
-    const{pairs,mins:totalMins}=calcDayWorkMins(ds,periodReps);
-    if(!pairs.length) continue;
-    const devMins=stdMins>0?totalMins-stdMins:null;
-    const devStr=devMins!==null?(devMins>=0?'+':'')+minsToHHMM(Math.abs(devMins)):'';
-    if(pairs.length===1){
-      attRows.push([ds,pairs[0].entry,pairs[0].exit,minsToHHMM(pairs[0].mins),stdStr,devStr]);
-    }else{
-      attRows.push([ds,pairs[0].entry,pairs[pairs.length-1].exit,minsToHHMM(totalMins),stdStr,devStr]);
-      pairs.forEach(p=>attRows.push([ds,p.entry,p.exit,minsToHHMM(p.mins),'','']));
+  const startDt = new Date(fromDate);
+  const endDt = new Date(toDate);
+  for(let dt = new Date(startDt); dt <= endDt; dt.setDate(dt.getDate()+1)){
+    const ds = isoD(dt);
+    const { status, minMins, actualMins, dayType, notes } = getDayStatus(ds, periodReps);
+    const isPaid = ['vacation','sick','holiday','sabbatical'].includes(dayType);
+    const stdStr = minMins > 0 ? minsToHHMM(minMins) : '';
+    const { pairs, mins: rawMins } = calcDayWorkMins(ds, periodReps);
+    
+    // דלג אם אין דיווחים ביום זה, אלא אם כן מדובר ביום היעדרות מזכה
+    if(!pairs.length && !(isPaid && minMins > 0)) continue;
+    
+    const devMins = minMins > 0 ? actualMins - minMins : null;
+    const devStr = devMins !== null ? (devMins >= 0 ? '+' : '') + minsToHHMM(Math.abs(devMins)) : '';
+    
+    if(!pairs.length && isPaid && minMins > 0){
+      attRows.push([ds, '—', '—', minsToHHMM(actualMins), stdStr, devStr, notes || dayType]);
+    } else if(pairs.length === 1){
+      attRows.push([ds, pairs[0].entry, pairs[0].exit, minsToHHMM(pairs[0].mins), stdStr, devStr, notes || '']);
+    } else if(pairs.length > 1){
+      attRows.push([ds, pairs[0].entry, pairs[pairs.length-1].exit, minsToHHMM(rawMins), stdStr, devStr, notes || '']);
+      pairs.forEach(p=>attRows.push([ds, p.entry, p.exit, minsToHHMM(p.mins), '', '', '']));
     }
   }
 
