@@ -3142,13 +3142,22 @@ function renderWCCalendar(year,month,reports){
 function renderMonthlyWCStats(year, month, reports) {
   const el = $('monthly-wc-stats');
   if (!el) return;
-  const todayStr = isoD(new Date());
+  
+  const now = new Date();
+  const todayStr = isoD(now);
+  
+  // חישוב תאריך האתמול (פורמט YYYY-MM-DD)
+  const yesterday = new Date(now);
+  yesterday.setDate(yesterday.getDate() - 1);
+  const yesterdayStr = isoD(yesterday);
+
   const lastDate = new Date(year, month + 1, 0).getDate();
   
   let reqMins = 0;
   let actualMins = 0;
-  let reportedWorkDaysCount = 0; // ימים עם דיווח/הצהרה
+  let reportedWorkDaysCount = 0; // ימי עבודה מדווחים (חופש/מחלה/נוכחות)
   let totalStdWorkDays = 0;      // סך ימי עבודה בתקן החודש
+  let missingReportDays = 0;     // 🆕 ימים ללא דיווח (מתחילת החודש עד אתמול)
   let vacDays = 0;
   let sickDays = 0;
 
@@ -3156,26 +3165,30 @@ function renderMonthlyWCStats(year, month, reports) {
     const ds = `${year}-${pad(month + 1)}-${pad(d)}`;
     const { status, actualMins: am, minMins, dayType, stdHours } = getDayStatus(ds, reports);
     
-    // בדיקה אם יום עבודה רגיל לפי סופ"ש/תקן
+    // בדיקה אם היום מוגדר כיום עבודה בתקן
     const isStdWorkDay = minMins > 0 || (stdHours > 0);
     if (isStdWorkDay) totalStdWorkDays++;
 
-    // ספירת ימי הצהרה
+    // ספירת הצהרות
     if (dayType === 'vacation') vacDays++;
     if (dayType === 'sick') sickDays++;
 
-    // חישוב ימי עבודה/דיווח בפועל (נוכחות או הצהרה)
-    if (am > 0 || dayType === 'vacation' || dayType === 'sick' || dayType === 'sabbatical') {
+    // בדיקה אם הייתה פעילות/דיווח ביום הזה
+    const hasReport = am > 0 || ['vacation', 'sick', 'holiday', 'sabbatical'].includes(dayType);
+
+    if (hasReport) {
       reportedWorkDaysCount++;
+    } else if (isStdWorkDay && ds <= yesterdayStr) {
+      // 🆕 יום תקן מתחילת החודש עד אתמול שלא דווחה בו שום פעילות
+      missingReportDays++;
     }
 
     // חישוב שעות נדרשות ובפועל עד היום הנוכחי
     if (ds <= todayStr && isStdWorkDay) {
       reqMins += minMins;
       
-      // אם זה יום הצהרה (חופש/מחלה/שבתון) - מקבלים זיכוי שעות מלא בגובה התקן
       if (['vacation', 'sick', 'holiday', 'sabbatical'].includes(dayType)) {
-        actualMins += Math.max(am, minMins);
+        actualMins += Math.max(am, minMins); // זיכוי מלא בגין יום הצהרה
       } else {
         actualMins += am;
       }
@@ -3187,13 +3200,17 @@ function renderMonthlyWCStats(year, month, reports) {
   const pctAch = reqMins > 0 ? Math.round((actualMins / reqMins) * 100) : null;
   const pctColor = pctAch == null ? 'var(--text3)' : pctAch >= 100 ? 'var(--lime)' : pctAch >= 80 ? 'var(--amber)' : 'var(--red)';
 
-  // רינדור הכרטיסיות המעודכנות בלבד (ללא עודף/חוסר/משימות/ימים בתקן)
+  // רינדור הכרטיסיות (כולל הכרטיסייה החדשה)
   el.innerHTML = `
     <div class="wc-stat"><div class="wc-stat-lbl">ימי עבודה</div><div class="wc-stat-val" style="font-size:.82rem">${reportedWorkDaysCount}/${totalStdWorkDays}</div></div>
     <div class="wc-stat"><div class="wc-stat-lbl">נדרש עד היום</div><div class="wc-stat-val" style="font-size:.82rem">${minsToHHMM(reqMins)}</div></div>
     <div class="wc-stat actual-s"><div class="wc-stat-lbl">בפועל</div><div class="wc-stat-val" style="font-size:.82rem">${minsToHHMM(actualMins)}</div></div>
     <div class="wc-stat ${balClass}"><div class="wc-stat-lbl">מאזן</div><div class="wc-stat-val" style="font-size:.82rem">${balanceMins >= 0 ? '+' : ''}${minsToHHMM(balanceMins)}</div></div>
     <div class="wc-stat" style="border-color:${pctColor}"><div class="wc-stat-lbl">עמידה ביעד</div><div class="wc-stat-val" style="color:${pctColor}">${pctAch != null ? pctAch + '%' : '—'}</div></div>
+    <div class="wc-stat" style="border-color:${missingReportDays > 0 ? 'var(--red)' : 'var(--border)'}">
+      <div class="wc-stat-lbl">ללא דיווח</div>
+      <div class="wc-stat-val" style="color:${missingReportDays > 0 ? 'var(--red)' : 'var(--text2)'}">${missingReportDays}</div>
+    </div>
     ${vacDays > 0 ? `<div class="wc-stat" style="border-color:var(--amber)"><div class="wc-stat-lbl">🏖 ימי חופש</div><div class="wc-stat-val" style="color:var(--amber)">${vacDays}</div></div>` : ''}
     ${sickDays > 0 ? `<div class="wc-stat" style="border-color:var(--purple)"><div class="wc-stat-lbl">🤒 ימי מחלה</div><div class="wc-stat-val" style="color:var(--purple)">${sickDays}</div></div>` : ''}
   `;
