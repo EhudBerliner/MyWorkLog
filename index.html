@@ -3144,49 +3144,67 @@ function renderWCCalendar(year,month,reports){
 }
 
 /* ─ Monthly stats ─ */
-function renderMonthlyWCStats(year,month,reports){
-  const el=$('monthly-wc-stats');if(!el)return;
-  const todayStr=isoD(new Date());
-  const lastDate=new Date(year,month+1,0).getDate();
-  let reqMins=0,actualMins=0,surplusMins=0,deficitMins=0,deficitDays=0,okDays=0,workDays=0,pastDays=0,vacDays=0,sickDays=0,sabbDays=0;
-  for(let d=1;d<=lastDate;d++){
-    const ds=`${year}-${pad(month+1)}-${pad(d)}`;
-    const{status,actualMins:am,minMins,dayType}=getDayStatus(ds,reports);
-    // Count special days regardless of work status
-    if(dayType==='vacation'||dayType==='holiday')vacDays++;
-    if(dayType==='sick')sickDays++;
-    if(dayType==='sabbatical')sabbDays++;
-    if(status==='nostandard'||status==='vacation'||status==='sick'||status==='holiday'||status==='sabbatical'||status==='weekend')continue;
-    workDays++;
-    if(ds<=todayStr){
-      pastDays++;reqMins+=minMins;actualMins+=am;
-      const diff=am-minMins;
-      if(diff>=0){surplusMins+=diff;okDays++;}
-      else{deficitMins+=Math.abs(diff);deficitDays++;}
+function renderMonthlyWCStats(year, month, reports) {
+  const el = $('monthly-wc-stats');
+  if (!el) return;
+  const todayStr = isoD(new Date());
+  const lastDate = new Date(year, month + 1, 0).getDate();
+  
+  let reqMins = 0;
+  let actualMins = 0;
+  let reportedWorkDaysCount = 0; // ימים עם דיווח/הצהרה
+  let totalStdWorkDays = 0;      // סך ימי עבודה בתקן החודש
+  let vacDays = 0;
+  let sickDays = 0;
+
+  for (let d = 1; d <= lastDate; d++) {
+    const ds = `${year}-${pad(month + 1)}-${pad(d)}`;
+    const { status, actualMins: am, minMins, dayType, stdHours } = getDayStatus(ds, reports);
+    
+    // בדיקה אם יום עבודה רגיל לפי סופ"ש/תקן
+    const isStdWorkDay = minMins > 0 || (stdHours > 0);
+    if (isStdWorkDay) totalStdWorkDays++;
+
+    // ספירת ימי הצהרה
+    if (dayType === 'vacation') vacDays++;
+    if (dayType === 'sick') sickDays++;
+
+    // חישוב ימי עבודה/דיווח בפועל (נוכחות או הצהרה)
+    if (am > 0 || dayType === 'vacation' || dayType === 'sick' || dayType === 'sabbatical') {
+      reportedWorkDaysCount++;
+    }
+
+    // חישוב שעות נדרשות ובפועל עד היום הנוכחי
+    if (ds <= todayStr && isStdWorkDay) {
+      reqMins += minMins;
+      
+      // אם זה יום הצהרה (חופש/מחלה/שבתון) - מקבלים זיכוי שעות מלא בגובה התקן
+      if (['vacation', 'sick', 'holiday', 'sabbatical'].includes(dayType)) {
+        actualMins += Math.max(am, minMins);
+      } else {
+        actualMins += am;
+      }
     }
   }
-  const balance=surplusMins-deficitMins;
-  const balClass=balance>=0?'balpos':'balneg';
-  const pctAch=reqMins>0?Math.round(actualMins/reqMins*100):null;
-  const pctColor=pctAch==null?'var(--text3)':pctAch>=100?'var(--lime)':pctAch>=80?'var(--amber)':'var(--red)';
 
-  el.innerHTML=`
-    <div class="wc-stat"><div class="wc-stat-lbl">${t('wcStatWorkdays')}</div><div class="wc-stat-val">${workDays}</div></div>
-    <div class="wc-stat"><div class="wc-stat-lbl">${t('wcStatRequired')}</div><div class="wc-stat-val" style="font-size:.82rem">${minsToHHMM(reqMins)}</div></div>
-    <div class="wc-stat actual-s"><div class="wc-stat-lbl">${t('wcStatActual')}</div><div class="wc-stat-val" style="font-size:.82rem">${minsToHHMM(actualMins)}</div></div>
-    <div class="wc-stat surplus-s"><div class="wc-stat-lbl">${t('wcStatSurplus')}</div><div class="wc-stat-val" style="font-size:.82rem">${minsToHHMM(surplusMins)}</div></div>
-    <div class="wc-stat deficit-s"><div class="wc-stat-lbl">${t('wcStatDeficit')}</div><div class="wc-stat-val" style="font-size:.82rem">${minsToHHMM(deficitMins)}</div></div>
-    <div class="wc-stat ${balClass}"><div class="wc-stat-lbl">${t('wcStatBalance')}</div><div class="wc-stat-val" style="font-size:.82rem">${balance>=0?'+':''}${minsToHHMM(balance)}</div></div>
-    <div class="wc-stat" style="border-color:var(--lime)"><div class="wc-stat-lbl">${t('wcStatOkDays')}</div><div class="wc-stat-val" style="color:var(--lime)">${okDays}<span style="font-size:.65rem;color:var(--text3)">/${pastDays}</span></div></div>
-    <div class="wc-stat deficit-s"><div class="wc-stat-lbl">${t('wcStatDefDays')}</div><div class="wc-stat-val" style="color:${deficitDays>0?'var(--red)':'var(--text)'}">${deficitDays}<span style="font-size:.65rem;color:var(--text3)">/${pastDays}</span></div></div>
-    <div class="wc-stat" style="border-color:${pctColor}"><div class="wc-stat-lbl">${t('wcStatAchieve')}</div><div class="wc-stat-val" style="color:${pctColor}">${pctAch!=null?pctAch+'%':'—'}</div></div>
-    ${vacDays>0?'<div class="wc-stat" style="border-color:var(--amber)"><div class="wc-stat-lbl">'+t('wcStatVacDays')+'</div><div class="wc-stat-val" style="color:var(--amber)">'+vacDays+'</div></div>':''}
-    ${sickDays>0?'<div class="wc-stat" style="border-color:var(--purple)"><div class="wc-stat-lbl">'+t('wcStatSickDays')+'</div><div class="wc-stat-val" style="color:var(--purple)">'+sickDays+'</div></div>':''}
+  const balanceMins = actualMins - reqMins;
+  const balClass = balanceMins >= 0 ? 'balpos' : 'balneg';
+  const pctAch = reqMins > 0 ? Math.round((actualMins / reqMins) * 100) : null;
+  const pctColor = pctAch == null ? 'var(--text3)' : pctAch >= 100 ? 'var(--lime)' : pctAch >= 80 ? 'var(--amber)' : 'var(--red)';
+
+  // רינדור הכרטיסיות המעודכנות בלבד (ללא עודף/חוסר/משימות/ימים בתקן)
+  el.innerHTML = `
+    <div class="wc-stat"><div class="wc-stat-lbl">ימי עבודה</div><div class="wc-stat-val" style="font-size:.82rem">${reportedWorkDaysCount}/${totalStdWorkDays}</div></div>
+    <div class="wc-stat"><div class="wc-stat-lbl">נדרש עד היום</div><div class="wc-stat-val" style="font-size:.82rem">${minsToHHMM(reqMins)}</div></div>
+    <div class="wc-stat actual-s"><div class="wc-stat-lbl">בפועל</div><div class="wc-stat-val" style="font-size:.82rem">${minsToHHMM(actualMins)}</div></div>
+    <div class="wc-stat ${balClass}"><div class="wc-stat-lbl">מאזן</div><div class="wc-stat-val" style="font-size:.82rem">${balanceMins >= 0 ? '+' : ''}${minsToHHMM(balanceMins)}</div></div>
+    <div class="wc-stat" style="border-color:${pctColor}"><div class="wc-stat-lbl">עמידה ביעד</div><div class="wc-stat-val" style="color:${pctColor}">${pctAch != null ? pctAch + '%' : '—'}</div></div>
+    ${vacDays > 0 ? `<div class="wc-stat" style="border-color:var(--amber)"><div class="wc-stat-lbl">🏖 ימי חופש</div><div class="wc-stat-val" style="color:var(--amber)">${vacDays}</div></div>` : ''}
+    ${sickDays > 0 ? `<div class="wc-stat" style="border-color:var(--purple)"><div class="wc-stat-lbl">🤒 ימי מחלה</div><div class="wc-stat-val" style="color:var(--purple)">${sickDays}</div></div>` : ''}
   `;
-  const ac=$('stat-achievement-card');
-  if(ac)ac.style.display='none';
 }
 
+   
 /* ─ Edit day modal ─ */
 let _editDs='';
 function editDayConfig(ds){
