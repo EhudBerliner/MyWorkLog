@@ -11,6 +11,10 @@
 <link rel="apple-touch-icon" href="apple-touch-icon.png"/>
 <link rel="icon" type="image/png" href="logo.png" />
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://script.google.com"/>
+<link rel="preconnect" href="https://script.googleusercontent.com"/>
+<link rel="dns-prefetch" href="https://script.google.com"/>
+<link rel="dns-prefetch" href="https://script.googleusercontent.com"/>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Noto+Sans+Hebrew:wght@300;400;500;700&display=swap" rel="stylesheet"/>
 <style>
 /* ═══════════════════════════════════════════════════════
@@ -1920,7 +1924,7 @@ async function syncQ_silent(){
   const fail=[];
   for(const r of q){
     try{
-      await fetch(ep,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(r),mode:'no-cors'});
+      await fetch(ep,{method:'POST',headers:{'Content-Type':'text/plain;charset=UTF-8'},body:JSON.stringify(r),mode:'no-cors',keepalive:true});
       markSent(r.id);
     }catch{fail.push(r);}
   }
@@ -2672,63 +2676,16 @@ function buildRep(date,time){
   return{id:Date.now()+Math.random().toString(36).slice(2),timestamp:new Date().toISOString(),
     report_date:date,report_time:rTime,category:cat,description:desc,project:proj};
 }
-/* Legacy blocking send — used only by syncQ */
-async function send(rep,ep){
-  try{
-    await fetch(ep,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(rep),mode:'no-cors'});
-    markSent(rep.id);
-  }catch{addQ(rep);pendUI();}
-}
 
-/* Non-blocking background send for new reports */
-function sendBackground(rep,ep){
-  const label=catLbl(rep.category);
-  fetch(ep,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(rep),mode:'no-cors'})
-    .then(()=>{
-      markSent(rep.id);
-      toast(t('toastSentLabel',label),'success');
-    })
-    .catch(()=>{
-      addQ(rep);pendUI();
-      toast(t('toastQueuedLabel',label),'warn',3500);
-    });
-}
+   
 
 /* STORAGE */
 function saveLocal(r){const rs=store(K.reps)||[];rs.unshift(r);store(K.reps,rs.slice(0,300))}
 function markSent(id){const rs=store(K.reps)||[];const r=rs.find(x=>x.id===id);if(r)r.sent=true;store(K.reps,rs)}
 function addQ(r){const q=store(K.q)||[];if(!q.find(x=>x.id===r.id))q.push(r);store(K.q,q)}
 function pendUI(){const q=store(K.q)||[];$('pending-section').classList.toggle('hidden',!q.length);$('pending-count').textContent=q.length}
-async function syncQ(){
-  const ep=store(K.ep);if(!ep){toast(t('toastNoEndpointSync'),'warn');return}
-  const q=store(K.q)||[];
-  if(!q.length&&!(store(K.delQ)||[]).length){
-    await syncFromSheet();
-    toast(t('toastNoQueuePending'),'success');return;
-  }
-  // Snapshot + clear queue immediately — prevents duplicate sends on re-click
-  const snapshot=[...q];
-  store(K.q,[]);pendUI();
-  let ok=0;const fail=[];
-  for(const r of snapshot){
-    try{
-      await fetch(ep,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(r),mode:'no-cors'});
-      markSent(r.id);ok++;
-    }catch{fail.push(r);}
-  }
-  // Re-add only items that failed (network error)
-  if(fail.length){
-    const current=store(K.q)||[];
-    const ids=new Set(current.map(x=>x.id));
-    fail.forEach(r=>{if(!ids.has(r.id))current.push(r);});
-    store(K.q,current);
-  }
-  pendUI();
-  await flushDeleteQueue();
-  await flushWStandardQueue();
-  await syncFromSheet();
-  toast(t('toastSynced',ok),'success');
-}
+
+
 
 /* NETWORK */
 function netInit(){
@@ -2759,31 +2716,9 @@ function histRender(){
     .slice(0,200);
   $('history-list').innerHTML=rs.length?rs.map(r=>hItem(r,true)).join(''):`<p class="empty">${t('historyEmpty')}</p>`;
 }
-/* Fix 10: delete report */
-function delReport(id){
-  if(!confirm(t('confirmDelReport')||'למחוק דיווח זה?'))return;
-  const all=store(K.reps)||[];
-  const rep=all.find(r=>r.id===id);
-  const cat=rep?rep.category:'';
-  const date=rep?rep.report_date:'';
-  store(K.reps,all.filter(r=>r.id!==id));
-  store(K.q,(store(K.q)||[]).filter(r=>r.id!==id));
-  const ep=store(K.ep);
-  if(ep&&navigator.onLine){
-    // send category+date so GAS can clean Attendance/Tasks too
-    fetch(ep,{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({action:'delete',id,category:cat,report_date:date}),mode:'no-cors'}).catch(()=>{
-      const dq=store('mwl_delete_queue')||[];
-      dq.push({id,category:cat,report_date:date});
-      store('mwl_delete_queue',dq);
-    });
-  }else if(ep){
-    const dq=store('mwl_delete_queue')||[];
-    dq.push({id,category:cat,report_date:date});
-    store('mwl_delete_queue',dq);
-  }
-  histRender();summaryRender();updateSessionBanner();toast(t('toastDeleted')||'🗑 דיווח נמחק','success');
-}
+
+
+   
 function hItem(r,showDel=false){
   const actBtns=showDel?`<div style="display:flex;gap:5px;flex-shrink:0"><button class="btn-g sm" onclick="openEditReport('${r.id}')" style="padding:4px 8px;font-size:.7rem" title="ערוך">✏️</button><button class="btn-d sm" onclick="delReport('${r.id}')" style="padding:4px 8px;font-size:.7rem" title="מחק">🗑</button></div>`:'';
   return`<div class="hitem" data-id="${r.id}"><div class="hdot ${r.category}"></div><div class="hmeta"><div class="htitle">${r.description||catLbl(r.category)}</div><div class="hsub">${fmtD(r.report_date)} · ${fmtT(r.report_time)}${r.project?' · '+r.project:''}${r.workDuration?' · ⏱'+r.workDuration:''}</div></div><span class="hbadge ${r.category}">${catLbl(r.category)}</span>${actBtns}</div>`;
@@ -2828,45 +2763,6 @@ function _syncEditFields(){
   $('edit-time-wrap').style.display   = isTask?'none':'';
 }
 
-async function saveEditReport(){
-  if(!_editRepId) return;
-  const reps = store(K.reps)||[];
-  const idx = reps.findIndex(x=>x.id===_editRepId);
-  if(idx<0){ toast('\u26a0\ufe0f \u05d3\u05d9\u05d5\u05d5\u05d7 \u05dc\u05d0 \u05e0\u05de\u05e6\u05d0','warn'); return; }
-  const btn = $('btn-edit-report-save');
-  btn.disabled=true; btn.textContent='...';
-  const date = $('edit-report-date').value;
-  if(!date){ toast('\u26a0\ufe0f \u05e0\u05d0 \u05dc\u05de\u05dc\u05d0 \u05ea\u05d0\u05e8\u05d9\u05da','warn'); btn.disabled=false; btn.textContent='\u26a1 \u05e9\u05de\u05d5\u05e8 \u05e9\u05d9\u05e0\u05d5\u05d9\u05d9\u05dd'; return; }
-  const isTask = _editRepCat==='task';
-  let report_time, description='', project='';
-  if(isTask){
-    report_time = ($('edit-report-duration').value||'').trim();
-    description = ($('edit-task-desc').value||'').trim();
-    project     = ($('edit-task-project').value||'').trim();
-    if(!project){ toast('\u26a0\ufe0f \u05e0\u05d0 \u05dc\u05de\u05dc\u05d0 \u05e4\u05e8\u05d5\u05d9\u05e7\u05d8','warn'); btn.disabled=false; btn.textContent='\u26a1 \u05e9\u05de\u05d5\u05e8 \u05e9\u05d9\u05e0\u05d5\u05d9\u05d9\u05dd'; return; }
-    if(!report_time){ toast('\u26a0\ufe0f \u05e0\u05d0 \u05dc\u05de\u05dc\u05d0 \u05de\u05e9\u05da','warn'); btn.disabled=false; btn.textContent='\u26a1 \u05e9\u05de\u05d5\u05e8 \u05e9\u05d9\u05e0\u05d5\u05d9\u05d9\u05dd'; return; }
-    const ps=store(K.proj)||[];
-    if(!ps.includes(project)){ps.push(project);store(K.proj,ps);projLoad();}
-  } else {
-    report_time = ($('edit-report-time').value||'').trim();
-    if(!report_time){ toast('\u26a0\ufe0f \u05e0\u05d0 \u05dc\u05de\u05dc\u05d0 \u05e9\u05e2\u05d4','warn'); btn.disabled=false; btn.textContent='\u26a1 \u05e9\u05de\u05d5\u05e8 \u05e9\u05d9\u05e0\u05d5\u05d9\u05d9\u05dd'; return; }
-    report_time = applyRounding(report_time);
-  }
-  const oldDate = reps[idx].report_date;
-  const updated = {...reps[idx], report_date:date, report_time, category:_editRepCat, description, project, edited:new Date().toISOString()};
-  reps[idx] = updated;
-  store(K.reps, reps);
-  const ep = store(K.ep);
-  if(ep && navigator.onLine){
-    fetch(ep,{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({action:'editReport',...updated,old_date:oldDate}),mode:'no-cors'}).catch(()=>{});
-  }
-  histRender(); summaryRender(); updateSessionBanner();
-  buzz([20,40]);
-  toast('\u2705 \u05d3\u05d9\u05d5\u05d5\u05d7 \u05e2\u05d5\u05d3\u05db\u05df','success');
-  btn.disabled=false; btn.textContent='\u26a1 \u05e9\u05de\u05d5\u05e8 \u05e9\u05d9\u05e0\u05d5\u05d9\u05d9\u05dd';
-  closeM('modal-edit-report');
-}
 
 function editReportInit(){
   $('btn-close-edit-report').addEventListener('click',()=>closeM('modal-edit-report'));
@@ -3826,21 +3722,6 @@ function projRemove(encoded){
 }
 
 
-/* ── BI-DIRECTIONAL SYNC ── */
-/* Flush offline-queued deletes to sheet */
-async function flushDeleteQueue(){
-  const ep=store(K.ep);
-  if(!ep||!navigator.onLine)return;
-  const q=store(K.delQ)||[];if(!q.length)return;
-  const fail=[];
-  for(const item of q){
-    try{
-      await fetch(ep,{method:'POST',headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({action:'delete',id:item.id,category:item.category,report_date:item.report_date}),mode:'no-cors'});
-    }catch{fail.push(item);}
-  }
-  store(K.delQ,fail);
-}
 
 /* ═══════════════════════════════════════════════════════
    DELTA SYNC FUNCTIONS — 60 DAYS TIME WINDOW (FIXED)
@@ -3999,22 +3880,147 @@ async function syncWStandardDelta(fromDate) {
 }
 
 
+/* ─── פונקציות שליחה מסונכרנות ומורחבות לבקשות מהירות ─── */
 
+async function send(rep,ep){
+  try{
+    await fetch(ep,{method:'POST',headers:{'Content-Type':'text/plain;charset=UTF-8'},body:JSON.stringify(rep),mode:'no-cors',keepalive:true});
+    markSent(rep.id);
+  }catch{addQ(rep);pendUI();}
+}
 
+function sendBackground(rep,ep){
+  const label=catLbl(rep.category);
+  fetch(ep,{method:'POST',headers:{'Content-Type':'text/plain;charset=UTF-8'},body:JSON.stringify(rep),mode:'no-cors',keepalive:true})
+    .then(()=>{
+      markSent(rep.id);
+      toast(t('toastSentLabel',label),'success');
+    })
+    .catch(()=>{
+      addQ(rep);pendUI();
+      toast(t('toastQueuedLabel',label),'warn',3500);
+    });
+}
 
+async function syncQ(){
+  const ep=store(K.ep);if(!ep){toast(t('toastNoEndpointSync'),'warn');return}
+  const q=store(K.q)||[];
+  if(!q.length&&!(store(K.delQ)||[]).length){
+    await syncFromSheet();
+    toast(t('toastNoQueuePending'),'success');return;
+  }
+  const snapshot=[...q];
+  store(K.q,[]);pendUI();
+  let ok=0;const fail=[];
+  for(const r of snapshot){
+    try{
+      await fetch(ep,{method:'POST',headers:{'Content-Type':'text/plain;charset=UTF-8'},body:JSON.stringify(r),mode:'no-cors',keepalive:true});
+      markSent(r.id);ok++;
+    }catch{fail.push(r);}
+  }
+  if(fail.length){
+    const current=store(K.q)||[];
+    const ids=new Set(current.map(x=>x.id));
+    fail.forEach(r=>{if(!ids.has(r.id))current.push(r);});
+    store(K.q,current);
+  }
+  pendUI();
+  await flushDeleteQueue();
+  await flushWStandardQueue();
+  await syncFromSheet();
+  toast(t('toastSynced',ok),'success');
+}
 
+function delReport(id){
+  if(!confirm(t('confirmDelReport')||'למחוק דיווח זה?'))return;
+  const all=store(K.reps)||[];
+  const rep=all.find(r=>r.id===id);
+  const cat=rep?rep.category:'';
+  const date=rep?rep.report_date:'';
+  store(K.reps,all.filter(r=>r.id!==id));
+  store(K.q,(store(K.q)||[]).filter(r=>r.id!==id));
+  const ep=store(K.ep);
+  if(ep&&navigator.onLine){
+    fetch(ep,{method:'POST',headers:{'Content-Type':'text/plain;charset=UTF-8'},
+      body:JSON.stringify({action:'delete',id,category:cat,report_date:date}),mode:'no-cors',keepalive:true}).catch(()=>{
+      const dq=store('mwl_delete_queue')||[];
+      dq.push({id,category:cat,report_date:date});
+      store('mwl_delete_queue',dq);
+    });
+  }else if(ep){
+    const dq=store('mwl_delete_queue')||[];
+    dq.push({id,category:cat,report_date:date});
+    store('mwl_delete_queue',dq);
+  }
+  histRender();summaryRender();updateSessionBanner();toast(t('toastDeleted')||'🗑 דיווח נמחק','success');
+}
 
-/* Push a new project to GAS */
+async function saveEditReport(){
+  if(!_editRepId) return;
+  const reps = store(K.reps)||[];
+  const idx = reps.findIndex(x=>x.id===_editRepId);
+  if(idx<0){ toast('\u26a0\ufe0f \u05d3\u05d9\u05d5\u05d5\u05d7 \u05dc\u05d0 \u05e0\u05de\u05e6\u05d0','warn'); return; }
+  const btn = $('btn-edit-report-save');
+  btn.disabled=true; btn.textContent='...';
+  const date = $('edit-report-date').value;
+  if(!date){ toast('\u26a0\ufe0f \u05e0\u05d0 \u05dc\u05de\u05dc\u05d0 \u05ea\u05d0\u05e8\u05d9\u05da','warn'); btn.disabled=false; btn.textContent='\u26a1 \u05e9\u05de\u05d5\u05e8 \u05e9\u05d9\u05e0\u05d5\u05d9\u05d9\u05dd'; return; }
+  const isTask = _editRepCat==='task';
+  let report_time, description='', project='';
+  if(isTask){
+    report_time = ($('edit-report-duration').value||'').trim();
+    description = ($('edit-task-desc').value||'').trim();
+    project     = ($('edit-task-project').value||'').trim();
+    if(!project){ toast('\u26a0\ufe0f \u05e0\u05d0 \u05dc\u05de\u05dc\u05d0 \u05e4\u05e8\u05d5\u05d9\u05e7\u05d8','warn'); btn.disabled=false; btn.textContent='\u26a1 \u05e9\u05de\u05d5\u05e8 \u05e9\u05d9\u05e0\u05d5\u05d9\u05d9\u05dd'; return; }
+    if(!report_time){ toast('\u26a0\ufe0f \u05e0\u05d0 \u05dc\u05de\u05dc\u05d0 \u05de\u05e9\u05da','warn'); btn.disabled=false; btn.textContent='\u26a1 \u05e9\u05de\u05d5\u05e8 \u05e9\u05d9\u05e0\u05d5\u05d9\u05d9\u05dd'; return; }
+    const ps=store(K.proj)||[];
+    if(!ps.includes(project)){ps.push(project);store(K.proj,ps);projLoad();}
+  } else {
+    report_time = ($('edit-report-time').value||'').trim();
+    if(!report_time){ toast('\u26a0\ufe0f \u05e0\u05d0 \u05dc\u05de\u05dc\u05d0 \u05e9\u05e2\u05d4','warn'); btn.disabled=false; btn.textContent='\u26a1 \u05e9\u05de\u05d5\u05e8 \u05e9\u05d9\u05e0\u05d5\u05d9\u05d9\u05dd'; return; }
+    report_time = applyRounding(report_time);
+  }
+  const oldDate = reps[idx].report_date;
+  const updated = {...reps[idx], report_date:date, report_time, category:_editRepCat, description, project, edited:new Date().toISOString()};
+  reps[idx] = updated;
+  store(K.reps, reps);
+  const ep = store(K.ep);
+  if(ep && navigator.onLine){
+    fetch(ep,{method:'POST',headers:{'Content-Type':'text/plain;charset=UTF-8'},
+      body:JSON.stringify({action:'editReport',...updated,old_date:oldDate}),mode:'no-cors',keepalive:true}).catch(()=>{});
+  }
+  histRender(); summaryRender(); updateSessionBanner();
+  buzz([20,40]);
+  toast('\u2705 \u05d3\u05d9\u05d5\u05d5\u05d7 \u05e2\u05d5\u05d3\u05db\u05df','success');
+  btn.disabled=false; btn.textContent='\u26a1 \u05e9\u05de\u05d5\u05e8 \u05e9\u05d9\u05e0\u05d5\u05d9\u05d9\u05dd';
+  closeM('modal-edit-report');
+}
+
+async function flushDeleteQueue(){
+  const ep=store(K.ep);
+  if(!ep||!navigator.onLine)return;
+  const q=store(K.delQ)||[];if(!q.length)return;
+  const fail=[];
+  for(const item of q){
+    try{
+      await fetch(ep,{method:'POST',headers:{'Content-Type':'text/plain;charset=UTF-8'},
+        body:JSON.stringify({action:'delete',id:item.id,category:item.category,report_date:item.report_date}),mode:'no-cors',keepalive:true});
+    }catch{fail.push(item);}
+  }
+  store(K.delQ,fail);
+}
+
 async function pushProjectToSheet(name){
   const ep=store(K.ep);
   if(!ep||!navigator.onLine)return;
-  try{await fetch(ep,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'addProject',project:name}),mode:'no-cors'});}catch(_){}
+  try{await fetch(ep,{method:'POST',headers:{'Content-Type':'text/plain;charset=UTF-8'},body:JSON.stringify({action:'addProject',project:name}),mode:'no-cors',keepalive:true});}catch(_){}
 }
+
 async function removeProjectFromSheet(name){
   const ep=store(K.ep);
   if(!ep||!navigator.onLine)return;
-  try{await fetch(ep,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'deleteProject',project:name}),mode:'no-cors'});}catch(_){}
+  try{await fetch(ep,{method:'POST',headers:{'Content-Type':'text/plain;charset=UTF-8'},body:JSON.stringify({action:'deleteProject',project:name}),mode:'no-cors',keepalive:true});}catch(_){}
 }
+
 
 /* Bi-directional project sync (called from settings "Sync Projects" button) */
 async function syncProjects(){
