@@ -2760,18 +2760,21 @@ function getWStandard(){ return store(K.wstandard)||[]; }
 function saveWStandardLocal(arr){ store(K.wstandard,arr); }
 
 /* Return standard for a specific date-string YYYY-MM-DD */
-/* Classify Notes field → 'vacation' | 'sick' | 'holiday' | 'normal' */
+/* Classify Notes field → 'vacation' | 'sick' | 'holiday' | 'sabbatical' | 'normal' */
 function classifyNotes(notes){
-  if(!notes) return 'normal';
+  if (!notes) return 'normal';
   const n = notes.trim().toLowerCase();
   
   // זיהוי שבתון / חופשה ממושכת
   if (/שבתון|sabbatical|לא זמין|חופשה ממושכת/.test(n)) return 'sabbatical';
   
-  // זיהוי חופשה וחגים
-  if (/חופש|vacation|holiday|חג|פסח|שבועות|ראש השנה|יום כיפור|סוכות|שמחת תורה|חנוכה|פורים|יום עצמאות/.test(n)) return 'vacation';
+  // זיהוי חג אחיד לפי עמודת Notes
+  if (/חג|holiday/.test(n)) return 'holiday';
+
+  // זיהוי חופשה
+  if (/חופש|vacation|חופשה/.test(n)) return 'vacation';
   
-  // זיהוי מחלה - כולל 'מחלה', 'חלה', 'חולה', 'sick', 'ill'
+  // זיהוי מחלה
   if (/מחלה|חלה|חולה|sick|ill/.test(n)) return 'sick';
   
   return 'normal';
@@ -3260,8 +3263,8 @@ function editDayConfig(ds){
   const{stdHours,notes,description,isWorkDay}=getDayStd(ds);
   const{actualMins,wdStr,status,diffMins,minMins,pct}=getDayStatus(ds,reports);
   const[y,m,d]=ds.split('-');
-  $('dayedit-title').textContent=`📅 ${d}/${m}/${y} — ${hebDow(ds)}`;
-  const infoEl=$('dayedit-info');
+const displayTitle = description ? `📅 ${d}/${m}/${y} — ${hebDow(ds)} (${description})` : `📅 ${d}/${m}/${y} — ${hebDow(ds)}`;
+$('dayedit-title').textContent = displayTitle;  const infoEl=$('dayedit-info');
   let infoHtml=`<div style="display:flex;gap:18px;flex-wrap:wrap">
     <div><div style="font-size:.62rem;color:var(--text3);margin-bottom:2px">${t('sumPeriodDay')}</div><div style="font-weight:700">${hebDow(ds)}</div></div>
     <div><div style="font-size:.62rem;color:var(--text3);margin-bottom:2px">${t('wcStatActual')}</div><div style="font-weight:700;color:${actualMins>0?'var(--blue)':'var(--text3)'}">${wdStr}</div></div>
