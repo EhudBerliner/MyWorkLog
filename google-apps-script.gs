@@ -261,9 +261,9 @@ function rebuildDayAttendance(ss, dateStr) {
   const newRows = [];
 
   if (pairs.length === 0 && isPaidAbsence) {
-    newRows.push([dateStr, '🛡️ מפוצה', '🛡️ מפוצה', fmtMins(totalMins), stdStr, devStr, classification, 'single']);
+    newRows.push([dateStr, 'מחלה', 'מחלה', fmtMins(totalMins), stdStr, devStr, classification, 'single']);
   } else if (pairs.length <= 1 && !openEntry) {
-    const p = pairs[0] || { entry: '🛡️ מפוצה', exit: '🛡️ מפוצה' };
+    const p = pairs[0] || { entry: 'מחלה', exit: 'מחלה' };
     newRows.push([dateStr, p.entry, p.exit, fmtMins(totalMins), stdStr, devStr, classification, 'single']);
   } else {
     const firstEntry = pairs.length>0 ? pairs[0].entry : openEntry;
