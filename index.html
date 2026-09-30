@@ -431,6 +431,9 @@ textarea.fi{resize:vertical;min-height:72px}
 .wc-cell.ok{background:rgba(200,241,53,.07);border-color:rgba(200,241,53,.25)}
 .wc-cell.deficit{background:rgba(255,77,106,.07);border-color:rgba(255,77,106,.25)}
 .wc-cell.vacation{background:rgba(255,184,48,.07);border-color:rgba(255,184,48,.25)}
+.wc-cell.holiday { background: rgba(77, 171, 255, 0.12); border-color: rgba(77, 171, 255, 0.3); }
+.wc-cell.holiday-nostd { background: rgba(107, 114, 128, 0.08); border-color: rgba(107, 114, 128, 0.2); opacity: 0.75; }
+.wc-cell.vacation-nostd { background: rgba(255, 184, 48, 0.05); border-color: rgba(255, 184, 48, 0.15); opacity: 0.75; }
 .wc-cell.sick{background:rgba(167,139,250,.08);border-color:rgba(167,139,250,.28)}
 .wc-cell.sabbatical{background:rgba(99,202,183,.08);border-color:rgba(99,202,183,.28)}
 .wc-cell.today{border-color:var(--blue)!important;border-width:2px}
@@ -3138,24 +3141,26 @@ function renderWCCalendar(year,month,reports){
     const showActual=actualMins>0;
     const hasStd = minMins > 0;
 
-    // קביעת מחלקת العיצוב - הבחנה בין חופש/חג עם תקן לבין חופש/חג ללא תקן
+    // הפרדה מוחלטת בלוגיקה בין סוגי הימים
     let cellClass = status==='nostandard'?'':status;
     if (dayType === 'sick') {
       cellClass = 'sick';
     } else if (dayType === 'sabbatical') {
       cellClass = 'sabbatical';
-    } else if (dayType === 'vacation' || dayType === 'holiday') {
+    } else if (dayType === 'holiday') {
+      cellClass = hasStd ? 'holiday' : 'holiday-nostd';
+    } else if (dayType === 'vacation') {
       cellClass = hasStd ? 'vacation' : 'vacation-nostd';
     }
 
-    // תגית שעות תקן לתצוגה בתא
     const stdStr = hasStd ? minsToHHMM(minMins) : '';
     
-    // איקון מובחן - יום עם תקן יציג חיווי מיוחד (למשל ⭐/🏖 עם תקן, 🎉 ללא תקן)
+    // אייקונים מופרדים לכל סוג יום
     let vacIcon = '';
     if (dayType === 'sick') vacIcon = '🤒';
     else if (dayType === 'sabbatical') vacIcon = '🌴';
-    else if (dayType === 'vacation' || dayType === 'holiday') vacIcon = hasStd ? '🏖️' : '🎉';
+    else if (dayType === 'holiday') vacIcon = '✡️';
+    else if (dayType === 'vacation') vacIcon = '🏖️';
     else if (notes) vacIcon = '📝';
 
     html+=`<div class="wc-cell ${cellClass}${isToday?' today':''}" onclick="editDayConfig('${ds}')">
