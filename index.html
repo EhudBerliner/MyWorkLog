@@ -3154,12 +3154,15 @@ function renderWCCalendar(year,month,reports){
 /* ─ Monthly stats ─ */
 function renderMonthlyWCStats(year, month, reports) {
   const el = $('monthly-wc-stats');
-  if (!el) return;
+  if (!el) return;  
+  
+  // פתרון בעיית ה-UI: מעבר ל-Flexbox כדי שהקוביות ימלאו את השורה תמיד ללא "חורים"
+  el.style.display = 'flex';
+  el.style.flexWrap = 'wrap';
   
   const now = new Date();
   const todayStr = isoD(now);
   
-  // חישוב תאריך האתמול (פורמט YYYY-MM-DD)
   const yesterday = new Date(now);
   yesterday.setDate(yesterday.getDate() - 1);
   const yesterdayStr = isoD(yesterday);
@@ -3168,9 +3171,9 @@ function renderMonthlyWCStats(year, month, reports) {
   
   let reqMins = 0;
   let actualMins = 0;
-  let reportedWorkDaysCount = 0; // ימי עבודה מדווחים (חופש/מחלה/נוכחות)
-  let totalStdWorkDays = 0;      // סך ימי עבודה בתקן החודש
-  let missingReportDays = 0;     // 🆕 ימים ללא דיווח (מתחילת החודש עד אתמול)
+  let reportedStdWorkDaysCount = 0; // התיקון: ימי עבודה בתקן בלבד
+  let totalStdWorkDays = 0;      
+  let missingReportDays = 0;     
   let vacDays = 0;
   let sickDays = 0;
 
@@ -3178,30 +3181,25 @@ function renderMonthlyWCStats(year, month, reports) {
     const ds = `${year}-${pad(month + 1)}-${pad(d)}`;
     const { status, actualMins: am, minMins, dayType, stdHours } = getDayStatus(ds, reports);
     
-    // בדיקה אם היום מוגדר כיום עבודה בתקן
     const isStdWorkDay = minMins > 0 || (stdHours > 0);
     if (isStdWorkDay) totalStdWorkDays++;
 
-    // ספירת הצהרות
     if (dayType === 'vacation') vacDays++;
     if (dayType === 'sick') sickDays++;
 
-    // בדיקה אם הייתה פעילות/דיווח ביום הזה
     const hasReport = am > 0 || ['vacation', 'sick', 'holiday', 'sabbatical'].includes(dayType);
 
-    if (hasReport) {
-      reportedWorkDaysCount++;
+    // התיקון הלוגי: ספירת הדיווחים רק לימי עבודה בתקן, כדי שלא נציג 20/20 כשיש חוסר
+    if (isStdWorkDay && hasReport) {
+      reportedStdWorkDaysCount++;
     } else if (isStdWorkDay && ds <= yesterdayStr) {
-      // 🆕 יום תקן מתחילת החודש עד אתמול שלא דווחה בו שום פעילות
       missingReportDays++;
     }
 
-    // חישוב שעות נדרשות ובפועל עד היום הנוכחי
     if (ds <= todayStr && isStdWorkDay) {
       reqMins += minMins;
-      
       if (['vacation', 'sick', 'holiday', 'sabbatical'].includes(dayType)) {
-        actualMins += Math.max(am, minMins); // זיכוי מלא בגין יום הצהרה
+        actualMins += Math.max(am, minMins); 
       } else {
         actualMins += am;
       }
@@ -3213,19 +3211,21 @@ function renderMonthlyWCStats(year, month, reports) {
   const pctAch = reqMins > 0 ? Math.round((actualMins / reqMins) * 100) : null;
   const pctColor = pctAch == null ? 'var(--text3)' : pctAch >= 100 ? 'var(--lime)' : pctAch >= 80 ? 'var(--amber)' : 'var(--red)';
 
-  // רינדור הכרטיסיות (כולל הכרטיסייה החדשה)
+  // עיצוב אחיד לקוביות כדי שישתרעו על כל הרוחב הפנוי
+  const boxStyle = 'flex: 1 1 calc(33.333% - 6px); min-width: 85px;';
+
   el.innerHTML = `
-    <div class="wc-stat"><div class="wc-stat-lbl">ימי עבודה</div><div class="wc-stat-val" style="font-size:.82rem">${reportedWorkDaysCount}/${totalStdWorkDays}</div></div>
-    <div class="wc-stat"><div class="wc-stat-lbl">נדרש עד היום</div><div class="wc-stat-val" style="font-size:.82rem">${minsToHHMM(reqMins)}</div></div>
-    <div class="wc-stat actual-s"><div class="wc-stat-lbl">בפועל</div><div class="wc-stat-val" style="font-size:.82rem">${minsToHHMM(actualMins)}</div></div>
-    <div class="wc-stat ${balClass}"><div class="wc-stat-lbl">מאזן</div><div class="wc-stat-val" style="font-size:.82rem">${balanceMins >= 0 ? '+' : ''}${minsToHHMM(balanceMins)}</div></div>
-    <div class="wc-stat" style="border-color:${pctColor}"><div class="wc-stat-lbl">עמידה ביעד</div><div class="wc-stat-val" style="color:${pctColor}">${pctAch != null ? pctAch + '%' : '—'}</div></div>
-    <div class="wc-stat" style="border-color:${missingReportDays > 0 ? 'var(--red)' : 'var(--border)'}">
+    <div class="wc-stat" style="${boxStyle}"><div class="wc-stat-lbl">ימי עבודה</div><div class="wc-stat-val" style="font-size:.82rem">${reportedStdWorkDaysCount}/${totalStdWorkDays}</div></div>
+    <div class="wc-stat" style="${boxStyle}"><div class="wc-stat-lbl">נדרש עד היום</div><div class="wc-stat-val" style="font-size:.82rem">${minsToHHMM(reqMins)}</div></div>
+    <div class="wc-stat actual-s" style="${boxStyle}"><div class="wc-stat-lbl">בפועל</div><div class="wc-stat-val" style="font-size:.82rem">${minsToHHMM(actualMins)}</div></div>
+    <div class="wc-stat ${balClass}" style="${boxStyle}"><div class="wc-stat-lbl">מאזן</div><div class="wc-stat-val" style="font-size:.82rem">${balanceMins >= 0 ? '+' : ''}${minsToHHMM(balanceMins)}</div></div>
+    <div class="wc-stat" style="border-color:${pctColor}; ${boxStyle}"><div class="wc-stat-lbl">עמידה ביעד</div><div class="wc-stat-val" style="color:${pctColor}">${pctAch != null ? pctAch + '%' : '—'}</div></div>
+    ${missingReportDays > 0 ? `<div class="wc-stat" style="border-color:var(--red); ${boxStyle}">
       <div class="wc-stat-lbl">ללא דיווח</div>
-      <div class="wc-stat-val" style="color:${missingReportDays > 0 ? 'var(--red)' : 'var(--text2)'}">${missingReportDays}</div>
-    </div>
-    ${vacDays > 0 ? `<div class="wc-stat" style="border-color:var(--amber)"><div class="wc-stat-lbl">🏖 ימי חופש</div><div class="wc-stat-val" style="color:var(--amber)">${vacDays}</div></div>` : ''}
-    ${sickDays > 0 ? `<div class="wc-stat" style="border-color:var(--purple)"><div class="wc-stat-lbl">🤒 ימי מחלה</div><div class="wc-stat-val" style="color:var(--purple)">${sickDays}</div></div>` : ''}
+      <div class="wc-stat-val" style="color:var(--red)">${missingReportDays}</div>
+    </div>` : ''}
+    ${vacDays > 0 ? `<div class="wc-stat" style="border-color:var(--amber); ${boxStyle}"><div class="wc-stat-lbl">🏖 ימי חופש</div><div class="wc-stat-val" style="color:var(--amber)">${vacDays}</div></div>` : ''}
+    ${sickDays > 0 ? `<div class="wc-stat" style="border-color:var(--purple); ${boxStyle}"><div class="wc-stat-lbl">🤒 ימי מחלה</div><div class="wc-stat-val" style="color:var(--purple)">${sickDays}</div></div>` : ''}
   `;
 }
 
