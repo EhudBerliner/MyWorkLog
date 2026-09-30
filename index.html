@@ -3209,7 +3209,7 @@ function renderMonthlyWCStats(year, month, reports) {
     if (dayType === 'vacation') vacDays++;
     if (dayType === 'sick') sickDays++;
 
-    const hasReport = am > 0 || ['vacation', 'sick', 'holiday', 'sabbatical'].includes(dayType);
+    const hasReport = am > 0 || ['vacation', 'sick', 'sabbatical'].includes(dayType);
 
     // התיקון הלוגי: ספירת הדיווחים רק לימי עבודה בתקן, כדי שלא נציג 20/20 כשיש חוסר
     if (isStdWorkDay && hasReport) {
