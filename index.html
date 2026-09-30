@@ -3136,16 +3136,33 @@ function renderWCCalendar(year,month,reports){
     const{status,actualMins,wdStr,notes,minMins,fromTasks,dayType}=getDayStatus(ds,reports);
     const isToday=ds===todayStr;
     const showActual=actualMins>0;
-    const cellClass=dayType==='sick'?'sick':
-      dayType==='sabbatical'?'sabbatical':
-      dayType==='vacation'||dayType==='holiday'?'vacation':
-      status==='nostandard'?'':status;
-    const stdStr=minMins>0?minsToHHMM(minMins):'';
+    const hasStd = minMins > 0;
+
+    // קביעת מחלקת العיצוב - הבחנה בין חופש/חג עם תקן לבין חופש/חג ללא תקן
+    let cellClass = status==='nostandard'?'':status;
+    if (dayType === 'sick') {
+      cellClass = 'sick';
+    } else if (dayType === 'sabbatical') {
+      cellClass = 'sabbatical';
+    } else if (dayType === 'vacation' || dayType === 'holiday') {
+      cellClass = hasStd ? 'vacation' : 'vacation-nostd';
+    }
+
+    // תגית שעות תקן לתצוגה בתא
+    const stdStr = hasStd ? minsToHHMM(minMins) : '';
+    
+    // איקון מובחן - יום עם תקן יציג חיווי מיוחד (למשל ⭐/🏖 עם תקן, 🎉 ללא תקן)
+    let vacIcon = '';
+    if (dayType === 'sick') vacIcon = '🤒';
+    else if (dayType === 'sabbatical') vacIcon = '🌴';
+    else if (dayType === 'vacation' || dayType === 'holiday') vacIcon = hasStd ? '🏖️' : '🎉';
+    else if (notes) vacIcon = '📝';
+
     html+=`<div class="wc-cell ${cellClass}${isToday?' today':''}" onclick="editDayConfig('${ds}')">
       <span class="wc-day-num">${d}</span>
       ${showActual?`<span class="wc-actual">${wdStr}${fromTasks?'*':''}</span>`:''}
-      ${stdStr&&!showActual?`<span class="wc-actual" style="color:var(--text3)">${stdStr}</span>`:''}
-      ${dayType==='sick'?`<span class="wc-vac-icon" title="${notes}">🤒</span>`:dayType==='sabbatical'?`<span class="wc-vac-icon" title="${notes}">🌴</span>`:dayType==='vacation'||dayType==='holiday'?`<span class="wc-vac-icon" title="${notes}">🏖</span>`:notes?`<span class="wc-vac-icon" title="${notes}">📝</span>`:''}
+      ${stdStr?`<span class="wc-actual" style="color:${showActual?'var(--lime)':'var(--amber)'}">${stdStr}</span>`:''}
+      ${vacIcon?`<span class="wc-vac-icon" title="${notes}">${vacIcon}</span>`:''}
     </div>`;
   }
   daysGrid.innerHTML=html;
