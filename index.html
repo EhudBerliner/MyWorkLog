@@ -1796,10 +1796,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     safeSplashExit(bootFailsafe);
 
-  } catch (err) {
+} catch (err) {
     console.error('[Boot Error]', err);
     forceAppShow();
-    clearTimeout(bootFailsafe);
   }
 });
 
@@ -1822,6 +1821,12 @@ function safeSplashExit(timerId) {
 function forceAppShow() {
   const app = document.getElementById('app');
   if (app) app.classList.remove('hidden');
+  
+  const splash = document.getElementById('splash');
+  if (splash) {
+    splash.classList.add('out');
+    setTimeout(() => splash.remove(), 400);
+  }
 }
 
 function openResetMaintenanceModal() {
@@ -2169,20 +2174,21 @@ function switchTab(name){
 
 /* MENU */
 function menuInit(){
-  $('btn-hamburger').addEventListener('click',menuOpen);
-  $('btn-close-menu').addEventListener('click',menuClose);
-  $('menu-overlay').addEventListener('click',menuClose);
-  $('menu-settings-btn').addEventListener('click',()=>{menuClose();openM('modal-settings')});
-  $('menu-help-btn').addEventListener('click',()=>{menuClose();openM('modal-help')});
-  $('menu-gs-btn').addEventListener('click',()=>{menuClose();downloadGS();});
-  $('menu-import-btn').addEventListener('click',()=>{menuClose();openImportModal();}); // keep in menu too
-  $('menu-theme-btn').addEventListener('click',()=>{
+  $('btn-hamburger')?.addEventListener('click',menuOpen);
+  $('btn-close-menu')?.addEventListener('click',menuClose);
+  $('menu-overlay')?.addEventListener('click',menuClose);
+  $('menu-settings-btn')?.addEventListener('click',()=>{menuClose();openM('modal-settings')});
+  $('menu-help-btn')?.addEventListener('click',()=>{menuClose();openM('modal-help')});
+  $('menu-gs-btn')?.addEventListener('click',()=>{menuClose();downloadGS();});
+  $('menu-import-btn')?.addEventListener('click',()=>{menuClose();openImportModal();});
+  $('menu-theme-btn')?.addEventListener('click',()=>{
     applyTheme(document.body.classList.contains('light')?'dark':'light');buzz([20]);
   });
   document.querySelectorAll('.menu-item[data-tab]').forEach(el=>el.addEventListener('click',()=>switchTab(el.dataset.tab)));
   updateMenuSheetLink();
   $('menu-wstandard-btn')?.addEventListener('click',()=>{menuClose();openWorkcalSettings();});
 }
+   
 function updateMenuSheetLink(){
   const su=store(K.sheetUrl);
   const el=$('menu-sheet-link');
