@@ -1170,41 +1170,71 @@ details summary::-webkit-details-marker{display:none}
 <div id="modal-reset" class="moverlay hidden" role="dialog" aria-modal="true">
   <div class="mbox sm">
     <div class="mhdr">
-      <h2 data-i18n="resetTitle" style="color:var(--red)">⚠️ איפוס אפליקציה</h2>
-      <button class="ibtn" id="btn-close-reset">✕</button>
+      <h2 style="color:var(--red)">⚠️ איפוס ותחזוקת מערכת</h2>
+      <button class="ibtn" id="btn-close-reset" onclick="closeResetModal()">✕</button>
     </div>
+    
     <div class="mbody">
-      <div style="background:var(--redDim);border:1px solid rgba(255,90,90,.25);border-radius:var(--rs);
-        padding:11px 13px;font-size:.82rem;color:var(--text2);line-height:1.6">
-        <span data-i18n="resetWarning">⚠️ פעולה זו אינה ניתנת לביטול. בחר אילו נתונים לשמור:</span>
+      <div style="background:var(--redDim);border:1px solid rgba(255,77,106,.3);border-radius:var(--rs);padding:11px 13px;font-size:.82rem;color:var(--text);line-height:1.5">
+        <strong>אזהרה:</strong> איפוס הנתונים ימחק את המידע המקומי שנבחר. מומלץ לבצע ייצוא/גיבוי לפני הפעולה.
       </div>
-      <div class="sset-block pref-list">
-        <label class="pref-row">
-          <span class="pref-row-icon">📋</span>
-          <span class="pref-row-body">
-            <span class="pref-row-label" data-i18n="resetKeepReports">היסטוריית דיווחים</span>
-          </span>
-          <input type="checkbox" id="reset-keep-reports" class="ptog" checked/>
-        </label>
-        <label class="pref-row">
-          <span class="pref-row-icon">⚙️</span>
-          <span class="pref-row-body">
-            <span class="pref-row-label" data-i18n="resetKeepSettings">הגדרות (endpoint, פרויקטים)</span>
-          </span>
-          <input type="checkbox" id="reset-keep-settings" class="ptog" checked/>
-        </label>
-        <label class="pref-row">
-          <span class="pref-row-icon">⏳</span>
-          <span class="pref-row-body">
-            <span class="pref-row-label" data-i18n="resetKeepQueue">תור ממתין לשליחה</span>
-          </span>
-          <input type="checkbox" id="reset-keep-queue" class="ptog"/>
-        </label>
+
+      <div class="sset-group" style="margin-top:10px">
+        <div class="sset-label">בחר רכיבים לאיפוס</div>
+        <div class="sset-block pref-list">
+          
+          <label class="pref-row">
+            <span class="pref-row-icon">📋</span>
+            <span class="pref-row-body">
+              <span class="pref-row-label">היסטוריית דיווחים מקומית</span>
+              <span class="pref-row-desc">מחק את כל הדיווחים השמורים במכשיר זה</span>
+            </span>
+            <input type="checkbox" id="reset-opt-reports" class="ptog" checked/>
+          </label>
+
+          <label class="pref-row">
+            <span class="pref-row-icon">⏳</span>
+            <span class="pref-row-body">
+              <span class="pref-row-label">תור דיווחים ממתין לשליחה</span>
+              <span class="pref-row-desc">נקה דיווחים שלא נשלחו עדיין לגיליון</span>
+            </span>
+            <input type="checkbox" id="reset-opt-queue" class="ptog"/>
+          </label>
+
+          <label class="pref-row">
+            <span class="pref-row-icon">⚙️</span>
+            <span class="pref-row-body">
+              <span class="pref-row-label">הגדרות אפליקציה ופרויקטים</span>
+              <span class="pref-row-desc">אפס כתובת גיליון, שם משתמש ורשימת פרויקטים</span>
+            </span>
+            <input type="checkbox" id="reset-opt-settings" class="ptog"/>
+          </label>
+
+          <label class="pref-row">
+            <span class="pref-row-icon">📊</span>
+            <span class="pref-row-body">
+              <span class="pref-row-label">נתוני תקן שעות (WorkStandard)</span>
+              <span class="pref-row-desc">מחק נתוני חג/חופשה ותקן ימי שנשמרו מקומית</span>
+            </span>
+            <input type="checkbox" id="reset-opt-wstandard" class="ptog"/>
+          </label>
+
+          <label class="pref-row">
+            <span class="pref-row-icon">🔄</span>
+            <span class="pref-row-body">
+              <span class="pref-row-label" style="color:var(--amber)">ניקוי זיכרון מטמון (Cache & PWA)</span>
+              <span class="pref-row-desc">רענון גרסה כפוי והורדת קבצי המערכת מחדש</span>
+            </span>
+            <input type="checkbox" id="reset-opt-cache" class="ptog" checked/>
+          </label>
+
+        </div>
       </div>
     </div>
+
     <div class="mfoot mfoot2">
-      <button class="btn-g" id="btn-reset-cancel"  data-i18n="btnResetCancel">ביטול</button>
-      <button class="btn-d" id="btn-reset-confirm" data-i18n="btnResetConfirm">🗑 אפס</button>
+      <button class="btn-g" id="btn-reset-cancel" onclick="closeResetModal()">ביטול</button>
+      <button class="btn-d" id="btn-reset-confirm" onclick="executeReset()">🗑️ בצע איפוס</button>
     </div>
   </div>
 </div>
@@ -1686,78 +1716,193 @@ function toast(msg, type = 'success', ms = 2800) {
   NotificationSystem.showToast(msg, typeMap[type] || type, ms);
 }
 
-document.addEventListener('DOMContentLoaded',()=>{
-  // Failsafe: always show app after 3s no matter what
-  const _failsafe=window.setTimeout(()=>{
-    try{document.getElementById('splash')?.remove();}catch(_){}
-    try{document.getElementById('app')?.classList.remove('hidden');}catch(_){}
-  },3000);
+document.addEventListener('DOMContentLoaded', () => {
+  const bootFailsafe = setTimeout(() => {
+    console.warn('[Boot] Failsafe triggered - forcing app display.');
+    forceAppShow();
+  }, 2500);
 
-  try{
-    verCheck();themeInit();langInit();prefsApply();
-    splashInit();dtInit();tabsInit();catInit();durInit();clockInit();
-    submitInit();settingsInit();summaryInit();
-    settingsTabsInit();   // v3.7.0
-    profileInit();        // v3.7.0
-    roundingInit();       // v3.7.0
-    exportInit();         // v3.7.0
-    editReportInit();     // v3.7.0
-    changelogInit();      // v3.7.0
-    // Theme toggle in settings
-    $('btn-theme-toggle-settings')?.addEventListener('click',()=>{
-      applyTheme(document.body.classList.contains('light')?'dark':'light');
-      themeSettingsSync();buzz([20]);
+  try {
+    if (typeof verCheck === 'function') verCheck();
+    if (typeof themeInit === 'function') themeInit();
+    if (typeof langInit === 'function') langInit();
+    if (typeof prefsApply === 'function') prefsApply();
+    if (typeof dtInit === 'function') dtInit();
+    if (typeof tabsInit === 'function') tabsInit();
+    if (typeof catInit === 'function') catInit();
+    if (typeof durInit === 'function') durInit();
+    if (typeof clockInit === 'function') clockInit();
+    if (typeof submitInit === 'function') submitInit();
+    if (typeof settingsInit === 'function') settingsInit();
+    if (typeof summaryInit === 'function') summaryInit();
+    if (typeof settingsTabsInit === 'function') settingsTabsInit();
+    if (typeof profileInit === 'function') profileInit();
+    if (typeof roundingInit === 'function') roundingInit();
+    if (typeof exportInit === 'function') exportInit();
+    if (typeof editReportInit === 'function') editReportInit();
+    if (typeof changelogInit === 'function') changelogInit();
+
+    $('btn-theme-toggle-settings')?.addEventListener('click', () => {
+      applyTheme(document.body.classList.contains('light') ? 'dark' : 'light');
+      if (typeof themeSettingsSync === 'function') themeSettingsSync();
+      if (typeof buzz === 'function') buzz([20]);
     });
-    // WorkStandard sync in connection tab
-    $('btn-sync-wstandard-settings')?.addEventListener('click',async()=>{
-      const btn=$('btn-sync-wstandard-settings');
-      btn.disabled=true;btn.textContent='⏳ מסנכרן...';
-      await syncWStandard(false);
-      btn.disabled=false;btn.textContent='↻ משוך WorkStandard מגיליון';
-      wstdSyncStatusInline();updateSyncStatus();
+
+    $('btn-sync-wstandard-settings')?.addEventListener('click', async () => {
+      const btn = $('btn-sync-wstandard-settings');
+      if (btn) { btn.disabled = true; btn.textContent = '⏳ מסנכרן...'; }
+      if (typeof syncWStandard === 'function') await syncWStandard(false);
+      if (btn) { btn.disabled = false; btn.textContent = '↻ משוך WorkStandard מגיליון'; }
+      if (typeof wstdSyncStatusInline === 'function') wstdSyncStatusInline();
+      if (typeof updateSyncStatus === 'function') updateSyncStatus();
     });
-    $('btn-now').addEventListener('click',()=>{
-      const n=new Date();
-      $('report-date').value=isoD(n);
-      // Apply rounding to "now" time
-      $('report-time').value=applyRounding(timeS(n));
-      toast(t('toastNowUpdated'));buzz([20]);
+
+    $('btn-now')?.addEventListener('click', () => {
+      const n = new Date();
+      const rDate = $('report-date');
+      const rTime = $('report-time');
+      if (rDate && typeof isoD === 'function') rDate.value = isoD(n);
+      if (rTime && typeof applyRounding === 'function' && typeof timeS === 'function') {
+        rTime.value = applyRounding(timeS(n));
+      }
+      if (typeof toast === 'function' && typeof t === 'function') toast(t('toastNowUpdated'));
+      if (typeof buzz === 'function') buzz([20]);
     });
-    fixStoredDates();
-  netInit();netQInit();projLoad();histRender();
-  importInit();
-    NotificationSystem.init(VER);  // v4.4.6
-    updateSessionBanner();
-    flushDeleteQueue();
-    menuInit();vBadgeInit();swipeInit();ptrInit();swInit();installInit();scrollInit();
-    backBtnInit();
-    history.replaceState({ui:'tab',name:'report'},'');
-    window.clearTimeout(_failsafe);
-  }catch(err){
-    console.error('[boot]',err);
-    // Show app even on error
-    try{document.getElementById('splash')?.remove();}catch(_){}
-    try{document.getElementById('app')?.classList.remove('hidden');}catch(_){}
-    window.clearTimeout(_failsafe);
+
+    if (typeof fixStoredDates === 'function') fixStoredDates();
+    if (typeof netInit === 'function') netInit();
+    if (typeof netQInit === 'function') netQInit();
+    if (typeof projLoad === 'function') projLoad();
+    if (typeof histRender === 'function') histRender();
+    if (typeof importInit === 'function') importInit();
+
+    if (window.NotificationSystem) {
+      NotificationSystem.init(typeof VER !== 'undefined' ? VER : '3.7.0');
+    }
+    if (typeof updateSessionBanner === 'function') updateSessionBanner();
+    if (typeof flushDeleteQueue === 'function') flushDeleteQueue();
+    if (typeof menuInit === 'function') menuInit();
+    if (typeof vBadgeInit === 'function') vBadgeInit();
+    if (typeof swipeInit === 'function') swipeInit();
+    if (typeof ptrInit === 'function') ptrInit();
+    if (typeof swInit === 'function') swInit();
+    if (typeof installInit === 'function') installInit();
+    if (typeof scrollInit === 'function') scrollInit();
+    if (typeof backBtnInit === 'function') backBtnInit();
+
+    if (window.history && window.history.replaceState) {
+      history.replaceState({ ui: 'tab', name: 'report' }, '');
+    }
+
+    safeSplashExit(bootFailsafe);
+
+  } catch (err) {
+    console.error('[Boot Error]', err);
+    forceAppShow();
+    clearTimeout(bootFailsafe);
   }
 });
 
-/* SPLASH */
-function splashInit(){
-  setTimeout(()=>{
-    $('splash').classList.add('out');
-    setTimeout(()=>{
-      try{$('splash').remove();}catch(_){}
-      try{$('app').classList.remove('hidden');}catch(_){}
-      try{applyLang(window._lang||'he');}catch(_){}
-      try{summaryRender();}catch(e){console.error('[summaryRender]',e);}
-      try{updateMenuSheetLink();}catch(_){}
-      // Background sync: projects + WorkStandard on every launch
-      setTimeout(()=>{try{bgSync();}catch(_){}}, 2000);
-    },420);
-  },900);
+function safeSplashExit(timerId) {
+  setTimeout(() => {
+    const splash = document.getElementById('splash');
+    if (splash) {
+      splash.classList.add('out');
+      setTimeout(() => splash.remove(), 400);
+    }
+    forceAppShow();
+    if (typeof applyLang === 'function') applyLang(window._lang || 'he');
+    if (typeof summaryRender === 'function') summaryRender();
+    if (typeof updateMenuSheetLink === 'function') updateMenuSheetLink();
+    
+    if (timerId) clearTimeout(timerId);
+  }, 600);
 }
 
+function forceAppShow() {
+  const app = document.getElementById('app');
+  if (app) app.classList.remove('hidden');
+}
+
+function openResetMaintenanceModal() {
+  const modal = document.getElementById('modal-reset');
+  if (modal) {
+    modal.classList.remove('hidden');
+    const settingsModal = document.getElementById('modal-settings');
+    if (settingsModal) settingsModal.classList.add('hidden');
+  }
+}
+
+function closeResetModal() {
+  const modal = document.getElementById('modal-reset');
+  if (modal) modal.classList.add('hidden');
+}
+
+async function executeReset() {
+  const clearReports  = document.getElementById('reset-opt-reports')?.checked;
+  const clearQueue    = document.getElementById('reset-opt-queue')?.checked;
+  const clearSettings = document.getElementById('reset-opt-settings')?.checked;
+  const clearWStd     = document.getElementById('reset-opt-wstandard')?.checked;
+  const clearCache    = document.getElementById('reset-opt-cache')?.checked;
+
+  if (!clearReports && !clearQueue && !clearSettings && !clearWStd && !clearCache) {
+    if (typeof toast === 'function') toast('לא נבחר רכיב לאיפוס', 'warn');
+    return;
+  }
+
+  if (!confirm('האם אתה בטוח שברצונך לבצע איפוס לרכיבים שנבחרו?')) {
+    return;
+  }
+
+  try {
+    if (clearReports) {
+      localStorage.removeItem('worklog_history');
+      localStorage.removeItem('reports');
+    }
+
+    if (clearQueue) {
+      localStorage.removeItem('worklog_queue');
+      localStorage.removeItem('pending_queue');
+    }
+
+    if (clearSettings) {
+      localStorage.removeItem('worklog_endpoint');
+      localStorage.removeItem('worklog_sheet_url');
+      localStorage.removeItem('worklog_projects');
+      localStorage.removeItem('worklog_user');
+      localStorage.removeItem('worklog_prefs');
+    }
+
+    if (clearWStd) {
+      localStorage.removeItem('worklog_wstandard');
+      localStorage.removeItem('workstandard_data');
+    }
+
+    if (clearCache) {
+      if ('caches' in window) {
+        const cacheNames = await caches.keys();
+        await Promise.all(cacheNames.map(name => caches.delete(name)));
+      }
+      if ('serviceWorker' in navigator) {
+        const registrations = await navigator.serviceWorker.getRegistrations();
+        for (let registration of registrations) {
+          await registration.unregister();
+        }
+      }
+    }
+
+    if (typeof toast === 'function') toast('האיפוס בוצע בהצלחה! מרענן...', 'success');
+
+    setTimeout(() => {
+      window.location.reload(true);
+    }, 800);
+
+  } catch (err) {
+    console.error('[Reset Error]', err);
+    if (typeof toast === 'function') toast('אירעה שגיאה במהלך האיפוס', 'error');
+  }
+}
+   
 // ── טריגר לסנכרון אוטומטי בחזרה מפעילות ברקע ──
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'visible') {
