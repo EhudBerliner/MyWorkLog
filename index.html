@@ -438,14 +438,17 @@ textarea.fi{resize:vertical;min-height:72px}
 .wc-cell.sabbatical{background:rgba(99,202,183,.08);border-color:rgba(99,202,183,.28)}
 .wc-cell.today{border-color:var(--blue)!important;border-width:2px}
 .wc-day-num{font-family:'Syne',monospace;font-size:.75rem;font-weight:700;color:var(--text2);line-height:1}
-.wc-cell.ok .wc-day-num{color:var(--lime)}
-.wc-cell.deficit .wc-day-num{color:var(--red)}
+/* צבע ירוק כהה וקריא למספר ולשעות המדווחות */
+.wc-cell.ok .wc-day-num { color: #2e7d32; }
+.wc-cell.ok .wc-actual { color: #1b5e20; }
+/* התאמת צבעים אוטומטית במצב כהה (Dark mode) */
+body:not(.light) .wc-cell.ok .wc-day-num { color: var(--lime); }
+body:not(.light) .wc-cell.ok .wc-actual { color: rgba(200,241,53,.9); }.wc-cell.deficit .wc-day-num{color:var(--red)}
 .wc-cell.vacation .wc-day-num{color:var(--amber)}
 .wc-cell.sick .wc-day-num{color:var(--purple)}
 .wc-cell.sabbatical .wc-day-num{color:#63cab7}
 .wc-cell.sabbatical .wc-day-num{color:#63cab7}
 .wc-actual{font-family:'Syne',monospace;font-size:.57rem;font-weight:700;color:var(--text3);line-height:1}
-.wc-cell.ok .wc-actual{color:rgba(200,241,53,.9)}
 .wc-cell.deficit .wc-actual{color:var(--red)}
 .wc-cell.sick .wc-actual{color:var(--purple)}
 .wc-cell.vacation .wc-actual{color:var(--amber)}
@@ -3169,7 +3172,6 @@ function renderWCCalendar(year,month,reports){
     html+=`<div class="wc-cell ${cellClass}${isToday?' today':''}" onclick="editDayConfig('${ds}')">
       <span class="wc-day-num">${d}</span>
       ${showActual?`<span class="wc-actual">${wdStr}${fromTasks?'*':''}</span>`:''}
-      ${stdStr?`<span class="wc-actual" style="color:${showActual?'var(--lime)':'var(--amber)'}">${stdStr}</span>`:''}
       ${vacIcon?`<span class="wc-vac-icon" title="${notes}">${vacIcon}</span>`:''}
     </div>`;
   }
