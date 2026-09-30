@@ -3889,47 +3889,97 @@ async function send(rep,ep){
   }catch{addQ(rep);pendUI();}
 }
 
-function sendBackground(rep,ep){
-  const label=catLbl(rep.category);
-  fetch(ep,{method:'POST',headers:{'Content-Type':'text/plain;charset=UTF-8'},body:JSON.stringify(rep),mode:'no-cors',keepalive:true})
-    .then(()=>{
-      markSent(rep.id);
-      toast(t('toastSentLabel',label),'success');
-    })
-    .catch(()=>{
-      addQ(rep);pendUI();
-      toast(t('toastQueuedLabel',label),'warn',3500);
-    });
+/* ─── מנגנון שליחה בעדיפות גבוהה וסנכרון אוטומטי מואץ ─── */
+
+function sendBackground(rep, ep) {
+  const label = catLbl(rep.category);
+  
+  // שליחה בעדיפות גבוהה (priority: 'high') מול הדפדפן
+  fetch(ep, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
+    body: JSON.stringify(rep),
+    mode: 'no-cors',
+    keepalive: true,
+    priority: 'high' // ⚡ קדימות מוחלטת בתור התקשורת של הדפדפן
+  })
+  .then(() => {
+    markSent(rep.id);
+    toast(t('toastSentLabel', label), 'success');
+  })
+  .catch(() => {
+    // במידה והשליחה נכשלה, שומר בתור ומנסה לסנכרן שוב באופן מיידי בעוד 2 שניות
+    addQ(rep); 
+    pendUI();
+    toast(t('toastQueuedLabel', label), 'warn', 3500);
+    setTimeout(syncQ, 2000); 
+  });
 }
 
-async function syncQ(){
-  const ep=store(K.ep);if(!ep){toast(t('toastNoEndpointSync'),'warn');return}
-  const q=store(K.q)||[];
-  if(!q.length&&!(store(K.delQ)||[]).length){
-    await syncFromSheet();
-    toast(t('toastNoQueuePending'),'success');return;
+async function syncQ() {
+  const ep = store(K.ep);
+  if (!ep || !navigator.onLine) return;
+  
+  const q = store(K.q) || [];
+  const delQ = store(K.delQ) || [];
+  
+  if (!q.length && !delQ.length) return;
+
+  const snapshot = [...q];
+  store(K.q, []); 
+  pendUI();
+  
+  let ok = 0;
+  const fail = [];
+
+  // סנכרון התור במקביל/ברצף מהיר
+  for (const r of snapshot) {
+    try {
+      await fetch(ep, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
+        body: JSON.stringify(r),
+        mode: 'no-cors',
+        keepalive: true,
+        priority: 'high'
+      });
+      markSent(r.id);
+      ok++;
+    } catch {
+      fail.push(r);
+    }
   }
-  const snapshot=[...q];
-  store(K.q,[]);pendUI();
-  let ok=0;const fail=[];
-  for(const r of snapshot){
-    try{
-      await fetch(ep,{method:'POST',headers:{'Content-Type':'text/plain;charset=UTF-8'},body:JSON.stringify(r),mode:'no-cors',keepalive:true});
-      markSent(r.id);ok++;
-    }catch{fail.push(r);}
+
+  if (fail.length) {
+    const current = store(K.q) || [];
+    const ids = new Set(current.map(x => x.id));
+    fail.forEach(r => { if (!ids.has(r.id)) current.push(r); });
+    store(K.q, current);
   }
-  if(fail.length){
-    const current=store(K.q)||[];
-    const ids=new Set(current.map(x=>x.id));
-    fail.forEach(r=>{if(!ids.has(r.id))current.push(r);});
-    store(K.q,current);
-  }
+
   pendUI();
   await flushDeleteQueue();
   await flushWStandardQueue();
-  await syncFromSheet();
-  toast(t('toastSynced',ok),'success');
+  
+  if (ok > 0) {
+    toast(t('toastSynced', ok), 'success');
+  }
 }
+
+/* ─── מאזינים אוטומטיים לתעדוף סנכרון ברקע ─── */
+
+// 1. סנכרון מיידי ברגע שהמכשיר חוזר להיות אונליין
+window.addEventListener('online', () => {
+  console.log(' Network is online. Triggering immediate sync...');
+  syncQ();
+});
+
+// 2. סנכרון אוטומטי בעת חזרה לאפליקציה/כרטיסייה (Visibility Change)
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible' && navigator.onLine) {
+    syncQ();
+  }
+});
 
 function delReport(id){
   if(!confirm(t('confirmDelReport')||'למחוק דיווח זה?'))return;
