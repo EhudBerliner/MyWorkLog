@@ -1095,12 +1095,12 @@ details summary::-webkit-details-marker{display:none}
           </div>
         </div>
 
-        <!-- CLEAR DATA -->
+      <!-- CLEAR DATA -->
         <div class="sset-group">
-          <div class="sset-label" data-i18n="settingsDataLabel">ניהול נתונים</div>
+          <div class="sset-label" data-i18n="settingsDataLabel">ניהול נתונים ותחזוקה</div>
           <div class="sset-block">
             <div class="sset-row">
-              <button class="btn-d sm" id="btn-clear-data" style="width:100%" data-i18n="btnClearData">🗑 מחק כל הנתונים המקומיים</button>
+              <button class="btn-p sm" id="btn-open-reset-maintenance" style="width:100%" onclick="openResetMaintenanceModal()">🛡️ איפוס ותחזוקת מערכת</button>
             </div>
           </div>
         </div>
@@ -1908,11 +1908,8 @@ function migrateData(prevVer){
 function vBadgeInit(){
   [$('version-badge'),$('menu-vbadge')].forEach(el=>{
     if(!el)return;
-    el.addEventListener('click',()=>{buzz([20,30,20]);openM('modal-reset')});
+    el.addEventListener('click',()=>{buzz([20,30,20]);openResetMaintenanceModal();});
   });
-  $('btn-close-reset').addEventListener('click',()=>closeM('modal-reset'));
-  $('btn-reset-cancel').addEventListener('click',()=>closeM('modal-reset'));
-  $('btn-reset-confirm').addEventListener('click',hardReset);
 }
    
 async function hardReset(){
@@ -3623,9 +3620,7 @@ function settingsInit(){
       btn.disabled=false;btn.textContent=origText;
     }
   });
-  $('btn-clear-data').addEventListener('click',()=>{
-    if(confirm(t('confirmClearData'))){Object.values(K).forEach(k=>localStorage.removeItem(k));toast(t('toastDataCleared'),'success');closeM('modal-settings');histRender();pendUI()}
-  });
+
   $('btn-add-project').addEventListener('click',projAdd);
   $('btn-sync-projects')?.addEventListener('click',syncProjects);
   $('new-project').addEventListener('keydown',e=>{if(e.key==='Enter')projAdd()});
@@ -3944,18 +3939,25 @@ function swipeInit(){
   },{passive:true});
 }
 
-/* PULL TO REFRESH */
+/* PULL TO REFRESH - סנכרון בלבד ללא טעינה מחדש של העמוד */
 function ptrInit(){
   const scroll=$('main-scroll'),ind=$('ptr');
   scroll.addEventListener('touchstart',e=>{if(!getP().pullRefresh)return;ST.pullY=e.touches[0].clientY;ST.pulling=scroll.scrollTop===0},{passive:true});
   scroll.addEventListener('touchmove',e=>{if(!ST.pulling||!getP().pullRefresh)return;if(e.touches[0].clientY-ST.pullY>60){ind.classList.remove('hidden');ind.classList.add('visible');ind.querySelector('.ptr-icon').classList.add('spin')}},{passive:true});
   scroll.addEventListener('touchend',()=>{
     if(!ST.pulling)return;
-    if(!ind.classList.contains('hidden'))setTimeout(()=>{ind.classList.remove('visible');ind.classList.add('hidden');ind.querySelector('.ptr-icon').classList.remove('spin');window.location.reload()},600);
+    if(!ind.classList.contains('hidden')){
+      setTimeout(()=>{
+        ind.classList.remove('visible');
+        ind.classList.add('hidden');
+        ind.querySelector('.ptr-icon').classList.remove('spin');
+        // אם מוגדרת פונקציית סנכרון ברקע, היא תופעל כאן בלבד ללא רענון עמוד
+        if(typeof bgSync === 'function') bgSync();
+      },600);
+    }
     ST.pulling=false;
   });
 }
-
 
 /* ─ HELP TABS ─ */
 function hTab(btn){
@@ -4467,6 +4469,14 @@ function wstdSyncStatusInline(){
   el.textContent=last?`✅ סנכרן: ${last} · ${count} ימים`:'לא סונכרן עדיין';
 }
 
+/**
+ * פתיחת המודאל המאוחד לתחזוקת המערכת והאיפוס.
+ * מופעלת אך ורק בלחיצה על תג הגרסה או מכפתור התחזוקה בהגדרות.
+ */
+function openResetMaintenanceModal() {
+    openM('modal-reset-maintenance'); // או פתיחה מותאמת לפי מנגנון openM הקיים בקוד
+}
+   
 </script>
 
 <!-- IMPORT MODAL -->
