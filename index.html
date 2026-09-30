@@ -1716,32 +1716,68 @@ function toast(msg, type = 'success', ms = 2800) {
   NotificationSystem.showToast(msg, typeMap[type] || type, ms);
 }
 
+/* ─ מנגנון הסרה בטוחה של מסך האתחול ─ */
+function removeSplashScreen() {
+  const splash = document.getElementById('splash');
+  if (!splash) return;
+  
+  splash.classList.add('out');
+  setTimeout(() => {
+    if (splash.parentNode) {
+      splash.remove();
+    }
+  }, 400);
+}
+
+/* ─ הצגת האפליקציה במקרה חירום/תקלה ─ */
+function forceAppShow() {
+  const app = document.getElementById('app');
+  if (app) {
+    app.classList.remove('hidden');
+  }
+  removeSplashScreen();
+}
+
+function safeSplashExit(timerId) {
+  if (timerId) clearTimeout(timerId);
+  
+  setTimeout(() => {
+    forceAppShow();
+    if (typeof applyLang === 'function') applyLang(window._lang || 'he');
+    if (typeof summaryRender === 'function') summaryRender();
+    if (typeof updateMenuSheetLink === 'function') updateMenuSheetLink();
+  }, 300);
+}
+
+/* ─ תהליך האתחול הראשי (Boot Routine) ─ */
 document.addEventListener('DOMContentLoaded', () => {
   const bootFailsafe = setTimeout(() => {
     console.warn('[Boot] Failsafe triggered - forcing app display.');
     forceAppShow();
   }, 2500);
 
-  try {
-    if (typeof verCheck === 'function') verCheck();
-    if (typeof themeInit === 'function') themeInit();
-    if (typeof langInit === 'function') langInit();
-    if (typeof prefsApply === 'function') prefsApply();
-    if (typeof dtInit === 'function') dtInit();
-    if (typeof tabsInit === 'function') tabsInit();
-    if (typeof catInit === 'function') catInit();
-    if (typeof durInit === 'function') durInit();
-    if (typeof clockInit === 'function') clockInit();
-    if (typeof submitInit === 'function') submitInit();
-    if (typeof settingsInit === 'function') settingsInit();
-    if (typeof summaryInit === 'function') summaryInit();
-    if (typeof settingsTabsInit === 'function') settingsTabsInit();
-    if (typeof profileInit === 'function') profileInit();
-    if (typeof roundingInit === 'function') roundingInit();
-    if (typeof exportInit === 'function') exportInit();
-    if (typeof editReportInit === 'function') editReportInit();
-    if (typeof changelogInit === 'function') changelogInit();
+  // מודולים להרצה בטוחה בנפרד (שגיאה במודול אחד לא תתקע מודול אחר)
+  const bootTasks = [
+    verCheck, themeInit, langInit, prefsApply, dtInit, tabsInit,
+    catInit, durInit, clockInit, submitInit, settingsInit, summaryInit,
+    settingsTabsInit, profileInit, roundingInit, exportInit, editReportInit,
+    changelogInit, fixStoredDates, netInit, netQInit, projLoad,
+    histRender, importInit, updateSessionBanner, flushDeleteQueue,
+    menuInit, vBadgeInit, swipeInit, ptrInit, swInit, installInit,
+    scrollInit, backBtnInit
+  ];
 
+  bootTasks.forEach(task => {
+    if (typeof task === 'function') {
+      try {
+        task();
+      } catch (err) {
+        console.error(`[Boot Error in ${task.name || 'anonymous'}]:`, err);
+      }
+    }
+  });
+
+  try {
     $('btn-theme-toggle-settings')?.addEventListener('click', () => {
       applyTheme(document.body.classList.contains('light') ? 'dark' : 'light');
       if (typeof themeSettingsSync === 'function') themeSettingsSync();
@@ -1769,65 +1805,19 @@ document.addEventListener('DOMContentLoaded', () => {
       if (typeof buzz === 'function') buzz([20]);
     });
 
-    if (typeof fixStoredDates === 'function') fixStoredDates();
-    if (typeof netInit === 'function') netInit();
-    if (typeof netQInit === 'function') netQInit();
-    if (typeof projLoad === 'function') projLoad();
-    if (typeof histRender === 'function') histRender();
-    if (typeof importInit === 'function') importInit();
-
     if (window.NotificationSystem) {
       NotificationSystem.init(typeof VER !== 'undefined' ? VER : '3.7.0');
     }
-    if (typeof updateSessionBanner === 'function') updateSessionBanner();
-    if (typeof flushDeleteQueue === 'function') flushDeleteQueue();
-    if (typeof menuInit === 'function') menuInit();
-    if (typeof vBadgeInit === 'function') vBadgeInit();
-    if (typeof swipeInit === 'function') swipeInit();
-    if (typeof ptrInit === 'function') ptrInit();
-    if (typeof swInit === 'function') swInit();
-    if (typeof installInit === 'function') installInit();
-    if (typeof scrollInit === 'function') scrollInit();
-    if (typeof backBtnInit === 'function') backBtnInit();
 
     if (window.history && window.history.replaceState) {
       history.replaceState({ ui: 'tab', name: 'report' }, '');
     }
-
-    safeSplashExit(bootFailsafe);
-
-} catch (err) {
-    console.error('[Boot Error]', err);
-    forceAppShow();
+  } catch (err) {
+    console.error('[Boot Event Listeners Error]:', err);
   }
+
+  safeSplashExit(bootFailsafe);
 });
-
-function safeSplashExit(timerId) {
-  setTimeout(() => {
-    const splash = document.getElementById('splash');
-    if (splash) {
-      splash.classList.add('out');
-      setTimeout(() => splash.remove(), 400);
-    }
-    forceAppShow();
-    if (typeof applyLang === 'function') applyLang(window._lang || 'he');
-    if (typeof summaryRender === 'function') summaryRender();
-    if (typeof updateMenuSheetLink === 'function') updateMenuSheetLink();
-    
-    if (timerId) clearTimeout(timerId);
-  }, 600);
-}
-
-function forceAppShow() {
-  const app = document.getElementById('app');
-  if (app) app.classList.remove('hidden');
-  
-  const splash = document.getElementById('splash');
-  if (splash) {
-    splash.classList.add('out');
-    setTimeout(() => splash.remove(), 400);
-  }
-}
 
 function openResetMaintenanceModal() {
   const modal = document.getElementById('modal-reset');
