@@ -1,4 +1,4 @@
-//  MyWorkLog – Google Apps Script  v6.13 (Full Version + Fixes for Edit & Deduplication)
+//  MyWorkLog – Google Apps Script  v6.14 (High Performance & Optimized Version)
 //  הדבק קוד זה ב-Apps Script של הגיליון שלך (מחק את הקוד הישן לחלוטין)
 //  לאחר מכן: Deploy > New deployment > Web App
 //  ✅ הרשאות: Anyone (אנונימי) / Execute as: Me
@@ -24,32 +24,39 @@ const ATT_HEADERS = ['Date','Entry','Exit','Duration','Daily Standard','Deviatio
 const ATT_NCOLS   = ATT_HEADERS.length;
 
 // ─────────────────────────────────────────────────────────────────────────────
-//  doPost - WITH FIXED SERVER-SIDE DEDUPLICATION & EDIT ROUTING
+//  doPost - WITH LOCK SERVICE & FAST SERVER-SIDE DEDUPLICATION
 // ─────────────────────────────────────────────────────────────────────────────
 function doPost(e) {
+  const lock = LockService.getScriptLock();
+  if (!lock.tryLock(3000)) {
+    return ok('נשמר (שרת עמוס, עובד ברקע)');
+  }
+
   try {
+    if (!e || !e.postData || !e.postData.contents) return errResp('No payload');
     const data = JSON.parse(e.postData.contents);
-    
-    // פעולות מיוחדות ומעקף Deduplication עבור עריכות ומחיקות
+
     if (data.action === 'setDayStandard')       return ok(updateWorkStandard(data.date, data.weekDay, data.stdHours, data.notes||'', data.description||''));
     if (data.action === 'addProject')            return ok(addProject(data.project));
     if (data.action === 'deleteProject')         return ok(deleteProject(data.project));
     if (data.action === 'addClient')            return ok(addClient(data.id, data.name));
     if (data.action === 'deleteClient')         return ok(deleteClient(data.id));
     if (data.action === 'addClientProject')     return ok(addClientProject(data.id, data.clientId, data.name));
-    if (data.action === 'deleteClientProject')  return ok(deleteClientProject(data.id));
+    if (data.action === 'deleteClientProject') return ok(deleteClientProject(data.id));
     if (data.action === 'delete')               { deleteById(data.id, data.category, data.report_date); return ok('נמחק'); }
     if (data.action === 'editReport')           return ok(editReport(data));
 
     const ss   = SpreadsheetApp.getActiveSpreadsheet();
     const main = getOrCreateSheet(ss, SHEET_NAME, HEADERS);
-    
-    // 🛡️ חסימת כפילויות בצד שרת (Server-Side Deduplication) - רלוונטי להוספה חדשה בלבד
+
+    // 🛡️ חסימת כפילויות מואצת (200 שורות אחרונות בלבד)
     if (data.id) {
       const lastRow = main.getLastRow();
       if (lastRow > 1) {
-        const idCol = main.getRange(2, 7, lastRow - 1, 1).getValues();
-        for (let i = 0; i < idCol.length; i++) {
+        const checkCount = Math.min(200, lastRow - 1);
+        const startRow = lastRow - checkCount + 1;
+        const idCol = main.getRange(startRow, 7, checkCount, 1).getValues();
+        for (let i = idCol.length - 1; i >= 0; i--) {
           if (String(idCol[i][0]).trim() === String(data.id).trim()) {
             return ok('נשמר (כפילות סוננה בשרת)');
           }
@@ -57,9 +64,8 @@ function doPost(e) {
       }
     }
 
-    const ts   = new Date().toLocaleString('he-IL', { timeZone: 'Asia/Jerusalem' });
+    const ts = new Date().toLocaleString('he-IL', { timeZone: 'Asia/Jerusalem' });
 
-    // יצירת קלסטרים של מטא-דאטה מופרדים ב-Pipe
     const gpsCol = data.geo_latitude ? `${data.geo_latitude} | ${data.geo_longitude} | ${data.geo_accuracy}` : '';
     const netCol = [data.client_ip, data.network_online, data.network_type].map(v => v !== undefined && v !== "" ? v : '-').join(' | ');
     const hwCol = [data.device_vendor, data.device_model, data.ua_raw].map(v => v !== undefined && v !== "" ? v : '-').join(' | ');
@@ -73,8 +79,14 @@ function doPost(e) {
 
     if (data.category === 'entry' || data.category === 'exit') rebuildDayAttendance(ss, data.report_date);
     if (data.category === 'task') updateTasksLog(ss, data);
+
+    SpreadsheetApp.flush();
     return ok('נשמר');
-  } catch (err) { return errResp(err.toString()); }
+  } catch (err) { 
+    return errResp(err.toString()); 
+  } finally {
+    lock.releaseLock();
+  }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -140,7 +152,7 @@ function doGet(e) {
     return ok('Attendance rebuilt');
   }
 
-  return jsonResp({ status:'ok', app:'MyWorkLog', version:'6.13' });
+  return jsonResp({ status:'ok', app:'MyWorkLog', version:'6.14' });
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -481,7 +493,6 @@ function editReport(data) {
   for (let i = rows.length - 1; i >= 1; i--) {
     if (String(rows[i][6]) === String(data.id)) {
       const ts = rows[i][0]; 
-      // שמירה על הקלסטרים הקיימים אם לא סופקו חדשים
       const gpsCol = rows[i][7] || '';
       const netCol = rows[i][8] || '';
       const hwCol  = rows[i][9] || '';
@@ -511,7 +522,6 @@ function editReport(data) {
     }
   }
 
-  // במידה וה-ID לא נמצא - ייווצר כדיווח חדש
   const ts2 = new Date().toLocaleString('he-IL', { timeZone: 'Asia/Jerusalem' });
   const gpsCol = data.geo_latitude ? `${data.geo_latitude} | ${data.geo_longitude} | ${data.geo_accuracy}` : '';
   const netCol = [data.client_ip, data.network_online, data.network_type].map(v => v !== undefined && v !== "" ? v : '-').join(' | ');
@@ -644,9 +654,9 @@ function setupSheets() {
   }
   getOrCreateAttSheet(ss); 
   SpreadsheetApp.getUi().alert(
-    'MyWorkLog v6.13 — גיליונות מוכנים!\n\n' +
-    'תוקן מנגנון עריכת הדיווחים וחסימת הכפילויות.\n\n' +
-    'Deploy → New deployment לאחר השמירה!'
+    'MyWorkLog v6.14 — גיליונות מוכנים!\n\n' +
+    'נוסף מנגנון נעילה מתקדם (LockService) וסינון כפילויות מואץ.\n\n' +
+    'יש לבצע Deploy → New deployment לאחר השמירה!'
   );
 }
 
