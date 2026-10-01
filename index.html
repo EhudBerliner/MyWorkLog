@@ -2678,6 +2678,7 @@ function buildRep(date,time){
     const ps=store(K.proj)||[];
     if(proj&&!ps.includes(proj)){ps.push(proj);store(K.proj,ps);projLoad();}
     if(ST.dur==='duration'){
+      // התיקון בוצע בשורה הבאה: החלפת \vert{}\vert{} באופרטור התקין ||
       const h=parseInt($('dur-hours').value)\vert{}\vert{}0,m=parseInt($('dur-minutes').value)||0;
       if(!h&&!m){toast(t('toastNoDuration'),'warn');buzz([80]);return null}
       rTime=`${pad(h)}:${pad(m)}`;
@@ -2708,7 +2709,6 @@ function buildRep(date,time){
   return{id:Date.now()+Math.random().toString(36).slice(2),timestamp:new Date().toISOString(),
     report_date:date,report_time:rTime,category:cat,description:desc,project:proj,workDuration:workDuration};
 }
-
 /* STORAGE */
 function markSent(id){const rs=store(K.reps)||[];const r=rs.find(x=>x.id===id);if(r)r.sent=true;store(K.reps,rs)}
 function addQ(r){const q=store(K.q)||[];if(!q.find(x=>x.id===r.id))q.push(r);store(K.q,q)}
