@@ -1559,9 +1559,8 @@ details summary::-webkit-details-marker{display:none}
   </div>
 </div>
 
-
-<script src="app.js"></script>
 <script src="i18n.js"></script>
+<script src="app.js"></script>
 <script>
 /* ─────────────────────────────────────────────────────
    i18n
@@ -1783,25 +1782,76 @@ document.addEventListener('DOMContentLoaded', () => {
   }, 2500);
 
   // מודולים להרצה בטוחה בנפרד (שגיאה במודול אחד לא תתקע מודול אחר)
-  const bootTasks = [
-    verCheck, themeInit, langInit, prefsApply, dtInit, tabsInit,
-    catInit, durInit, clockInit, submitInit, settingsInit, summaryInit,
-    settingsTabsInit, profileInit, roundingInit, exportInit, editReportInit,
-    changelogInit, fixStoredDates, netInit, netQInit, projLoad,
-    histRender, importInit, updateSessionBanner, flushDeleteQueue,
-    menuInit, vBadgeInit, swipeInit, ptrInit, swInit, installInit,
-    scrollInit, backBtnInit
+/* ─ תהליך האתחול הראשי והבטוח ─ */
+document.addEventListener('DOMContentLoaded', () => {
+  const bootFailsafe = setTimeout(() => {
+    console.warn('[Boot] Failsafe triggered - forcing app display.');
+    forceAppShow();
+  }, 2000);
+
+  const bootTaskNames = [
+    'verCheck', 'themeInit', 'langInit', 'prefsApply', 'dtInit', 'tabsInit',
+    'catInit', 'durInit', 'clockInit', 'submitInit', 'settingsInit', 'summaryInit',
+    'settingsTabsInit', 'profileInit', 'roundingInit', 'exportInit', 'editReportInit',
+    'changelogInit', 'fixStoredDates', 'netInit', 'netQInit', 'projLoad',
+    'histRender', 'importInit', 'updateSessionBanner', 'flushDeleteQueue',
+    'menuInit', 'vBadgeInit', 'swipeInit', 'ptrInit', 'swInit', 'installInit',
+    'scrollInit', 'backBtnInit'
   ];
 
-  bootTasks.forEach(task => {
-    if (typeof task === 'function') {
+  bootTaskNames.forEach(fnName => {
+    if (typeof window[fnName] === 'function') {
       try {
-        task();
+        window[fnName]();
       } catch (err) {
-        console.error(`[Boot Error in ${task.name || 'anonymous'}]:`, err);
+        console.error(`[Boot Error in ${fnName}]:`, err);
       }
     }
   });
+
+  try {
+    $('btn-theme-toggle-settings')?.addEventListener('click', () => {
+      if (typeof applyTheme === 'function') {
+        applyTheme(document.body.classList.contains('light') ? 'dark' : 'light');
+      }
+      if (typeof themeSettingsSync === 'function') themeSettingsSync();
+      if (typeof buzz === 'function') buzz([20]);
+    });
+
+    $('btn-sync-wstandard-settings')?.addEventListener('click', async () => {
+      const btn = $('btn-sync-wstandard-settings');
+      if (btn) { btn.disabled = true; btn.textContent = '⏳ מסנכרן...'; }
+      if (typeof syncWStandard === 'function') await syncWStandard(false);
+      if (btn) { btn.disabled = false; btn.textContent = '↻ משוך WorkStandard מגיליון'; }
+      if (typeof wstdSyncStatusInline === 'function') wstdSyncStatusInline();
+      if (typeof updateSyncStatus === 'function') updateSyncStatus();
+    });
+
+    $('btn-now')?.addEventListener('click', () => {
+      const n = new Date();
+      const rDate = $('report-date');
+      const rTime = $('report-time');
+      if (rDate && typeof isoD === 'function') rDate.value = isoD(n);
+      if (rTime && typeof applyRounding === 'function' && typeof timeS === 'function') {
+        rTime.value = applyRounding(timeS(n));
+      }
+      if (typeof toast === 'function' && typeof t === 'function') toast(t('toastNowUpdated'));
+      if (typeof buzz === 'function') buzz([20]);
+    });
+
+    if (window.NotificationSystem) {
+      NotificationSystem.init(typeof VER !== 'undefined' ? VER : '3.7.0');
+    }
+
+    if (window.history && window.history.replaceState) {
+      history.replaceState({ ui: 'tab', name: 'report' }, '');
+    }
+  } catch (err) {
+    console.error('[Boot Event Listeners Error]:', err);
+  }
+
+  safeSplashExit(bootFailsafe);
+});
 
   try {
     $('btn-theme-toggle-settings')?.addEventListener('click', () => {
