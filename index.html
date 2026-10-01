@@ -2640,7 +2640,7 @@ function submitInit(){
 }
    
 function buildRep(date,time){
-  const cat=ST.cat;let rTime=time,desc='',proj='';
+  const cat=ST.cat;let rTime=time,desc='',proj='',workDuration='';
   if(cat==='task'){
     desc=$('task-desc').value.trim();proj=$('task-project').value.trim();
     if(!proj){
@@ -2656,7 +2656,7 @@ function buildRep(date,time){
     const ps=store(K.proj)||[];
     if(proj&&!ps.includes(proj)){ps.push(proj);store(K.proj,ps);projLoad();}
     if(ST.dur==='duration'){
-      const h=parseInt($('dur-hours').value)||0,m=parseInt($('dur-minutes').value)||0;
+      const h=parseInt($('dur-hours').value)\vert{}\vert{}0,m=parseInt($('dur-minutes').value)||0;
       if(!h&&!m){toast(t('toastNoDuration'),'warn');buzz([80]);return null}
       rTime=`${pad(h)}:${pad(m)}`;
     }else{
@@ -2665,10 +2665,26 @@ function buildRep(date,time){
       rTime=`${s}-${e}`;
     }
   }
+
   // Apply time rounding for entry/exit
   if(cat==='entry'||cat==='exit') rTime=applyRounding(rTime);
+
+  // חישוב סך שעות עבודה בעת דיווח יציאה
+  if(cat==='exit'){
+    const reports=store(K.reps)||[];
+    const openSession=getOpenSession(reports);
+    if(openSession && openSession.report_time){
+      const [eh, em] = openSession.report_time.split(':').map(Number);
+      const [xh, xm] = rTime.split(':').map(Number);
+      const diffMins = (xh * 60 + xm) - (eh * 60 + em);
+      if(diffMins > 0){
+        workDuration = minsToHHMM(diffMins);
+      }
+    }
+  }
+
   return{id:Date.now()+Math.random().toString(36).slice(2),timestamp:new Date().toISOString(),
-    report_date:date,report_time:rTime,category:cat,description:desc,project:proj};
+    report_date:date,report_time:rTime,category:cat,description:desc,project:proj,workDuration:workDuration};
 }
 
 /* STORAGE */
@@ -2696,7 +2712,7 @@ async function dispatchAction(actionEvent, uiButton = null) {
   let reqBody;
   let successMsg = '';
   
-  if (action === 'delete') {
+if (action === 'delete') {
     reqBody = { action: 'delete', id: payload.id, category: payload.category, report_date: payload.report_date };
     successMsg = '🗑️ דיווח נמחק';
   } else if (action === 'update') {
@@ -2704,7 +2720,11 @@ async function dispatchAction(actionEvent, uiButton = null) {
     successMsg = '✅ דיווח עודכן';
   } else {
     reqBody = { ...payload };
-    successMsg = '✅ הדיווח נשמר בגיליון';
+    if (payload.category === 'exit' && payload.workDuration) {
+      successMsg = `🔴 יציאה נרשמה (סך הכל: ${payload.workDuration} שעות)`;
+    } else {
+      successMsg = '✅ הדיווח נשמר בגיליון';
+    }
   }
 
   let isSuccess = false;
