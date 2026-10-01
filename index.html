@@ -60,7 +60,7 @@ html,body{height:100%;background:var(--bg0);color:var(--text);
 .workday-chip input{position:absolute;opacity:0;width:0;height:0}
 .workday-chip:has(input:checked){background:var(--limeDim);border-color:var(--lime);color:var(--lime)}
 
-/* ── NOTIFICATION SYSTEM v4.4.6 ── */
+/* ── NOTIFICATION SYSTEM v4.4.7 ── */
 .offline-banner{position:fixed;top:0;left:0;right:0;
   background:var(--red,#ef4444);color:#fff;text-align:center;
   padding:calc(var(--safeT,0px)+8px) 16px 8px;
@@ -1570,12 +1570,12 @@ details summary::-webkit-details-marker{display:none}
 /* BOOT */
 
 /* ═══════════════════════════════════════════════════════
-   NOTIFICATION SYSTEM  v4.4.6
+   NOTIFICATION SYSTEM  v4.4.7
    Manages: Offline banner · PWA Install · Update Prompt · Toast
    ═══════════════════════════════════════════════════════ */
 const NotificationSystem = {
   settings: { showNetworkStatus: true },
-  currentVersion: '4.4.6',
+  currentVersion: '4.4.7',
   deferredInstallPrompt: null,
   _wasOffline: false,   // track previous state for auto-cleanup
 
@@ -2599,7 +2599,6 @@ function submitInit(){
     const date=$('report-date').value,time=$('report-time').value;
     if(!date||!time){toast(t('toastNoTime'),'warn');buzz([80]);return}
 
-    // ── Session validation (entry/exit) ───────────────────────
     const reports=store(K.reps)||[];
     if(ST.cat==='entry'){
       const err=validateEntry(date,reports);
@@ -2620,21 +2619,15 @@ function submitInit(){
 
     const rep=buildRep(date,time);if(!rep)return;
 
-    // ── Save locally and reset UI immediately ─────────────────
-    saveLocal(rep);histRender();summaryRender();resetForm();
-    updateSessionBanner();
+    // ── Unified Pipeline Call ──
+    await dispatchAction({ action: 'create', payload: rep }, $('btn-submit'));
+    resetForm();
     buzz([30,20,60]);
-    toast(t('toastSavedLocal'),'success',1200);
-
-    // ── Send to sheet in background ───────────────────────────
-    const ep=store(K.ep);
-    if(!ep){toast(t('toastNoEndpoint'),'warn');addQ(rep);pendUI();return}
-    if(!navigator.onLine){toast(t('toastSavedOffline'),'warn');addQ(rep);pendUI();return}
-    sendBackground(rep,ep);
   });
+  
   $('btn-sync')?.addEventListener('click',async()=>{
     const btn=$('btn-sync');
-    if(btn.dataset.syncing==='1') return; // debounce — ignore if already syncing
+    if(btn.dataset.syncing==='1') return;
     btn.dataset.syncing='1';
     btn.disabled=true;
     btn.textContent='⏳';
@@ -2645,6 +2638,7 @@ function submitInit(){
     }
   });
 }
+   
 function buildRep(date,time){
   const cat=ST.cat;let rTime=time,desc='',proj='';
   if(cat==='task'){
@@ -2677,15 +2671,111 @@ function buildRep(date,time){
     report_date:date,report_time:rTime,category:cat,description:desc,project:proj};
 }
 
-   
-
 /* STORAGE */
-function saveLocal(r){const rs=store(K.reps)||[];rs.unshift(r);store(K.reps,rs.slice(0,300))}
 function markSent(id){const rs=store(K.reps)||[];const r=rs.find(x=>x.id===id);if(r)r.sent=true;store(K.reps,rs)}
 function addQ(r){const q=store(K.q)||[];if(!q.find(x=>x.id===r.id))q.push(r);store(K.q,q)}
 function pendUI(){const q=store(K.q)||[];$('pending-section').classList.toggle('hidden',!q.length);$('pending-count').textContent=q.length}
 
+/* ─── UNIFIED CRUD PIPELINE (Pessimistic / Confirmed UI) ─── */
+async function dispatchAction(actionEvent, uiButton = null) {
+  const { action, payload } = actionEvent;
+  const ep = store(K.ep);
+  
+  // 1. נעילת ה-UI והצגת סטטוס טעינה
+  let origText = '';
+  if (uiButton) {
+    origText = uiButton.innerHTML;
+    uiButton.disabled = true;
+    uiButton.innerHTML = '⏳ ממתין לשרת...';
+  }
 
+  // 2. הכנת גוף הבקשה לפי סוג הפעולה
+  let reqBody;
+  let successMsg = '';
+  
+  if (action === 'delete') {
+    reqBody = { action: 'delete', id: payload.id, category: payload.category, report_date: payload.report_date };
+    successMsg = '🗑️ דיווח נמחק בהצלחה';
+  } else if (action === 'update') {
+    reqBody = { action: 'editReport', ...payload };
+    successMsg = '✅ דיווח עודכן בהצלחה';
+  } else {
+    reqBody = { ...payload }; // Create (ה-GAS מזהה הוספה אוטומטית לפי המבנה)
+    successMsg = '✅ הדיווח נשמר בגיליון';
+  }
+
+  let isSuccess = false;
+  let isOffline = !navigator.onLine;
+
+  // 3. ביצוע הבקשה מול השרת
+  if (ep && !isOffline) {
+    try {
+      await fetch(ep, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
+        body: JSON.stringify(reqBody),
+        mode: 'no-cors',
+        keepalive: true,
+        priority: 'high'
+      });
+      // במצב no-cors לא נזרקת שגיאה אם הבקשה הגיעה לשרת
+      isSuccess = true;
+    } catch (err) {
+      isSuccess = false; // שגיאת רשת / אופליין
+    }
+  }
+
+  // 4. שמירה מקומית (Source of Truth) וניהול התורים
+  let reps = store(K.reps) || [];
+  if (action === 'create') {
+    payload.sent = isSuccess;
+    reps.unshift(payload);
+    reps = reps.slice(0, 300);
+    if (!isSuccess) addQ(payload);
+  } else if (action === 'update') {
+    payload.sent = isSuccess;
+    const idx = reps.findIndex(r => r.id === payload.id);
+    if (idx >= 0) {
+      const localPayload = { ...payload };
+      delete localPayload.old_date; // הסרת שדה עזר המשמש רק לשרת
+      reps[idx] = localPayload;
+    }
+    if (!isSuccess) addQ(payload);
+  } else if (action === 'delete') {
+    reps = reps.filter(r => r.id !== payload.id);
+    store(K.q, (store(K.q)||[]).filter(r => r.id !== payload.id)); // הסרה מתור יצירה אם היה שם
+    if (!isSuccess) {
+       const dq = store('mwl_delete_queue') || [];
+       dq.push(payload);
+       store('mwl_delete_queue', dq);
+    }
+  }
+  
+  store(K.reps, reps);
+  pendUI();
+
+  // 5. חיווי למשתמש לפי התוצאה האמיתית
+  if (isSuccess) {
+    toast(successMsg, 'success', 2500);
+  } else if (!ep) {
+    toast('⚠️ לא מוגדר חיבור לשרת - נשמר מקומית בלבד', 'warn', 4000);
+  } else {
+    toast('⚠️ אין תקשורת - הבקשה בתור למשלוח', 'warn', 4000);
+  }
+
+  // 6. רענון המסכים
+  histRender();
+  summaryRender();
+  updateSessionBanner();
+
+  // 7. שחרור ה-UI
+  if (uiButton) {
+    uiButton.disabled = false;
+    uiButton.innerHTML = origText;
+  }
+  
+  return isSuccess;
+}
 
 /* NETWORK */
 function netInit(){
@@ -3891,35 +3981,6 @@ async function send(rep,ep){
 
 /* ─── שליחה מיידית וסנכרון אוטומטי מועדף ─── */
 
-function sendBackground(rep, ep) {
-  const label = catLbl(rep.category);
-  
-  // שליחה מיידית מול השרת (בדיוק כמו פונקציית המחיקה)
-  fetch(ep, {
-    method: 'POST',
-    headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
-    body: JSON.stringify(rep),
-    mode: 'no-cors',
-    keepalive: true,
-    priority: 'high' // תעדוף בקשה ברמת הדפדפן
-  })
-  .then(() => {
-    markSent(rep.id);
-    toast(t('toastSentLabel', label), 'success');
-  })
-  .catch(() => {
-    // במידה ואין תקשורת - נכנס לתור המקומי
-    addQ(rep);
-    pendUI();
-    toast(t('toastQueuedLabel', label), 'warn', 3500);
-
-    // ניסיון סנכרון חוזר אוטומטי במידה והחיבור חזר
-    if (navigator.onLine) {
-      setTimeout(syncQ, 2000);
-    }
-  });
-}
-
 async function syncQ() {
   const ep = store(K.ep);
   if (!ep || !navigator.onLine) return;
@@ -3991,68 +4052,61 @@ document.addEventListener('visibilitychange', async () => {
   }
 });
 
-function delReport(id){
+async function delReport(id){
   if(!confirm(t('confirmDelReport')||'למחוק דיווח זה?'))return;
   const all=store(K.reps)||[];
   const rep=all.find(r=>r.id===id);
-  const cat=rep?rep.category:'';
-  const date=rep?rep.report_date:'';
-  store(K.reps,all.filter(r=>r.id!==id));
-  store(K.q,(store(K.q)||[]).filter(r=>r.id!==id));
-  const ep=store(K.ep);
-  if(ep&&navigator.onLine){
-    fetch(ep,{method:'POST',headers:{'Content-Type':'text/plain;charset=UTF-8'},
-      body:JSON.stringify({action:'delete',id,category:cat,report_date:date}),mode:'no-cors',keepalive:true}).catch(()=>{
-      const dq=store('mwl_delete_queue')||[];
-      dq.push({id,category:cat,report_date:date});
-      store('mwl_delete_queue',dq);
-    });
-  }else if(ep){
-    const dq=store('mwl_delete_queue')||[];
-    dq.push({id,category:cat,report_date:date});
-    store('mwl_delete_queue',dq);
-  }
-  histRender();summaryRender();updateSessionBanner();toast(t('toastDeleted')||'🗑 דיווח נמחק','success');
+  if(!rep) return;
+  
+  // נעילת רשימת ההיסטוריה בזמן הביצוע כדי למנוע לחיצות כפולות
+  const hList = $('history-list');
+  if (hList) hList.style.pointerEvents = 'none';
+  
+  await dispatchAction({ 
+    action: 'delete', 
+    payload: { id, category: rep.category, report_date: rep.report_date } 
+  }, null);
+  
+  if (hList) hList.style.pointerEvents = 'auto';
 }
 
 async function saveEditReport(){
   if(!_editRepId) return;
   const reps = store(K.reps)||[];
   const idx = reps.findIndex(x=>x.id===_editRepId);
-  if(idx<0){ toast('\u26a0\ufe0f \u05d3\u05d9\u05d5\u05d5\u05d7 \u05dc\u05d0 \u05e0\u05de\u05e6\u05d0','warn'); return; }
-  const btn = $('btn-edit-report-save');
-  btn.disabled=true; btn.textContent='...';
+  if(idx<0){ toast('\u26a0\ufe0f דיווח לא נמצא','warn'); return; }
+  
   const date = $('edit-report-date').value;
-  if(!date){ toast('\u26a0\ufe0f \u05e0\u05d0 \u05dc\u05de\u05dc\u05d0 \u05ea\u05d0\u05e8\u05d9\u05da','warn'); btn.disabled=false; btn.textContent='\u26a1 \u05e9\u05de\u05d5\u05e8 \u05e9\u05d9\u05e0\u05d5\u05d9\u05d9\u05dd'; return; }
+  if(!date){ toast('\u26a0\ufe0f נא למלא תאריך','warn'); return; }
+  
   const isTask = _editRepCat==='task';
   let report_time, description='', project='';
   if(isTask){
     report_time = ($('edit-report-duration').value||'').trim();
     description = ($('edit-task-desc').value||'').trim();
     project     = ($('edit-task-project').value||'').trim();
-    if(!project){ toast('\u26a0\ufe0f \u05e0\u05d0 \u05dc\u05de\u05dc\u05d0 \u05e4\u05e8\u05d5\u05d9\u05e7\u05d8','warn'); btn.disabled=false; btn.textContent='\u26a1 \u05e9\u05de\u05d5\u05e8 \u05e9\u05d9\u05e0\u05d5\u05d9\u05d9\u05dd'; return; }
-    if(!report_time){ toast('\u26a0\ufe0f \u05e0\u05d0 \u05dc\u05de\u05dc\u05d0 \u05de\u05e9\u05da','warn'); btn.disabled=false; btn.textContent='\u26a1 \u05e9\u05de\u05d5\u05e8 \u05e9\u05d9\u05e0\u05d5\u05d9\u05d9\u05dd'; return; }
+    if(!project){ toast('\u26a0\ufe0f נא למלא פרויקט','warn'); return; }
+    if(!report_time){ toast('\u26a0\ufe0f נא למלא משך','warn'); return; }
     const ps=store(K.proj)||[];
     if(!ps.includes(project)){ps.push(project);store(K.proj,ps);projLoad();}
   } else {
     report_time = ($('edit-report-time').value||'').trim();
-    if(!report_time){ toast('\u26a0\ufe0f \u05e0\u05d0 \u05dc\u05de\u05dc\u05d0 \u05e9\u05e2\u05d4','warn'); btn.disabled=false; btn.textContent='\u26a1 \u05e9\u05de\u05d5\u05e8 \u05e9\u05d9\u05e0\u05d5\u05d9\u05d9\u05dd'; return; }
+    if(!report_time){ toast('\u26a0\ufe0f נא למלא שעה','warn'); return; }
     report_time = applyRounding(report_time);
   }
+  
   const oldDate = reps[idx].report_date;
   const updated = {...reps[idx], report_date:date, report_time, category:_editRepCat, description, project, edited:new Date().toISOString()};
-  reps[idx] = updated;
-  store(K.reps, reps);
-  const ep = store(K.ep);
-  if(ep && navigator.onLine){
-    fetch(ep,{method:'POST',headers:{'Content-Type':'text/plain;charset=UTF-8'},
-      body:JSON.stringify({action:'editReport',...updated,old_date:oldDate}),mode:'no-cors',keepalive:true}).catch(()=>{});
-  }
-  histRender(); summaryRender(); updateSessionBanner();
-  buzz([20,40]);
-  toast('\u2705 \u05d3\u05d9\u05d5\u05d5\u05d7 \u05e2\u05d5\u05d3\u05db\u05df','success');
-  btn.disabled=false; btn.textContent='\u26a1 \u05e9\u05de\u05d5\u05e8 \u05e9\u05d9\u05e0\u05d5\u05d9\u05d9\u05dd';
+  
+  // ── Unified Pipeline Call ──
+  const success = await dispatchAction({ 
+    action: 'update', 
+    payload: { ...updated, old_date: oldDate } 
+  }, $('btn-edit-report-save'));
+  
+  // סגירת המודאל רק אם הפעולה תועדה כהלכה (גם אם באופליין)
   closeM('modal-edit-report');
+  buzz([20,40]);
 }
 
 async function flushDeleteQueue(){
