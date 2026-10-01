@@ -1695,7 +1695,7 @@ const NotificationSystem = {
     } catch (_) { /* silent — offline or missing */ }
   },
 
-  showUpdatePrompt(newVer, onUpdate) {
+showUpdatePrompt(newVer, onUpdate) {
     const el = document.getElementById('updatePrompt');
     if (!el) return;
     el.classList.add('visible');
@@ -1703,13 +1703,34 @@ const NotificationSystem = {
     document.getElementById('updateNowBtn').onclick = async () => {
       el.classList.remove('visible');
       if (onUpdate) onUpdate();
-      if ('caches' in window) {
-        const keys = await caches.keys();
-        await Promise.all(keys.map(k => caches.delete(k)));
+      
+      if (typeof toast === 'function') {
+        toast('⏳ מעדכן לגרסה חדשה...', 'info', 3000);
       }
-      window.location.reload();
+
+      try {
+        // 1. הפעלת ה-Service Worker הממתין
+        if ('serviceWorker' in navigator) {
+          const reg = await navigator.serviceWorker.getRegistration();
+          if (reg && reg.waiting) {
+            reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+          }
+        }
+
+        // 2. ניקוי מוחלט של כל ה-Caches בדפדפן
+        if ('caches' in window) {
+          const keys = await caches.keys();
+          await Promise.all(keys.map(k => caches.delete(k)));
+        }
+      } catch (err) {
+        console.warn('[Update Error]', err);
+      } finally {
+        // 3. רענון כפוי מהשרת לעקיפת זיכרון המטמון
+        window.location.href = window.location.origin + window.location.pathname + '?v=' + Date.now();
+      }
     };
   }
+   
 }
 window.NotificationSystem = NotificationSystem;
 
