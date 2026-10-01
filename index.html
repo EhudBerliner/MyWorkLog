@@ -1559,8 +1559,9 @@ details summary::-webkit-details-marker{display:none}
   </div>
 </div>
 
-<script src="i18n.js"></script>
+
 <script src="app.js"></script>
+<script src="i18n.js"></script>
 <script>
 /* ─────────────────────────────────────────────────────
    i18n
@@ -1694,7 +1695,7 @@ const NotificationSystem = {
     } catch (_) { /* silent — offline or missing */ }
   },
 
-showUpdatePrompt(newVer, onUpdate) {
+  showUpdatePrompt(newVer, onUpdate) {
     const el = document.getElementById('updatePrompt');
     if (!el) return;
     el.classList.add('visible');
@@ -1702,35 +1703,13 @@ showUpdatePrompt(newVer, onUpdate) {
     document.getElementById('updateNowBtn').onclick = async () => {
       el.classList.remove('visible');
       if (onUpdate) onUpdate();
-
-      if (typeof toast === 'function') {
-        toast('⏳ מנקה מטמון ומעדכן גרסה...', 'info', 3000);
+      if ('caches' in window) {
+        const keys = await caches.keys();
+        await Promise.all(keys.map(k => caches.delete(k)));
       }
-
-      try {
-        // 1. הסרת רישום של כל ה-Service Workers הפעילים
-        if ('serviceWorker' in navigator) {
-          const registrations = await navigator.serviceWorker.getRegistrations();
-          for (const registration of registrations) {
-            await registration.unregister();
-          }
-        }
-
-        // 2. מחיקת כל זיכרונות המטמון (Caches)
-        if ('caches' in window) {
-          const keys = await caches.keys();
-          await Promise.all(keys.map(k => caches.delete(k)));
-        }
-      } catch (err) {
-        console.warn('[Update Error]', err);
-      } finally {
-        // 3. טעינה מחדש נקייה לחלוטין עוקפת Cache
-        const cleanUrl = window.location.origin + window.location.pathname + '?reload=' + Date.now();
-        window.location.href = cleanUrl;
-      }
+      window.location.reload();
     };
   }
-   
 }
 window.NotificationSystem = NotificationSystem;
 
@@ -1782,76 +1761,25 @@ document.addEventListener('DOMContentLoaded', () => {
   }, 2500);
 
   // מודולים להרצה בטוחה בנפרד (שגיאה במודול אחד לא תתקע מודול אחר)
-/* ─ תהליך האתחול הראשי והבטוח ─ */
-document.addEventListener('DOMContentLoaded', () => {
-  const bootFailsafe = setTimeout(() => {
-    console.warn('[Boot] Failsafe triggered - forcing app display.');
-    forceAppShow();
-  }, 2000);
-
-  const bootTaskNames = [
-    'verCheck', 'themeInit', 'langInit', 'prefsApply', 'dtInit', 'tabsInit',
-    'catInit', 'durInit', 'clockInit', 'submitInit', 'settingsInit', 'summaryInit',
-    'settingsTabsInit', 'profileInit', 'roundingInit', 'exportInit', 'editReportInit',
-    'changelogInit', 'fixStoredDates', 'netInit', 'netQInit', 'projLoad',
-    'histRender', 'importInit', 'updateSessionBanner', 'flushDeleteQueue',
-    'menuInit', 'vBadgeInit', 'swipeInit', 'ptrInit', 'swInit', 'installInit',
-    'scrollInit', 'backBtnInit'
+  const bootTasks = [
+    verCheck, themeInit, langInit, prefsApply, dtInit, tabsInit,
+    catInit, durInit, clockInit, submitInit, settingsInit, summaryInit,
+    settingsTabsInit, profileInit, roundingInit, exportInit, editReportInit,
+    changelogInit, fixStoredDates, netInit, netQInit, projLoad,
+    histRender, importInit, updateSessionBanner, flushDeleteQueue,
+    menuInit, vBadgeInit, swipeInit, ptrInit, swInit, installInit,
+    scrollInit, backBtnInit
   ];
 
-  bootTaskNames.forEach(fnName => {
-    if (typeof window[fnName] === 'function') {
+  bootTasks.forEach(task => {
+    if (typeof task === 'function') {
       try {
-        window[fnName]();
+        task();
       } catch (err) {
-        console.error(`[Boot Error in ${fnName}]:`, err);
+        console.error(`[Boot Error in ${task.name || 'anonymous'}]:`, err);
       }
     }
   });
-
-  try {
-    $('btn-theme-toggle-settings')?.addEventListener('click', () => {
-      if (typeof applyTheme === 'function') {
-        applyTheme(document.body.classList.contains('light') ? 'dark' : 'light');
-      }
-      if (typeof themeSettingsSync === 'function') themeSettingsSync();
-      if (typeof buzz === 'function') buzz([20]);
-    });
-
-    $('btn-sync-wstandard-settings')?.addEventListener('click', async () => {
-      const btn = $('btn-sync-wstandard-settings');
-      if (btn) { btn.disabled = true; btn.textContent = '⏳ מסנכרן...'; }
-      if (typeof syncWStandard === 'function') await syncWStandard(false);
-      if (btn) { btn.disabled = false; btn.textContent = '↻ משוך WorkStandard מגיליון'; }
-      if (typeof wstdSyncStatusInline === 'function') wstdSyncStatusInline();
-      if (typeof updateSyncStatus === 'function') updateSyncStatus();
-    });
-
-    $('btn-now')?.addEventListener('click', () => {
-      const n = new Date();
-      const rDate = $('report-date');
-      const rTime = $('report-time');
-      if (rDate && typeof isoD === 'function') rDate.value = isoD(n);
-      if (rTime && typeof applyRounding === 'function' && typeof timeS === 'function') {
-        rTime.value = applyRounding(timeS(n));
-      }
-      if (typeof toast === 'function' && typeof t === 'function') toast(t('toastNowUpdated'));
-      if (typeof buzz === 'function') buzz([20]);
-    });
-
-    if (window.NotificationSystem) {
-      NotificationSystem.init(typeof VER !== 'undefined' ? VER : '3.7.0');
-    }
-
-    if (window.history && window.history.replaceState) {
-      history.replaceState({ ui: 'tab', name: 'report' }, '');
-    }
-  } catch (err) {
-    console.error('[Boot Event Listeners Error]:', err);
-  }
-
-  safeSplashExit(bootFailsafe);
-});
 
   try {
     $('btn-theme-toggle-settings')?.addEventListener('click', () => {
@@ -2712,7 +2640,7 @@ function submitInit(){
 }
    
 function buildRep(date,time){
-  const cat=ST.cat;let rTime=time,desc='',proj='',workDuration='';
+  const cat=ST.cat;let rTime=time,desc='',proj='';
   if(cat==='task'){
     desc=$('task-desc').value.trim();proj=$('task-project').value.trim();
     if(!proj){
@@ -2728,9 +2656,8 @@ function buildRep(date,time){
     const ps=store(K.proj)||[];
     if(proj&&!ps.includes(proj)){ps.push(proj);store(K.proj,ps);projLoad();}
     if(ST.dur==='duration'){
-      // התיקון בוצע בשורה הבאה: החלפת \vert{}\vert{} באופרטור התקין ||
       const h=parseInt($('dur-hours').value)||0,m=parseInt($('dur-minutes').value)||0;
-       if(!h&&!m){toast(t('toastNoDuration'),'warn');buzz([80]);return null}
+      if(!h&&!m){toast(t('toastNoDuration'),'warn');buzz([80]);return null}
       rTime=`${pad(h)}:${pad(m)}`;
     }else{
       const s=$('range-start').value,e=$('range-end').value;
@@ -2738,27 +2665,12 @@ function buildRep(date,time){
       rTime=`${s}-${e}`;
     }
   }
-
   // Apply time rounding for entry/exit
   if(cat==='entry'||cat==='exit') rTime=applyRounding(rTime);
-
-  // חישוב סך שעות עבודה בעת דיווח יציאה
-  if(cat==='exit'){
-    const reports=store(K.reps)||[];
-    const openSession=getOpenSession(reports);
-    if(openSession && openSession.report_time){
-      const [eh, em] = openSession.report_time.split(':').map(Number);
-      const [xh, xm] = rTime.split(':').map(Number);
-      const diffMins = (xh * 60 + xm) - (eh * 60 + em);
-      if(diffMins > 0){
-        workDuration = minsToHHMM(diffMins);
-      }
-    }
-  }
-
   return{id:Date.now()+Math.random().toString(36).slice(2),timestamp:new Date().toISOString(),
-    report_date:date,report_time:rTime,category:cat,description:desc,project:proj,workDuration:workDuration};
+    report_date:date,report_time:rTime,category:cat,description:desc,project:proj};
 }
+
 /* STORAGE */
 function markSent(id){const rs=store(K.reps)||[];const r=rs.find(x=>x.id===id);if(r)r.sent=true;store(K.reps,rs)}
 function addQ(r){const q=store(K.q)||[];if(!q.find(x=>x.id===r.id))q.push(r);store(K.q,q)}
@@ -2784,7 +2696,7 @@ async function dispatchAction(actionEvent, uiButton = null) {
   let reqBody;
   let successMsg = '';
   
-if (action === 'delete') {
+  if (action === 'delete') {
     reqBody = { action: 'delete', id: payload.id, category: payload.category, report_date: payload.report_date };
     successMsg = '🗑️ דיווח נמחק';
   } else if (action === 'update') {
@@ -2792,11 +2704,7 @@ if (action === 'delete') {
     successMsg = '✅ דיווח עודכן';
   } else {
     reqBody = { ...payload };
-    if (payload.category === 'exit' && payload.workDuration) {
-      successMsg = `🔴 יציאה נרשמה (סך הכל: ${payload.workDuration} שעות)`;
-    } else {
-      successMsg = '✅ הדיווח נשמר בגיליון';
-    }
+    successMsg = '✅ הדיווח נשמר בגיליון';
   }
 
   let isSuccess = false;
