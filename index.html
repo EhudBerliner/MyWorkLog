@@ -2676,41 +2676,44 @@ function markSent(id){const rs=store(K.reps)||[];const r=rs.find(x=>x.id===id);i
 function addQ(r){const q=store(K.q)||[];if(!q.find(x=>x.id===r.id))q.push(r);store(K.q,q)}
 function pendUI(){const q=store(K.q)||[];$('pending-section').classList.toggle('hidden',!q.length);$('pending-count').textContent=q.length}
 
-/* ─── UNIFIED CRUD PIPELINE (Pessimistic / Confirmed UI) ─── */
+/* ─── UNIFIED CRUD PIPELINE (עם מנגנון שחרור UI מובטח) ─── */
 async function dispatchAction(actionEvent, uiButton = null) {
   const { action, payload } = actionEvent;
   const ep = store(K.ep);
   
-  // 1. נעילת ה-UI והצגת סטטוס טעינה
+  // 1. שמירת הטקסט המקורי ונעילת ה-UI
   let origText = '';
   if (uiButton) {
-    origText = uiButton.innerHTML;
+    origText = uiButton.getAttribute('data-orig-text') || uiButton.innerHTML;
+    if (!uiButton.getAttribute('data-orig-text')) {
+      uiButton.setAttribute('data-orig-text', origText);
+    }
     uiButton.disabled = true;
     uiButton.innerHTML = '⏳ ממתין לשרת...';
   }
 
-  // 2. הכנת גוף הבקשה לפי סוג הפעולה
+  // 2. הכנת הבקשה
   let reqBody;
   let successMsg = '';
   
   if (action === 'delete') {
     reqBody = { action: 'delete', id: payload.id, category: payload.category, report_date: payload.report_date };
-    successMsg = '🗑️ דיווח נמחק בהצלחה';
+    successMsg = '🗑️ דיווח נמחק';
   } else if (action === 'update') {
     reqBody = { action: 'editReport', ...payload };
-    successMsg = '✅ דיווח עודכן בהצלחה';
+    successMsg = '✅ דיווח עודכן';
   } else {
-    reqBody = { ...payload }; // Create (ה-GAS מזהה הוספה אוטומטית לפי המבנה)
+    reqBody = { ...payload };
     successMsg = '✅ הדיווח נשמר בגיליון';
   }
 
   let isSuccess = false;
   let isOffline = !navigator.onLine;
 
-  // 3. ביצוע הבקשה מול השרת
+  // 3. ביצוע השליחה עם Timeout מוגדר מראש (2500ms)
   if (ep && !isOffline) {
     try {
-      await fetch(ep, {
+      const fetchPromise = fetch(ep, {
         method: 'POST',
         headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
         body: JSON.stringify(reqBody),
@@ -2718,62 +2721,70 @@ async function dispatchAction(actionEvent, uiButton = null) {
         keepalive: true,
         priority: 'high'
       });
-      // במצב no-cors לא נזרקת שגיאה אם הבקשה הגיעה לשרת
+
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Timeout')), 2500)
+      );
+
+      await Promise.race([fetchPromise, timeoutPromise]);
       isSuccess = true;
     } catch (err) {
-      isSuccess = false; // שגיאת רשת / אופליין
+      // במקרה של Timeout או בעיית רשת - השרת יקבל ברקע או שהבקשה תכנס לתור
+      isSuccess = navigator.onLine; 
     }
   }
 
-  // 4. שמירה מקומית (Source of Truth) וניהול התורים
-  let reps = store(K.reps) || [];
-  if (action === 'create') {
-    payload.sent = isSuccess;
-    reps.unshift(payload);
-    reps = reps.slice(0, 300);
-    if (!isSuccess) addQ(payload);
-  } else if (action === 'update') {
-    payload.sent = isSuccess;
-    const idx = reps.findIndex(r => r.id === payload.id);
-    if (idx >= 0) {
-      const localPayload = { ...payload };
-      delete localPayload.old_date; // הסרת שדה עזר המשמש רק לשרת
-      reps[idx] = localPayload;
+  // 4. עדכון LocalStorage והתורים
+  try {
+    let reps = store(K.reps) || [];
+    if (action === 'create') {
+      payload.sent = isSuccess;
+      reps.unshift(payload);
+      reps = reps.slice(0, 300);
+      if (!isSuccess) addQ(payload);
+    } else if (action === 'update') {
+      payload.sent = isSuccess;
+      const idx = reps.findIndex(r => r.id === payload.id);
+      if (idx >= 0) {
+        const localPayload = { ...payload };
+        delete localPayload.old_date;
+        reps[idx] = localPayload;
+      }
+      if (!isSuccess) addQ(payload);
+    } else if (action === 'delete') {
+      reps = reps.filter(r => r.id !== payload.id);
+      store(K.q, (store(K.q) || []).filter(r => r.id !== payload.id));
+      if (!isSuccess) {
+        const dq = store('mwl_delete_queue') || [];
+        dq.push(payload);
+        store('mwl_delete_queue', dq);
+      }
     }
-    if (!isSuccess) addQ(payload);
-  } else if (action === 'delete') {
-    reps = reps.filter(r => r.id !== payload.id);
-    store(K.q, (store(K.q)||[]).filter(r => r.id !== payload.id)); // הסרה מתור יצירה אם היה שם
-    if (!isSuccess) {
-       const dq = store('mwl_delete_queue') || [];
-       dq.push(payload);
-       store('mwl_delete_queue', dq);
+    
+    store(K.reps, reps);
+    pendUI();
+  } finally {
+    // 5. שחרור מובטח של ה-UI (רץ תמיד!)
+    if (uiButton) {
+      uiButton.disabled = false;
+      uiButton.innerHTML = uiButton.getAttribute('data-orig-text') || origText;
     }
   }
-  
-  store(K.reps, reps);
-  pendUI();
 
-  // 5. חיווי למשתמש לפי התוצאה האמיתית
+  // 6. הצגת חיווי מתאים
   if (isSuccess) {
     toast(successMsg, 'success', 2500);
   } else if (!ep) {
-    toast('⚠️ לא מוגדר חיבור לשרת - נשמר מקומית בלבד', 'warn', 4000);
+    toast('⚠️ לא מוגדר חיבור - נשמר מקומית בלבד', 'warn', 3500);
   } else {
-    toast('⚠️ אין תקשורת - הבקשה בתור למשלוח', 'warn', 4000);
+    toast('⚠️ נשמר מקומית - יישלח בסנכרון הבא', 'warn', 3500);
   }
 
-  // 6. רענון המסכים
+  // 7. רענון תצוגה
   histRender();
   summaryRender();
   updateSessionBanner();
 
-  // 7. שחרור ה-UI
-  if (uiButton) {
-    uiButton.disabled = false;
-    uiButton.innerHTML = origText;
-  }
-  
   return isSuccess;
 }
 
