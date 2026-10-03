@@ -2,84 +2,104 @@
    MyWorkLog · App Core  v4.4.9
    ═══════════════════════════════════════════════════════ */
 
-const VER = '4.4.9';
-
-/* ── Storage keys ── */
-const K = {
-  ep:        'mwl_endpoint',
-  reps:      'mwl_reports',
-  q:         'mwl_queue',
-  delQ:      'mwl_delete_queue',        // offline delete queue
-  proj:      'mwl_projects',
-  lang:      'mwl_lang',
-  theme:     'mwl_theme',
-  prefs:     'mwl_prefs',
-  ver:       'mwl_version',
-  sheetUrl:  'mwl_sheet_url',
-  wstandard: 'mwl_wstandard',           // WorkStandard local cache
-  profile:   'mwl_profile',             // {name, role}
-  rounding:  'mwl_rounding',            // 0 | 5 | 10 | 15
-};
-
-/* ── Runtime state ── */
-const ST = {
-  cat: 'entry', dur: 'duration',
-  sumPer: 'day', sumOff: 0,
-  swReg: null, install: null,
-  swX: 0, swY: 0, pullY: 0, pulling: false, _reloading: false,
-};
-
-/* ── Utilities ── */
-const $ = id => document.getElementById(id);
-const pad = n => String(n).padStart(2, '0');
-const isoD = (d = new Date()) => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
-const timeS = (d = new Date()) => `${pad(d.getHours())}:${pad(d.getMinutes())}`;
-
-function store(key, val) {
-  if (val === undefined) {
-    try { return JSON.parse(localStorage.getItem(key)); } catch { return null; }
-  }
-  localStorage.setItem(key, JSON.stringify(val));
-}
-
-const getP   = () => { const p = store(K.prefs) || {}; return { vibration:true, animations:true, pullRefresh:false, workDays:[0,1,2,3,4], ...p }; };
-const buzz   = (p = [30]) => { if (getP().vibration && navigator.vibrate) navigator.vibrate(p); };
-const fmtD   = d => { const [y,m,day] = d.split('-'); return `${day}/${m}/${y}`; };
-const fmtT   = tt => {
-  if (!tt) return '';
-  if (tt.includes('-')) return tt;
-  const [h,m] = tt.split(':');
-  return `${pad(parseInt(h))}:${pad(parseInt(m||0))}`;
-};
-const catLbl = cat => t({ entry:'catEntry', exit:'catExit', task:'catTask' }[cat]) || cat;
-
-/* toast() moved to index.html — bridges to NotificationSystem v3.8.0 */
-
-/* ── CONFLICT RESOLUTION (Offline vs Sheet) ── */
-function mergeSheetAndOfflineData(sheetData) {
-  // שליפת תור הדיווחים המקומיים הממתינים לשליחה (באמצעות המפתח הקיים באפליקציה)
-  const offlineQueue = store(K.q) || [];
-  
-  // אם תור האופליין ריק, אין התנגשויות - נחזיר את נתוני הגיליון כפי שהם
-  if (offlineQueue.length === 0) {
-    return sheetData;
-  }
-
-  // יצירת סט מזהים של כל דיווחי האופליין הממתינים
-  const offlineIds = new Set(offlineQueue.map(item => String(item.id)));
-
-  // סינון נתוני הגיליון המרוחק: כל דיווח שקיים לו עדכון אופליין באפליקציה - מוסר
-  const filteredSheetData = sheetData.filter(report => report.id && !offlineIds.has(String(report.id)));
-
-  // חיבור הנתונים: דיווחי האופליין גוברים ומתווספים לנתונים הנקיים מהגיליון
-  const finalMergedData = [...filteredSheetData, ...offlineQueue];
-
-  // מיון כרונולוגי יורד (מהחדש לישן) לפי תאריך ושעה, כפי שנדרש בהיסטוריה של המערכת
-  return finalMergedData.sort((a, b) => {
-    const keyA = (a.report_date || '') + 'T' + (a.report_time && !a.report_time.includes('-') ? a.report_time : '00:00');
-    const keyB = (b.report_date || '') + 'T' + (b.report_time && !b.report_time.includes('-') ? b.report_time : '00:00');
-    return keyB.localeCompare(keyA);
-  });
-}
 /* ── BOOT ── */
 
+/**
+ * פונקציה מוגנת להסרת מסך הפתיחה בלבד (בלי תלות בנתונים)
+ */
+function safeSplashExit() {
+  try {
+    const splash = (typeof $ === 'function' ? ($('splash') \vert{}\vert{}$('splashScreen')) : null) 
+      || document.getElementById('splash') 
+      || document.getElementById('splashScreen') 
+      || document.querySelector('.splash-screen');
+
+    if (splash) {
+      splash.classList.add('splash-hidden');
+      // הסרה מלאה מה-DOM לאחר סיום האנימציה
+      setTimeout(() => {
+        if (splash.parentNode) splash.parentNode.removeChild(splash);
+      }, 500);
+    }
+  } catch (e) {
+    console.warn('[Boot] Failed to smoothly remove splash element:', e);
+  }
+}
+
+/**
+ * תהליך האתחול הראשי והבטוח של האפליקציה
+ */
+async function boot() {
+  const currentVersion = typeof VER !== 'undefined' ? VER : '4.4.9';
+  console.log(`[Boot] Starting MyWorkLog v${currentVersion}...`);
+
+  // 1. הגדרת טיימר גיבוי מוחלט למסך הפתיחה (Max 3.5 שניות)
+  const failsafeTimer = setTimeout(() => {
+    console.warn('[Boot] Failsafe triggered: Force removing splash screen.');
+    safeSplashExit();
+  }, 3500);
+
+  try {
+    // 2. בדיקה ותקנון פורמטים של נתונים שמורים
+    if (typeof fixStoredDates === 'function') {
+      try { fixStoredDates(); } catch (e) { console.error('[Boot] fixStoredDates error:', e); }
+    }
+
+    // 3. טעינת העדפות, שפה ותצורות בסיסיות לממשק
+    if (typeof initUI === 'function') await initUI();
+    if (typeof applyTheme === 'function') applyTheme();
+
+  } catch (bootErr) {
+    console.error('[Boot] Critical error during structural boot:', bootErr);
+  } finally {
+    // 4. יציאה קריטית ומובטחת ממסך הפתיחה - ללא תלות בהצלחת הרינדור הכבד!
+    clearTimeout(failsafeTimer);
+    safeSplashExit();
+  }
+
+  // 5. הרצת חישובים ורינדור נתונים כבד בצורה אסינכרונית ובטוחה (Non-blocking)
+  requestAnimationFrame(() => {
+    setTimeout(() => {
+      runHeavyRenderTasks();
+    }, 50);
+  });
+}
+
+/**
+ * הרצת משימות רינדור כבדות תחת הגנת try-catch נפרדת
+ */
+function runHeavyRenderTasks() {
+  // רינדור סיכומים
+  if (typeof summaryRender === 'function') {
+    try {
+      summaryRender();
+    } catch (e) {
+      console.error('[Render] summaryRender failed:', e);
+    }
+  }
+
+  // רינדור היסטוריה
+  if (typeof histRender === 'function') {
+    try {
+      histRender();
+    } catch (e) {
+      console.error('[Render] histRender failed:', e);
+    }
+  }
+
+  // סנכרון תור אופליין
+  if (typeof syncQueue === 'function') {
+    try {
+      syncQueue();
+    } catch (e) {
+      console.warn('[Sync] Background sync failed:', e);
+    }
+  }
+}
+
+// הפעלת האתחול ברגע שה-DOM מוכן
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', boot);
+} else {
+  boot();
+}
