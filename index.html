@@ -657,7 +657,7 @@ details summary::-webkit-details-marker{display:none}
         </div>
         <div id="session-banner" class="session-banner closed" style="margin-top:10px">
           <span class="session-dot"></span>
-          <span id="session-banner-text"data-i18n="sessionLoading">טוען...</span>
+<span id="session-banner-text" data-i18n="sessionLoading">טוען...</span>
         </div>
       </div>
 
@@ -680,9 +680,8 @@ details summary::-webkit-details-marker{display:none}
         <div class="card-lbl" data-i18n="labelTaskDetails">פרטי משימה</div>
         <div class="fg">
           <label class="flbl" data-i18n="labelProject">פרויקט <span style="color:var(--red);font-size:.75rem">*</span></label>
-          <input type="text" id="task-project" class="fi" list="projects-list"
-            data-i18n="placeholderProj" data-i18n-attr="placeholder"
-            data-i18n="placeholderProjRequired" data-i18n-attr="placeholder" placeholder="שם הFprojected (חובה)"/>
+         <input type="text" id="task-project" class="fi" list="projects-list"
+           data-i18n="placeholderProjRequired" data-i18n-attr="placeholder" placeholder="שם הפרויקט (חובה)"/>   
           <datalist id="projects-list"></datalist>
         </div>
         <div class="fg">
@@ -4697,80 +4696,9 @@ function exportInit(){
   const invalidateBlob=()=>{_shareBlob=null;_shareFilename=null;};
   $('range-from')?.addEventListener('change',invalidateBlob);
   $('range-to')?.addEventListener('change',invalidateBlob);
-  // Show export + share buttons after "הצג" is clicked in range view
-  // Also pre-build the share blob so share() can fire synchronously
-  $('btn-range-go')?.addEventListener('click',()=>{
-    const expBtn=$('btn-export-range');if(expBtn) expBtn.style.display='';
-    const shrBtn=$('btn-share-range');if(shrBtn) shrBtn.style.display='';
-    prepareShareBlob(); // fire-and-forget: ready by the time user taps share
-  });
-}
 
-/* ═══════════════════════════════════════════════════════
-   ABOUT TAB   
-   ═══════════════════════════════════════════════════════ */
-function aboutTabRender(){
-  // Version
-  const av=$('about-version');if(av)av.textContent='v'+VER;
-  // PWA installed status
-  const pwaEl=$('about-pwa-status');
-  if(pwaEl){
-    const installed=window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone===true;
-    pwaEl.textContent=installed?'✅ מותקן':'🌐 פתוח בדפדפן';
-    pwaEl.style.color=installed?'var(--lime)':'var(--text3)';
-  }
-  // SW status
-  const swEl=$('about-sw-status');
-  if(swEl){
-    const hasSW='serviceWorker'in navigator&&navigator.serviceWorker.controller;
-    swEl.textContent=hasSW?'✅ פעיל':'⚠️ לא פעיל';
-    swEl.style.color=hasSW?'var(--lime)':'var(--amber)';
-  }
-  // Data count
-  const dcEl=$('about-data-count');
-  if(dcEl){const n=(store(K.reps)||[]).length;dcEl.textContent=`${n} דיווחים`;}
-  // Last sync
-  const lsEl=$('about-last-sync');
-  if(lsEl){const ls=store('mwl_last_full_sync');lsEl.textContent=ls?new Date(Number(ls)).toLocaleString('he-IL'):'לא סונכרן';}
-  // Reset button in about
-// Reset button in about
-  const btnResetAbout = $('btn-open-reset-about');
-  if(btnResetAbout){
-    btnResetAbout.onclick = () => { closeM('modal-settings'); openM('modal-reset'); };
-  }
-}
 
-/* ═══════════════════════════════════════════════════════
-   THEME BUTTON IN SETTINGS  v3.7.0
-   ═══════════════════════════════════════════════════════ */
-function themeSettingsSync(){
-  const isDark=!document.body.classList.contains('light');
-  const lbl=$('theme-label-settings');
-  if(lbl)lbl.textContent=isDark?'🌙 מצב כהה':'☀️ מצב בהיר';
-}
-
-/* ═══════════════════════════════════════════════════════
-   WORKCAL SYNC INLINE (in connection tab)  v3.7.0
-   ═══════════════════════════════════════════════════════ */
-function wstdSyncStatusInline(){
-  const el=$('wstandard-sync-status-inline');if(!el)return;
-  const last=store('mwl_wstandard_sync');
-  const count=getWStandard().length;
-  const ep=store(K.ep);
-  if(!ep){el.textContent='⚠️ Endpoint לא הוגדר';return;}
-  el.textContent=last?`✅ סנכרן: ${last} · ${count} ימים`:'לא סונכרן עדיין';
-}
-
-/**
- * פתיחת המודאל המאוחד לתחזוקת המערכת והאיפוס.
- * מופעלת אך ורק בלחיצה על תג הגרסה או מכפתור התחזוקה בהגדרות.
- */
-function openResetMaintenanceModal() {
-    openM('modal-reset');
-}
    
-</script>
-
 <!-- IMPORT MODAL -->
 <div id="modal-import" class="moverlay hidden" role="dialog" aria-modal="true">
   <div class="mbox">
