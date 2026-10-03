@@ -794,9 +794,11 @@ details summary::-webkit-details-marker{display:none}
           <button class="btn-g sm" id="btn-share-range"  style="font-size:.75rem;display:none" title="שתף דוח">📤 שתף</button>
         </div>
       </div>
-      <div class="stats-grid">
+<div class="stats-grid">
         <div class="stat-card"><div class="stat-lbl" data-i18n="statEntries">כניסות</div><div class="stat-val" id="stat-entries">0</div></div>
         <div class="stat-card"><div class="stat-lbl" data-i18n="statExits">יציאות</div><div class="stat-val" id="stat-exits">0</div></div>
+        <div class="stat-card"><div class="stat-lbl" data-i18n="statTasks">משימות</div><div class="stat-val" id="stat-tasks">0</div></div>
+        <div class="stat-card"><div class="stat-lbl" data-i18n="statHours">שעות משימה</div><div class="stat-val" id="stat-hours">0</div></div>
       </div>
             <!-- Daily status (day view only) -->
       <div id="day-wc-section" class="card" style="display:none">
@@ -3720,9 +3722,10 @@ function summaryRender(){
     $('sum-prev').disabled=true;$('sum-next').disabled=true;
   }
   if(lblEl)lblEl.textContent=lbl;
-  $('stat-entries').textContent=fil.filter(r=>r.category==='entry').length;
-  $('stat-exits').textContent=fil.filter(r=>r.category==='exit').length;
-  $('stat-tasks').textContent=fil.filter(r=>r.category==='task').length;
+if ($('stat-entries'))$('stat-entries').textContent = fil.filter(r => r.category === 'entry').length;
+  if ($('stat-exits'))$('stat-exits').textContent = fil.filter(r => r.category === 'exit').length;
+  if ($('stat-tasks'))$('stat-tasks').textContent = fil.filter(r => r.category === 'task').length;
+  if ($('stat-hours'))$('stat-hours').textContent = mm > 0 ? `${hh}:${pad(mm)}` : `${hh}`;
   // Sum task durations only
   let taskMins=0;
   fil.filter(r=>r.category==='task').forEach(r=>{
