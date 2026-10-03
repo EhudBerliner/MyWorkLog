@@ -4693,13 +4693,12 @@ function exportInit(){
   $('btn-share-range')?.addEventListener('click',shareReport);
   $('btn-open-import-from-settings')?.addEventListener('click',()=>{closeM('modal-settings');openImportModal();});
   // Invalidate pre-built blob when range dates change
-  const invalidateBlob=()=>{_shareBlob=null;_shareFilename=null;};
+const invalidateBlob=()=>{_shareBlob=null;_shareFilename=null;};
   $('range-from')?.addEventListener('change',invalidateBlob);
   $('range-to')?.addEventListener('change',invalidateBlob);
-} 
-</script>
+} // <--- סגירת הפונקציה exportInit()
+</script> <!-- סגירת בלוק הסקריפט -->
 
-   
 <!-- IMPORT MODAL -->
 <div id="modal-import" class="moverlay hidden" role="dialog" aria-modal="true">
   <div class="mbox">
