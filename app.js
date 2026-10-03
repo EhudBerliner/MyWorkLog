@@ -758,7 +758,7 @@ function goToday() { ST.sumOff = 0; summaryRender(); }
 
 function summaryRender() {
   const rs = store(K.reps) || [], now = new Date(); let fil = [], lbl = '';
-  const lblEl = $('sum-period-label') \vert{}\vert{}$('sum-lbl');
+  const lblEl = $('sum-period-label') || $('sum-lbl');
   if (ST.sumPer === 'day') {
     const tgt = new Date(now); tgt.setDate(tgt.getDate() + ST.sumOff);
     const ds = isoD(tgt); fil = rs.filter(r => r.report_date === ds); lbl = fmtD(ds);
@@ -919,3 +919,37 @@ function swInit() {
     });
   }).catch(e => Logger.warn('SW registration failed', e));
 }
+
+/* ── BOOT INITIALIZATION ── */
+document.addEventListener('DOMContentLoaded', () => {
+  // טיימר חילוץ של 2.5 שניות המבטיח שמסך הפתיחה ייעלם בכל מקרה
+  const bootTimer = setTimeout(() => {
+    safeSplashExit();
+  }, 2500);
+
+  try {
+    if (typeof themeInit === 'function') themeInit();
+    if (typeof fixStoredDates === 'function') fixStoredDates();
+    if (typeof verCheck === 'function') verCheck();
+    if (typeof dtInit === 'function') dtInit();
+    if (typeof catInit === 'function') catInit();
+    if (typeof durInit === 'function') durInit();
+    if (typeof clockInit === 'function') clockInit();
+    if (typeof submitInit === 'function') submitInit();
+    if (typeof tabsInit === 'function') tabsInit();
+    if (typeof menuInit === 'function') menuInit();
+    if (typeof summaryInit === 'function') summaryInit();
+    if (typeof projLoad === 'function') projLoad();
+    if (typeof netInit === 'function') netInit();
+    if (typeof netQInit === 'function') netQInit();
+    if (typeof swInit === 'function') swInit();
+    
+    // סיווג וסנכרון ברקע
+    if (typeof bgSync === 'function') bgSync();
+
+    safeSplashExit(bootTimer);
+  } catch (err) {
+    if (typeof Logger !== 'undefined') Logger.error('Boot Execution Failed', err);
+    safeSplashExit(bootTimer);
+  }
+});
