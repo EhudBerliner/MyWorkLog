@@ -238,6 +238,22 @@ function switchTab(name) {
   }
 }
 
+function applyRounding(timeStr) {
+  if (!timeStr) return '';
+  const roundingPref = store(K.rounding) || 0;
+  if (!roundingPref || roundingPref <= 0) return timeStr;
+  
+  const [h, m] = timeStr.split(':').map(Number);
+  if (isNaN(h) || isNaN(m)) return timeStr;
+  
+  const totalMins = h * 60 + m;
+  const roundedMins = Math.round(totalMins / roundingPref) * roundingPref;
+  const newH = Math.floor(roundedMins / 60) % 24;
+  const newM = roundedMins % 60;
+  
+  return `${pad(newH)}:${pad(newM)}`;
+}
+
 function menuInit() {
   $('btn-hamburger')?.addEventListener('click', menuOpen);
   $('btn-close-menu')?.addEventListener('click', menuClose);
