@@ -60,7 +60,7 @@ html,body{height:100%;background:var(--bg0);color:var(--text);
 .workday-chip input{position:absolute;opacity:0;width:0;height:0}
 .workday-chip:has(input:checked){background:var(--limeDim);border-color:var(--lime);color:var(--lime)}
 
-/* ── NOTIFICATION SYSTEM v4.4.9 ── */
+/* ── NOTIFICATION SYSTEM v4.4.8 ── */
 .offline-banner{position:fixed;top:0;left:0;right:0;
   background:var(--red,#ef4444);color:#fff;text-align:center;
   padding:calc(var(--safeT,0px)+8px) 16px 8px;
@@ -657,7 +657,7 @@ details summary::-webkit-details-marker{display:none}
         </div>
         <div id="session-banner" class="session-banner closed" style="margin-top:10px">
           <span class="session-dot"></span>
-<span id="session-banner-text" data-i18n="sessionLoading">טוען...</span>
+          <span id="session-banner-text"data-i18n="sessionLoading">טוען...</span>
         </div>
       </div>
 
@@ -680,8 +680,9 @@ details summary::-webkit-details-marker{display:none}
         <div class="card-lbl" data-i18n="labelTaskDetails">פרטי משימה</div>
         <div class="fg">
           <label class="flbl" data-i18n="labelProject">פרויקט <span style="color:var(--red);font-size:.75rem">*</span></label>
-         <input type="text" id="task-project" class="fi" list="projects-list"
-           data-i18n="placeholderProjRequired" data-i18n-attr="placeholder" placeholder="שם הפרויקט (חובה)"/>   
+          <input type="text" id="task-project" class="fi" list="projects-list"
+            data-i18n="placeholderProj" data-i18n-attr="placeholder"
+            data-i18n="placeholderProjRequired" data-i18n-attr="placeholder" placeholder="שם הFprojected (חובה)"/>
           <datalist id="projects-list"></datalist>
         </div>
         <div class="fg">
@@ -1561,6 +1562,3214 @@ details summary::-webkit-details-marker{display:none}
 
 <script src="app.js"></script>
 <script src="i18n.js"></script>
+<script>
+/* ─────────────────────────────────────────────────────
+   i18n
+───────────────────────────────────────────────────── */
+
+/* BOOT */
+
+/* ═══════════════════════════════════════════════════════
+   NOTIFICATION SYSTEM  v4.4.8
+   Manages: Offline banner · PWA Install · Update Prompt · Toast
+   ═══════════════════════════════════════════════════════ */
+const NotificationSystem = {
+  settings: { showNetworkStatus: true },
+  currentVersion: '4.4.8',
+  deferredInstallPrompt: null,
+  _wasOffline: false,   // track previous state for auto-cleanup
+
+  init(appVersion) {
+    if (appVersion) this.currentVersion = appVersion;
+    this.initNetworkMonitor();
+    this.initInstallPrompt();
+    this.checkRemoteVersion();
+  },
+
+  /* ── 1. TOAST ─────────────────────────────────────────────────
+     Dynamic toasts with auto-remove after duration.             */
+  showToast(message, type = 'info', duration = 3000) {
+    const container = document.getElementById('toastContainer');
+    if (!container) return;
+    const el = document.createElement('div');
+    el.className = `toast ${type}`;
+    el.textContent = message;
+    container.appendChild(el);
+    // Double rAF ensures transition fires after paint
+    requestAnimationFrame(() => requestAnimationFrame(() => el.classList.add('show')));
+    // Auto-remove
+    setTimeout(() => {
+      el.classList.remove('show');
+      setTimeout(() => el.remove(), 320);
+    }, duration);
+  },
+
+  /* ── 2. OFFLINE BANNER ────────────────────────────────────────
+     Shows on offline, auto-hides + shows toast on reconnect.
+     Guards against duplicate events with _wasOffline flag.      */
+  initNetworkMonitor() {
+    const banner = document.getElementById('offlineBanner');
+    if (!banner) return;
+
+    // Show/hide banner and emit toasts.
+    // showToast=false suppresses toast (used for initial state).
+    const goOffline = (showToast = true) => {
+      if (!this.settings.showNetworkStatus) return;
+      this._wasOffline = true;
+      banner.classList.add('visible');
+      if (showToast) this.showToast('⚠️ אין חיבור לאינטרנט', 'error', 4000);
+    };
+
+    const goOnline = () => {
+      if (!this._wasOffline) return; // already online, nothing to clean up
+      this._wasOffline = false;
+      banner.classList.remove('visible');
+      this.showToast('✅ חיבור לאינטרנט חודש', 'success', 3000);
+    };
+
+    window.addEventListener('online',  goOnline);
+    window.addEventListener('offline', () => goOffline(true));
+
+    // Set initial state (no toast — user hasn't done anything yet)
+    if (!navigator.onLine) goOffline(false);
+
+    // Safety poll: re-check after 1s in case events fired before init
+    setTimeout(() => {
+      if (navigator.onLine && this._wasOffline) goOnline();
+      if (!navigator.onLine && !this._wasOffline) goOffline(false);
+    }, 1000);
+  },
+
+  /* ── 3. PWA INSTALL BANNER ────────────────────────────────────
+     Slides up from bottom. Dismissed state saved in localStorage.
+     Auto-hides after install or dismiss.                        */
+  initInstallPrompt() {
+    const banner = document.getElementById('installBanner');
+    if (!banner) return;
+    if (localStorage.getItem('pwa_install_dismissed')) return;
+
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      this.deferredInstallPrompt = e;
+      setTimeout(() => banner.classList.add('visible'), 2000);
+    });
+
+    document.getElementById('installAcceptBtn')?.addEventListener('click', async () => {
+      banner.classList.remove('visible');
+      if (this.deferredInstallPrompt) {
+        this.deferredInstallPrompt.prompt();
+        const { outcome } = await this.deferredInstallPrompt.userChoice;
+        if (outcome === 'accepted') this.showToast('✅ האפליקציה הותקנה!', 'success');
+        this.deferredInstallPrompt = null;
+      }
+    });
+
+    document.getElementById('installDismissBtn')?.addEventListener('click', () => {
+      banner.classList.remove('visible');
+      localStorage.setItem('pwa_install_dismissed', '1');
+    });
+
+    window.addEventListener('appinstalled', () => {
+      banner.classList.remove('visible');
+      this.showToast('🎉 האפליקציה הותקנה בהצלחה!', 'success', 4000);
+    });
+  },
+
+  /* ── 4. UPDATE PROMPT ─────────────────────────────────────────
+     Drops from top. Triggered by version.json check or SW event.
+     "Update Now" clears caches and reloads. Auto-hides on dismiss. */
+  async checkRemoteVersion() {
+    if (!navigator.onLine) return;
+    if (this._updateShown) return; // already prompted this session
+    try {
+      const res = await fetch('./version.json?t=' + Date.now(), {
+        cache: 'no-store',
+        signal: AbortSignal.timeout(3000)
+      });
+      if (!res.ok) return;
+      const data = await res.json();
+      if (data.version && data.version !== this.currentVersion) {
+        this._updateShown = true;
+        this.showUpdatePrompt(data.version);
+      }
+    } catch (_) { /* silent — offline or missing */ }
+  },
+
+  showUpdatePrompt(newVer, onUpdate) {
+    const el = document.getElementById('updatePrompt');
+    if (!el) return;
+    el.classList.add('visible');
+
+    document.getElementById('updateNowBtn').onclick = async () => {
+      el.classList.remove('visible');
+      if (onUpdate) onUpdate();
+      if ('caches' in window) {
+        const keys = await caches.keys();
+        await Promise.all(keys.map(k => caches.delete(k)));
+      }
+      window.location.reload();
+    };
+  }
+}
+window.NotificationSystem = NotificationSystem;
+
+/* ── toast() — bridge to NotificationSystem (keeps existing call-sites working) ── */
+function toast(msg, type = 'success', ms = 2800) {
+  // Map legacy type names to NotificationSystem types
+  const typeMap = { warn: 'warn', success: 'success', error: 'error', info: 'info' };
+  NotificationSystem.showToast(msg, typeMap[type] || type, ms);
+}
+
+/* ─ מנגנון הסרה בטוחה של מסך האתחול ─ */
+function removeSplashScreen() {
+  const splash = document.getElementById('splash');
+  if (!splash) return;
+  
+  splash.classList.add('out');
+  setTimeout(() => {
+    if (splash.parentNode) {
+      splash.remove();
+    }
+  }, 400);
+}
+
+/* ─ הצגת האפליקציה במקרה חירום/תקלה ─ */
+function forceAppShow() {
+  const app = document.getElementById('app');
+  if (app) {
+    app.classList.remove('hidden');
+  }
+  removeSplashScreen();
+}
+
+function safeSplashExit(timerId) {
+  if (timerId) clearTimeout(timerId);
+  
+  setTimeout(() => {
+    forceAppShow();
+    if (typeof applyLang === 'function') applyLang(window._lang || 'he');
+    if (typeof summaryRender === 'function') summaryRender();
+    if (typeof updateMenuSheetLink === 'function') updateMenuSheetLink();
+  }, 300);
+}
+
+/* ─ תהליך האתחול הראשי (Boot Routine) ─ */
+document.addEventListener('DOMContentLoaded', () => {
+  const bootFailsafe = setTimeout(() => {
+    console.warn('[Boot] Failsafe triggered - forcing app display.');
+    forceAppShow();
+  }, 2500);
+
+  // מודולים להרצה בטוחה בנפרד (שגיאה במודול אחד לא תתקע מודול אחר)
+  const bootTasks = [
+    verCheck, themeInit, langInit, prefsApply, dtInit, tabsInit,
+    catInit, durInit, clockInit, submitInit, settingsInit, summaryInit,
+    settingsTabsInit, profileInit, roundingInit, exportInit, editReportInit,
+    changelogInit, fixStoredDates, netInit, netQInit, projLoad,
+    histRender, importInit, updateSessionBanner, flushDeleteQueue,
+    menuInit, vBadgeInit, swipeInit, ptrInit, swInit, installInit,
+    scrollInit, backBtnInit
+  ];
+
+  bootTasks.forEach(task => {
+    if (typeof task === 'function') {
+      try {
+        task();
+      } catch (err) {
+        console.error(`[Boot Error in ${task.name || 'anonymous'}]:`, err);
+      }
+    }
+  });
+
+  try {
+    $('btn-theme-toggle-settings')?.addEventListener('click', () => {
+      applyTheme(document.body.classList.contains('light') ? 'dark' : 'light');
+      if (typeof themeSettingsSync === 'function') themeSettingsSync();
+      if (typeof buzz === 'function') buzz([20]);
+    });
+
+    $('btn-sync-wstandard-settings')?.addEventListener('click', async () => {
+      const btn = $('btn-sync-wstandard-settings');
+      if (btn) { btn.disabled = true; btn.textContent = '⏳ מסנכרן...'; }
+      if (typeof syncWStandard === 'function') await syncWStandard(false);
+      if (btn) { btn.disabled = false; btn.textContent = '↻ משוך WorkStandard מגיליון'; }
+      if (typeof wstdSyncStatusInline === 'function') wstdSyncStatusInline();
+      if (typeof updateSyncStatus === 'function') updateSyncStatus();
+    });
+
+    $('btn-now')?.addEventListener('click', () => {
+      const n = new Date();
+      const rDate = $('report-date');
+      const rTime = $('report-time');
+      if (rDate && typeof isoD === 'function') rDate.value = isoD(n);
+      if (rTime && typeof applyRounding === 'function' && typeof timeS === 'function') {
+        rTime.value = applyRounding(timeS(n));
+      }
+      if (typeof toast === 'function' && typeof t === 'function') toast(t('toastNowUpdated'));
+      if (typeof buzz === 'function') buzz([20]);
+    });
+
+    if (window.NotificationSystem) {
+      NotificationSystem.init(typeof VER !== 'undefined' ? VER : '3.7.0');
+    }
+
+    if (window.history && window.history.replaceState) {
+      history.replaceState({ ui: 'tab', name: 'report' }, '');
+    }
+  } catch (err) {
+    console.error('[Boot Event Listeners Error]:', err);
+  }
+
+  safeSplashExit(bootFailsafe);
+});
+
+function openResetMaintenanceModal() {
+  const modal = document.getElementById('modal-reset');
+  if (modal) {
+    modal.classList.remove('hidden');
+    const settingsModal = document.getElementById('modal-settings');
+    if (settingsModal) settingsModal.classList.add('hidden');
+  }
+}
+
+function closeResetModal() {
+  const modal = document.getElementById('modal-reset');
+  if (modal) modal.classList.add('hidden');
+}
+
+async function executeReset() {
+  const clearReports  = document.getElementById('reset-opt-reports')?.checked;
+  const clearQueue    = document.getElementById('reset-opt-queue')?.checked;
+  const clearSettings = document.getElementById('reset-opt-settings')?.checked;
+  const clearWStd     = document.getElementById('reset-opt-wstandard')?.checked;
+  const clearCache    = document.getElementById('reset-opt-cache')?.checked;
+
+  if (!clearReports && !clearQueue && !clearSettings && !clearWStd && !clearCache) {
+    if (typeof toast === 'function') toast('לא נבחר רכיב לאיפוס', 'warn');
+    return;
+  }
+
+  if (!confirm('האם אתה בטוח שברצונך לבצע איפוס לרכיבים שנבחרו?')) {
+    return;
+  }
+
+  try {
+    if (clearReports) {
+      localStorage.removeItem('worklog_history');
+      localStorage.removeItem('reports');
+    }
+
+    if (clearQueue) {
+      localStorage.removeItem('worklog_queue');
+      localStorage.removeItem('pending_queue');
+    }
+
+    if (clearSettings) {
+      localStorage.removeItem('worklog_endpoint');
+      localStorage.removeItem('worklog_sheet_url');
+      localStorage.removeItem('worklog_projects');
+      localStorage.removeItem('worklog_user');
+      localStorage.removeItem('worklog_prefs');
+    }
+
+    if (clearWStd) {
+      localStorage.removeItem('worklog_wstandard');
+      localStorage.removeItem('workstandard_data');
+    }
+
+    if (clearCache) {
+      if ('caches' in window) {
+        const cacheNames = await caches.keys();
+        await Promise.all(cacheNames.map(name => caches.delete(name)));
+      }
+      if ('serviceWorker' in navigator) {
+        const registrations = await navigator.serviceWorker.getRegistrations();
+        for (let registration of registrations) {
+          await registration.unregister();
+        }
+      }
+    }
+
+    if (typeof toast === 'function') toast('האיפוס בוצע בהצלחה! מרענן...', 'success');
+
+    setTimeout(() => {
+      window.location.reload(true);
+    }, 800);
+
+  } catch (err) {
+    console.error('[Reset Error]', err);
+    if (typeof toast === 'function') toast('אירעה שגיאה במהלך האיפוס', 'error');
+  }
+}
+   
+// ── טריגר לסנכרון אוטומטי בחזרה מפעילות ברקע ──
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') {
+    // השהייה קלה כדי לתת לדפדפן לרענן את הממשק לפני פעולת הרשת
+    setTimeout(() => {
+      try {
+        if (typeof bgSync === 'function') bgSync();
+      } catch (err) {
+        console.error('[visibilitychange sync error]', err);
+      }
+    }, 500); 
+  }
+});
+
+
+/* Silent queue flush — no UI, no toast, just sends pending reports */
+async function syncQ_silent(){
+  const ep=store(K.ep);if(!ep||!navigator.onLine)return;
+  const q=store(K.q)||[];if(!q.length)return;
+  const fail=[];
+  for(const r of q){
+    try{
+      await fetch(ep,{method:'POST',headers:{'Content-Type':'text/plain;charset=UTF-8'},body:JSON.stringify(r),mode:'no-cors',keepalive:true});
+      markSent(r.id);
+    }catch{fail.push(r);}
+  }
+  store(K.q,fail);pendUI();
+}
+
+
+/* ─── Back button (Android / browser) ─────────────────────── */
+function backBtnInit(){
+  window.addEventListener('popstate', e => {
+    const st = e.state || {};
+
+    // 1. Close any open modal
+    const openModal = document.querySelector('.moverlay:not(.hidden)');
+    if(openModal){
+      openModal.classList.add('hidden');
+      document.body.style.overflow='';
+      return;
+    }
+
+    // 2. Close side menu if open
+    if($('side-menu').classList.contains('open')){
+      $('side-menu').classList.remove('open');
+      $('menu-overlay').classList.add('hidden');
+      $('side-menu').setAttribute('aria-hidden','true');
+      return;
+    }
+
+    // 3. Navigate tabs: summary/history → report
+    const cur = document.querySelector('.tab-btn.active')?.dataset?.tab;
+    if(cur && cur !== 'report'){
+      switchTab('report');
+      return;
+    }
+
+    // 4. On report tab — let the OS handle (minimize/exit)
+  });
+}
+
+/* VERSION */
+function verCheck(){
+  const prev=store(K.ver);
+  const isUpgrade = prev && prev !== VER;
+
+  if(isUpgrade){
+    // Clear SW caches so new assets load
+    if('caches'in window) caches.keys().then(ks=>ks.forEach(k=>caches.delete(k)));
+    // Migrate data — NEVER deletes existing user data, only adds missing keys
+    migrateData(prev);
+    console.info(`[verCheck] upgraded ${prev} → ${VER}`);
+  }
+
+  store(K.ver,VER);
+  document.querySelectorAll('.vbadge').forEach(el=>el.textContent=t('versionLabel',VER));
+}
+
+/* Safe migration: run on every version change.
+   Only ADDS missing defaults — never overwrites existing user data. */
+/* Fix malformed report_date values already stored in localStorage.
+   Runs once on boot — safe to call repeatedly (idempotent). */
+
+/* Normalise any time representation → "HH:MM"
+   Handles: "09:00", "9:00:00", "0.375" (Sheets decimal),
+            Date objects, "Sat Dec 30 1899 09:00:00 GMT+..." */
+function normTimeStr(v){
+  if(!v)return'';
+  if(typeof v==='object'&&v instanceof Date){
+    return String(v.getHours()).padStart(2,'0')+':'+String(v.getMinutes()).padStart(2,'0');
+  }
+  const s=String(v).trim();
+  if(!s)return'';
+  // Range format HH:MM-HH:MM — leave as-is
+  if(/^\d{1,2}:\d{2}-\d{1,2}:\d{2}/.test(s))return s;
+  // HH:MM or H:MM or HH:MM:SS
+  const hms=s.match(/^(\d{1,2}):(\d{2})(?::\d{2})?$/);
+  if(hms)return hms[1].padStart(2,'0')+':'+hms[2];
+  // Decimal fraction 0–1 (Sheets time)
+  const n=parseFloat(s);
+  if(!isNaN(n)&&n>=0&&n<1){
+    const tot=Math.round(n*1440);
+    return String(Math.floor(tot/60)).padStart(2,'0')+':'+String(tot%60).padStart(2,'0');
+  }
+  // Date string containing time (e.g. Sheets Date.toString())
+  const dm=s.match(/(\d{1,2}):(\d{2})(?::\d{2})?/);
+  if(dm)return dm[1].padStart(2,'0')+':'+dm[2];
+  return s;
+}
+
+function fixStoredDates(){
+  const normDate=s=>{
+    if(!s)return'';
+    const t=String(s).trim();
+    if(/^\d{4}-\d{2}-\d{2}$/.test(t))return t;
+    const slash=t.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+    if(slash)return`${slash[3]}-${slash[2].padStart(2,'0')}-${slash[1].padStart(2,'0')}`;
+    const d=new Date(s);
+    if(!isNaN(d.getTime()))return`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    return t;
+  };
+  // uses normTimeStr()
+  const reps=store(K.reps)||[];
+  let changed=false;
+  reps.forEach(r=>{
+    const fd=normDate(r.report_date);
+    if(fd!==r.report_date){r.report_date=fd;changed=true;}
+    if(r.category==='entry'||r.category==='exit'){
+      const ft=normTimeStr(r.report_time);
+      if(ft!==r.report_time){r.report_time=ft;changed=true;}
+    }
+  });
+  if(changed){store(K.reps,reps);console.info('[fixStoredDates] normalised stored records');}
+}
+
+function migrateData(prevVer){
+  // Ensure wstandard key exists (added in v2.3)
+  if(!store(K.wstandard)) store(K.wstandard,[]);
+  // Ensure queue key exists
+  if(!store('mwl_wstandard_queue')) store('mwl_wstandard_queue',[]);
+  // v3.5+: ensure new keys exist without overwriting
+  if(!store(K.profile)) store(K.profile,{name:'',role:''});
+  if(store(K.rounding)===null) store(K.rounding,0);
+  // Note: mwl_clients was used in v3.3-v3.4, removed in v3.5 — no migration needed
+  // Keep all other keys as-is — reports, settings, projects, prefs untouched
+}
+function vBadgeInit(){
+  [$('version-badge'),$('menu-vbadge')].forEach(el=>{
+    if(!el)return;
+    el.addEventListener('click',()=>{buzz([20,30,20]);openResetMaintenanceModal();});
+  });
+}
+   
+async function hardReset(){
+  const kR=$('reset-keep-reports').checked, kS=$('reset-keep-settings').checked, kQ=$('reset-keep-queue').checked;
+  
+  // שמירת הנתונים המבוקשים לפני הניקוי
+  const sR=kR?store(K.reps):null;
+  const sE=kS?store(K.ep):null, sSU=kS?store(K.sheetUrl):null;
+  const sP=kS?store(K.proj):null, sTH=kS?store(K.theme):null, sLN=kS?store(K.lang):null, sPR=kS?store(K.prefs):null;
+  const sQ=kQ?store(K.q):null;
+  const sRO=kS?store(K.rounding):null;
+  const sPR2=kS?store(K.profile):null;
+
+  // מנגנון הגנה: מונע מתהליך מחיקה לתקוע את האפליקציה מעבר לשנייה אחת
+  const withTimeout = (p, ms = 1000) => Promise.race([p, new Promise(r => setTimeout(r, ms))]);
+
+  try {
+    localStorage.clear();
+    sessionStorage.clear();
+    document.cookie.split(';').forEach(c => document.cookie = c.replace(/^ +/, '').replace(/=.*/, '=;expires=' + new Date().toUTCString() + ';path=/'));
+
+    if ('serviceWorker' in navigator) {
+      const regs = await withTimeout(navigator.serviceWorker.getRegistrations()) || [];
+      await Promise.all(regs.map(r => withTimeout(r.unregister())));
+    }
+    if ('caches' in window) {
+      const keys = await withTimeout(caches.keys()) || [];
+      await Promise.all(keys.map(k => withTimeout(caches.delete(k))));
+    }
+    if ('indexedDB' in window && indexedDB.databases) {
+      try {
+        const dbs = await withTimeout(indexedDB.databases()) || [];
+        dbs.forEach(db => { if (db.name) indexedDB.deleteDatabase(db.name); });
+      } catch(_) {}
+    }
+  } catch (err) {
+    console.warn('[hardReset]', err);
+  } finally {
+    // שחזור הנתונים שנבחרו לשמירה
+    if(sR)store(K.reps,sR);
+    if(sE)store(K.ep,sE); if(sSU)store(K.sheetUrl,sSU);
+    if(sP)store(K.proj,sP); if(sTH)store(K.theme,sTH); if(sLN)store(K.lang,sLN); if(sPR)store(K.prefs,sPR);
+    if(sQ)store(K.q,sQ);
+    if(sRO!==null)store(K.rounding,sRO);
+    if(sPR2)store(K.profile,sPR2);
+
+    buzz([100,50,100]);
+    // רענון כפוי מהשרת לעקיפת ה-Cache
+    window.location.href = window.location.origin + window.location.pathname + '?reset=' + Date.now();
+  }
+}
+
+/* THEME */
+function themeInit(){
+  const s=store(K.theme),dark=s!==null?s==='dark':window.matchMedia('(prefers-color-scheme:dark)').matches;
+  applyTheme(dark?'dark':'light');
+}
+function applyTheme(th){
+  const dark=th==='dark';
+  document.body.classList.toggle('light',!dark);
+  document.querySelector('meta[name="theme-color"]').content=dark?'#0a0a0f':'#f0f0f6';
+  store(K.theme,th);
+  // sync menu button label
+  const btn=$('menu-theme-btn');
+  if(btn){btn.textContent=dark?t('menuThemeLight'):t('menuThemeDark');btn.classList.toggle('theme-active',dark);}
+  // v3.7.0: sync settings label
+  themeSettingsSync();
+}
+
+/* LANG */
+function langInit(){window._lang=localStorage.getItem('mwl_lang')||'he';applyLang(window._lang)}
+
+/* PREFS */
+function prefsApply(){if(!getP().animations)document.body.classList.add('no-anim')}
+function prefsLoadUI(){
+  const p=getP();
+  $('pref-vibration').checked=p.vibration!==false;
+  $('pref-animations').checked=p.animations!==false;
+  $('pref-pull-refresh').checked=p.pullRefresh===true;
+  const wd=p.workDays||[0,1,2,3,4];
+  document.querySelectorAll('.pref-workday-cb').forEach(cb=>{ cb.checked=wd.includes(Number(cb.dataset.day)); });
+}
+function prefsSave(){
+  const workDays=[];
+  document.querySelectorAll('.pref-workday-cb:checked').forEach(cb=>workDays.push(Number(cb.dataset.day)));
+  const p={vibration:$('pref-vibration').checked,animations:$('pref-animations').checked,pullRefresh:$('pref-pull-refresh').checked,workDays:workDays.length?workDays:[0,1,2,3,4]};
+  store(K.prefs,p);document.body.classList.toggle('no-anim',!p.animations);
+}
+
+/* DATE/TIME */
+function dtInit(){
+  const n = new Date();
+  $('report-date').value = isoD(n);
+  $('report-time').value = applyRounding(timeS(n));
+}
+
+/* TABS */
+function tabsInit(){document.querySelectorAll('.tab-btn').forEach(b=>b.addEventListener('click',()=>switchTab(b.dataset.tab)))}
+function switchTab(name){
+  menuClose(); // close menu FIRST — before any rendering that could throw
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+  document.querySelector(`.tab-btn[data-tab="${name}"]`)?.classList.add('active');
+  $(`tab-${name}`)?.classList.add('active');
+  try{
+    if(name==='history')histRender();
+    if(name==='summary')summaryRender();
+  }catch(e){console.error('[switchTab render]',e);}
+  buzz([15]);
+  history.pushState({ui:'tab',name},'');
+}
+
+/* MENU */
+function menuInit(){
+  $('btn-hamburger')?.addEventListener('click',menuOpen);
+  $('btn-close-menu')?.addEventListener('click',menuClose);
+  $('menu-overlay')?.addEventListener('click',menuClose);
+  $('menu-settings-btn')?.addEventListener('click',()=>{menuClose();openM('modal-settings')});
+  $('menu-help-btn')?.addEventListener('click',()=>{menuClose();openM('modal-help')});
+  $('menu-gs-btn')?.addEventListener('click',()=>{menuClose();downloadGS();});
+  $('menu-import-btn')?.addEventListener('click',()=>{menuClose();openImportModal();});
+  $('menu-theme-btn')?.addEventListener('click',()=>{
+    applyTheme(document.body.classList.contains('light')?'dark':'light');buzz([20]);
+  });
+  document.querySelectorAll('.menu-item[data-tab]').forEach(el=>el.addEventListener('click',()=>switchTab(el.dataset.tab)));
+  updateMenuSheetLink();
+  $('menu-wstandard-btn')?.addEventListener('click',()=>{menuClose();openWorkcalSettings();});
+}
+   
+function updateMenuSheetLink(){
+  const su=store(K.sheetUrl);
+  const el=$('menu-sheet-link');
+  if(el){el.style.display=su?'flex':'none';if(su)el.href=su;}
+}
+function menuOpen(){
+  $('side-menu').classList.add('open');
+  $('menu-overlay').classList.remove('hidden');
+  $('side-menu').setAttribute('aria-hidden','false');
+  history.pushState({ui:'menu'},'');
+  buzz([20]);
+}
+function menuClose(){
+  $('side-menu').classList.remove('open');
+  $('menu-overlay').classList.add('hidden');
+  $('side-menu').setAttribute('aria-hidden','true');
+}
+
+/* CATEGORY */
+
+
+/* ═══════════════════════════════════════════════════════
+   DATA IMPORT  (CSV + Excel .xlsx)
+═══════════════════════════════════════════════════════ */
+
+async function downloadXLSXTemplate(){
+  await loadSheetJS();
+  // Sample rows — dates and times as real Excel types so they display correctly
+  const rows=[
+    {report_date:new Date('2024-03-15'),report_time:'09:00',category:'entry',description:'',project:''},
+    {report_date:new Date('2024-03-15'),report_time:'17:30',category:'exit', description:'',project:''},
+    {report_date:new Date('2024-03-15'),report_time:'10:00-11:30',category:'task',description:'ישיבת צוות',project:'פרויקט-א'},
+    {report_date:new Date('2024-03-16'),report_time:'08:45',category:'entry',description:'',project:''},
+    {report_date:new Date('2024-03-16'),report_time:'16:00',category:'exit', description:'',project:''},
+    {report_date:new Date('2024-03-16'),report_time:'02:00',category:'task', description:"פיתוח פיצ'ר",project:'backend'},
+  ];
+  const ws=XLSX.utils.json_to_sheet(rows,{header:['report_date','report_time','category','description','project']});
+  // Format date column as date string (keep as text to avoid serial issues)
+  const range=XLSX.utils.decode_range(ws['!ref']);
+  for(let r=range.s.r+1;r<=range.e.r;r++){
+    const cell=ws[XLSX.utils.encode_cell({r,c:0})];
+    if(cell&&cell.t==='d'){
+      const d=cell.v;
+      cell.t='s';
+      cell.v=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    }
+  }
+  // Column widths
+  ws['!cols']=[{wch:14},{wch:16},{wch:10},{wch:28},{wch:20}];
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,t('xlsxSheetName'));
+  const buf=XLSX.write(wb,{type:'array',bookType:'xlsx'});
+  const b=new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(b);
+  a.download='worklog-template.xlsx';document.body.appendChild(a);a.click();
+  setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1000);
+  toast(t('toastTemplateDownloaded'),'success');
+}
+
+let _importRows=[];
+
+function openImportModal(){
+  _importRows=[];
+  const fi=$('import-file-input');if(fi)fi.value='';
+  $('import-file-name').textContent='';
+  $('import-preview').style.display='none';
+  $('import-preview-list').innerHTML='';
+  $('import-warn').style.display='none';
+  $('btn-import-confirm').disabled=true;
+  openM('modal-import');
+}
+
+/* ── Excel helpers ── */
+function xlDateToISO(serial){
+  // Excel serial date → YYYY-MM-DD (handles 1900 leap-year bug)
+  const d=new Date(Math.round((serial-25569)*86400*1000));
+  const y=d.getUTCFullYear(),mo=String(d.getUTCMonth()+1).padStart(2,'0'),dy=String(d.getUTCDate()).padStart(2,'0');
+  return`${y}-${mo}-${dy}`;
+}
+function xlTimeToClock(frac){
+  // Excel time fraction → HH:MM
+  const totalMin=Math.round(frac*1440);
+  return`${String(Math.floor(totalMin/60)).padStart(2,'0')}:${String(totalMin%60).padStart(2,'0')}`;
+}
+function looksLikeXLDate(v){return typeof v==='number'&&v>40000&&v<100000&&Number.isInteger(v);}
+function looksLikeXLTime(v){return typeof v==='number'&&v>0&&v<1;}
+function looksLikeXLDateTime(v){return typeof v==='number'&&v>40000&&v<100000&&!Number.isInteger(v);}
+
+/* ── Parse rows array (shared by CSV + XLSX paths) ── */
+function parseRowsArray(hdrRow, dataRows){
+  const hdr=hdrRow.map(h=>String(h||'').trim().toLowerCase());
+  const reqCols=['report_date','report_time','category'];
+  const missing=reqCols.filter(col=>!hdr.includes(col));
+  if(missing.length) return{rows:[],errors:[`${t('importMissingCols')}: ${missing.join(', ')}`]};
+  const rows=[];const errors=[];
+  const get=(vals,col)=>{const idx=hdr.indexOf(col);return idx>=0?String(vals[idx]??'').trim():'';};
+
+  dataRows.forEach((vals,i)=>{
+    if(vals.every(v=>v===''||v===null||v===undefined))return; // skip empty
+
+    let report_date=get(vals,'report_date');
+    let report_time=get(vals,'report_time');
+    const category=get(vals,'category').toLowerCase();
+    const description=get(vals,'description');
+    const project=get(vals,'project');
+
+    // Convert Excel serial date
+    const rawDate=vals[hdr.indexOf('report_date')];
+    if(looksLikeXLDate(rawDate)){
+      report_date=xlDateToISO(rawDate);
+    } else if(looksLikeXLDateTime(rawDate)){
+      // date+time combined in one cell
+      const intPart=Math.floor(rawDate);
+      report_date=xlDateToISO(intPart);
+      if(!report_time) report_time=xlTimeToClock(rawDate-intPart);
+    }
+
+    // Convert Excel time fraction
+    const rawTime=vals[hdr.indexOf('report_time')];
+    if(typeof rawTime==='number'){
+      if(looksLikeXLTime(rawTime)) report_time=xlTimeToClock(rawTime);
+      else if(rawTime===0) report_time='00:00';
+    }
+
+    // Validate date
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(report_date)){
+      errors.push(`${t('rowLabel')||'שורה'} ${i+2}: ${t('importBadDate')} "${report_date}"`);return;
+    }
+    if(!report_time){errors.push(`${t('rowLabel')||'שורה'} ${i+2}: ${t('importMissingTime')}`);return;}
+    if(!['entry','exit','task'].includes(category)){
+      errors.push(`${t('rowLabel')||'שורה'} ${i+2}: ${t('importBadCategory')} "${category}"`);return;
+    }
+    rows.push({id:Date.now()+Math.random().toString(36).slice(2)+'_imp',
+      timestamp:new Date(report_date+'T12:00:00').toISOString(),
+      report_date,report_time,category,description,project,imported:true});
+  });
+  return{rows,errors};
+}
+
+/* ── CSV parser ── */
+function parseCSV(text){
+  const lines=text.replace(/\r\n/g,'\n').replace(/\r/g,'\n').split('\n').filter(l=>l.trim());
+  if(!lines.length)return{rows:[],errors:[]};
+  const parseRow=line=>{
+    const vals=[];let cur='',inQ=false;
+    for(const ch of line+','){
+      if(ch==='"'){inQ=!inQ;}
+      else if(ch===','&&!inQ){vals.push(cur.trim());cur='';}
+      else cur+=ch;
+    }
+    return vals;
+  };
+  const hdrRow=parseRow(lines[0]);
+  const dataRows=lines.slice(1).map(parseRow);
+  return parseRowsArray(hdrRow,dataRows);
+}
+
+/* ── XLSX parser (lazy-loads SheetJS from CDN) ── */
+function loadSheetJS(){
+  return new Promise((res,rej)=>{
+    if(window.XLSX){res();return;}
+    const s=document.createElement('script');
+    s.src='https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+    s.onload=res;s.onerror=()=>rej(new Error('SheetJS load failed'));
+    document.head.appendChild(s);
+  });
+}
+
+async function parseXLSX(buffer){
+  await loadSheetJS();
+  const wb=XLSX.read(buffer,{type:'array',cellDates:false,raw:true});
+  const ws=wb.Sheets[wb.SheetNames[0]];
+  const raw=XLSX.utils.sheet_to_json(ws,{header:1,raw:true,defval:''});
+  if(!raw.length)return{rows:[],errors:[]};
+  const hdrRow=raw[0].map(h=>String(h||'').trim().toLowerCase());
+  const dataRows=raw.slice(1);
+  return parseRowsArray(hdrRow,dataRows);
+}
+
+/* ── Show preview ── */
+function showImportPreview(rows,errors){
+  _importRows=rows;
+  $('import-preview').style.display='';
+  $('import-row-count').textContent=rows.length;
+  const catIcon={entry:'🟢',exit:'🔴',task:'📋'};
+  $('import-preview-list').innerHTML=rows.map(r=>{
+    const proj=r.project||r.description||'';
+    return`<div style="padding:1px 0">${catIcon[r.category]||'⬜'} <b>${r.report_date}</b> ${r.report_time} ${r.category}${proj?' · '+proj:''}</div>`;
+  }).join('');
+  const warn=$('import-warn');
+  if(errors.length){
+    warn.style.display='';
+    warn.innerHTML='⚠️ '+errors.length+' '+t('importErrorsLabel')+':<br>'+errors.map(e=>`<span style="display:block">${e}</span>`).join('');
+  }else{
+    warn.style.display='none';
+  }
+  $('btn-import-confirm').disabled=rows.length===0;
+}
+
+/* ── Handle file selection ── */
+async function handleImportFile(file){
+  if(!file)return;
+  $('import-file-name').textContent=file.name;
+  $('btn-import-confirm').disabled=true;
+  $('import-preview').style.display='none';
+
+  const isXLSX=file.name.toLowerCase().endsWith('.xlsx')||
+    file.type==='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+  const isXLS=file.name.toLowerCase().endsWith('.xls');
+
+  if(isXLSX||isXLS){
+    $('import-file-name').textContent=file.name+' ('+t('importLoading')+')';
+    try{
+      const buf=await file.arrayBuffer();
+      const{rows,errors}=await parseXLSX(new Uint8Array(buf));
+      $('import-file-name').textContent=file.name;
+      showImportPreview(rows,errors);
+    }catch(e){
+      $('import-file-name').textContent=file.name;
+      toast(t('toastXlsxError')+': '+e.message,'warn',5000);
+    }
+    return;
+  }
+
+  // CSV / text path
+  const reader=new FileReader();
+  reader.onload=e=>{
+    const{rows,errors}=parseCSV(e.target.result);
+    showImportPreview(rows,errors);
+  };
+  reader.readAsText(file,'utf-8');
+}
+
+function importConfirm(){
+  if(!_importRows.length)return;
+  const existing=store(K.reps)||[];
+  // Dedup: against both existing storage AND within the imported batch itself
+  const existingKeys=new Set(existing.map(r=>`${r.report_date}|${r.report_time}|${r.category}`));
+  const batchKeys=new Set();
+  const fresh=_importRows.filter(r=>{
+    const k=`${r.report_date}|${r.report_time}|${r.category}`;
+    if(existingKeys.has(k)||batchKeys.has(k))return false;
+    batchKeys.add(k);return true;
+  });
+  const skipped=_importRows.length-fresh.length;
+  const merged=[...fresh,...existing].sort((a,b)=>b.report_date.localeCompare(a.report_date)).slice(0,1000);
+  store(K.reps,merged);
+  histRender();summaryRender();updateSessionBanner();
+  // ── Disconnect file so re-opening modal starts clean ──
+  _importRows=[];
+  const fi=$('import-file-input');
+  if(fi){fi.value='';fi.replaceWith(fi.cloneNode(true));} // clone removes event; re-bind below
+  // (re-binding not needed — modal delegation in importInit handles new clone)
+  closeM('modal-import');
+  let msg=t('importSuccess',fresh.length);
+  if(skipped)msg+=t('importSkipped',skipped);
+  toast(msg,'success',4000);buzz([20,20,60]);
+}
+
+function importInit(){
+  $('btn-dl-template')?.addEventListener('click',downloadXLSXTemplate);
+  $('btn-pick-csv')?.addEventListener('click',()=>$('import-file-input').click());
+  // Use event delegation on modal so re-cloned input is always caught
+  $('modal-import')?.addEventListener('change',e=>{
+    if(e.target&&e.target.id==='import-file-input') handleImportFile(e.target.files[0]);
+  });
+  $('btn-import-confirm')?.addEventListener('click',importConfirm);
+  $('btn-close-import')?.addEventListener('click',()=>closeM('modal-import'));
+  $('modal-import')?.addEventListener('click',e=>{if(e.target===$('modal-import'))closeM('modal-import')});
+}
+
+
+/* ═══════════════════════════════════════════════════════
+   SESSION MANAGEMENT — entry/exit open-session logic
+═══════════════════════════════════════════════════════ */
+
+/** Return the latest "open" entry record for today (entry with no paired exit).
+ *  An entry on date D is "open" if there is no exit record on date D
+ *  whose time is >= the entry's time.
+ *  Returns the report record or null.
+ */
+function getOpenSession(reports){
+  const today=isoD(new Date());
+  const todayReps=reports.filter(r=>r.report_date===today);
+  const entries=todayReps.filter(r=>r.category==='entry')
+    .sort((a,b)=>a.report_time>b.report_time?-1:1); // newest first
+  const exits=todayReps.filter(r=>r.category==='exit')
+    .map(r=>r.report_time).sort();
+  for(const en of entries){
+    // Is there an exit >= this entry's time?
+    const paired=exits.find(exT=>exT>=en.report_time);
+    if(!paired) return en; // open session found
+  }
+  return null;
+}
+
+/** Validate an entry attempt — returns error string or null if OK */
+function validateEntry(date, reports){
+  // Only enforce today's date for open-session check
+  const today=isoD(new Date());
+  if(date!==today) return null; // historical edits allowed freely
+  const open=getOpenSession(reports);
+  if(open){
+    return t('sessionBlockEntry')+` (כניסה ${open.report_time})`;
+  }
+  return null;
+}
+
+/** Validate an exit attempt — returns error string or null if OK */
+function validateExit(date, reports){
+  const today=isoD(new Date());
+  if(date!==today) return null; // historical edits allowed
+  const open=getOpenSession(reports);
+  if(!open){
+    return t('sessionBlockExit');
+  }
+  return null;
+}
+
+/** Update the session status banner on the report tab */
+function updateSessionBanner(){
+  const banner=$('session-banner');
+  const txt=$('session-banner-text');
+  if(!banner||!txt)return;
+  const reports=store(K.reps)||[];
+  const open=getOpenSession(reports);
+
+  // Also compute today's accumulated work
+  const today=isoD(new Date());
+  const{mins:accMins}=calcDayWorkMins(today,reports);
+  const accStr=accMins>0?` · ${t('wcStatActual')}: ${minsToHHMM(accMins)}`:'';
+
+  if(open){
+    banner.className='session-banner open';
+    banner.querySelector('.session-dot').classList.add('pulse');
+    txt.textContent=t('sessionOpen')+open.report_time+accStr;
+  }else{
+    banner.className='session-banner closed';
+    banner.querySelector('.session-dot').classList.remove('pulse');
+    if(accMins>0){
+      txt.textContent=t('sessionClosedWithHours')+accStr;
+    }else{
+      txt.textContent=t('sessionClosed');
+    }
+  }
+}
+
+function catInit(){
+  document.querySelectorAll('.cat-btn').forEach(btn=>btn.addEventListener('click',()=>{
+    document.querySelectorAll('.cat-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');ST.cat=btn.dataset.cat;
+    $('task-fields').style.display=ST.cat==='task'?'flex':'none';
+    updateSessionBanner();
+    buzz([15]);
+  }));
+  $('task-fields').style.display='none';
+  updateSessionBanner(); // show current session state immediately on boot
+}
+
+/* DURATION */
+function durInit(){
+  document.querySelectorAll('.seg-btn[data-mode]').forEach(btn=>btn.addEventListener('click',()=>{
+    document.querySelectorAll('.seg-btn[data-mode]').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');ST.dur=btn.dataset.mode;
+    $('duration-mode').style.display=ST.dur==='duration'?'flex':'none';
+    $('range-mode').style.display=ST.dur==='range'?'flex':'none';
+  }));
+}
+
+/* CLOCK UI */
+let _ch=0,_cm=0;
+function clockUpdate(){$('dur-h-val').textContent=pad(_ch);$('dur-m-val').textContent=pad(_cm);$('dur-hours').value=_ch;$('dur-minutes').value=_cm}
+function clockInit(){
+  $('dur-h-up').addEventListener('click',()=>{_ch=(_ch+1)%25;clockUpdate();buzz([10])});
+  $('dur-h-dn').addEventListener('click',()=>{_ch=(_ch-1+25)%25;clockUpdate();buzz([10])});
+  $('dur-m-up').addEventListener('click',()=>{_cm=(_cm+15)%60;clockUpdate();buzz([10])});
+  $('dur-m-dn').addEventListener('click',()=>{_cm=(_cm-15+60)%60;clockUpdate();buzz([10])});
+  // touch swipe on clock vals
+  document.querySelectorAll('.clock-preset').forEach(btn=>btn.addEventListener('click',()=>{
+    const[h,m]=btn.dataset.dur.split(':').map(Number);_ch=h;_cm=m;clockUpdate();buzz([15]);
+  }));
+}
+
+
+/* ─ RESET FORM AFTER SUBMIT ─ */
+function resetForm(){
+  // Reset category → entry
+  document.querySelectorAll('.cat-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelector('.cat-btn[data-cat="entry"]').classList.add('active');
+  ST.cat='entry';
+  $('task-fields').style.display='none';
+  // Clear task fields
+  $('task-project').value='';
+  $('task-desc').value='';
+  // Reset clock to 00:00
+  _ch=0;_cm=0;clockUpdate();
+  // Reset duration mode
+  document.querySelectorAll('.seg-btn[data-mode]').forEach(b=>b.classList.remove('active'));
+  document.querySelector('.seg-btn[data-mode="duration"]').classList.add('active');
+  ST.dur='duration';
+  $('duration-mode').style.display='flex';
+  $('range-mode').style.display='none';
+  const rs=$('range-start'),re=$('range-end');
+  if(rs)rs.value='';if(re)re.value='';
+ 
+// Set date/time to now for the next report
+  const n = new Date();
+  $('report-date').value = isoD(n);
+  $('report-time').value = applyRounding(timeS(n));
+}
+   
+function submitInit(){
+  $('btn-submit').addEventListener('click',async()=>{
+    const date=$('report-date').value,time=$('report-time').value;
+    if(!date||!time){toast(t('toastNoTime'),'warn');buzz([80]);return}
+
+    const reports=store(K.reps)||[];
+    if(ST.cat==='entry'){
+      const err=validateEntry(date,reports);
+      if(err){
+        const banner=$('session-banner');
+        if(banner){banner.className='session-banner warn';banner.querySelector('.session-dot').classList.remove('pulse');$('session-banner-text').textContent=err;}
+        toast('⛔ '+err,'warn',5000);buzz([80,80]);return;
+      }
+    }
+    if(ST.cat==='exit'){
+      const err=validateExit(date,reports);
+      if(err){
+        const banner=$('session-banner');
+        if(banner){banner.className='session-banner warn';banner.querySelector('.session-dot').classList.remove('pulse');$('session-banner-text').textContent=err;}
+        toast('⛔ '+err,'warn',5000);buzz([80,80]);return;
+      }
+    }
+
+    const rep=buildRep(date,time);if(!rep)return;
+
+    // ── Unified Pipeline Call ──
+    await dispatchAction({ action: 'create', payload: rep }, $('btn-submit'));
+    resetForm();
+    buzz([30,20,60]);
+  });
+  
+  $('btn-sync')?.addEventListener('click',async()=>{
+    const btn=$('btn-sync');
+    if(btn.dataset.syncing==='1') return;
+    btn.dataset.syncing='1';
+    btn.disabled=true;
+    btn.textContent='⏳';
+    try{ await syncQ(); }finally{
+      btn.disabled=false;
+      btn.textContent=btn.getAttribute('data-i18n-orig')||'↑ שלח';
+      delete btn.dataset.syncing;
+    }
+  });
+}
+   
+function buildRep(date,time){
+  const cat=ST.cat;let rTime=time,desc='',proj='',workDuration='';
+  if(cat==='task'){
+    desc=$('task-desc').value.trim();proj=$('task-project').value.trim();
+    if(!proj){
+      const inp=$('task-project');
+      inp.classList.remove('input-err'); // reset to retrigger animation
+      void inp.offsetWidth;
+      inp.classList.add('input-err');
+      inp.focus();
+      setTimeout(()=>inp.classList.remove('input-err'),1500);
+      toast(t('toastNoDesc'),'warn');buzz([80,40,80]);return null;
+    }
+    // auto-save new project
+    const ps=store(K.proj)||[];
+    if(proj&&!ps.includes(proj)){ps.push(proj);store(K.proj,ps);projLoad();}
+    if(ST.dur==='duration'){
+      const h=parseInt($('dur-hours').value)\vert{}\vert{}0,m=parseInt($('dur-minutes').value)||0;
+      if(!h&&!m){toast(t('toastNoDuration'),'warn');buzz([80]);return null}
+      rTime=`${pad(h)}:${pad(m)}`;
+    }else{
+      const s=$('range-start').value,e=$('range-end').value;
+      if(!s||!e){toast(t('toastNoRange'),'warn');buzz([80]);return null}
+      rTime=`${s}-${e}`;
+    }
+  }
+
+  // Apply time rounding for entry/exit
+  if(cat==='entry'||cat==='exit') rTime=applyRounding(rTime);
+
+  // חישוב סך שעות עבודה בעת דיווח יציאה
+  if(cat==='exit'){
+    const reports=store(K.reps)||[];
+    const openSession=getOpenSession(reports);
+    if(openSession && openSession.report_time){
+      const [eh, em] = openSession.report_time.split(':').map(Number);
+      const [xh, xm] = rTime.split(':').map(Number);
+      const diffMins = (xh * 60 + xm) - (eh * 60 + em);
+      if(diffMins > 0){
+        workDuration = minsToHHMM(diffMins);
+      }
+    }
+  }
+
+  return{id:Date.now()+Math.random().toString(36).slice(2),timestamp:new Date().toISOString(),
+    report_date:date,report_time:rTime,category:cat,description:desc,project:proj,workDuration:workDuration};
+}
+
+/* STORAGE */
+function markSent(id){const rs=store(K.reps)||[];const r=rs.find(x=>x.id===id);if(r)r.sent=true;store(K.reps,rs)}
+function addQ(r){const q=store(K.q)||[];if(!q.find(x=>x.id===r.id))q.push(r);store(K.q,q)}
+function pendUI(){const q=store(K.q)||[];$('pending-section').classList.toggle('hidden',!q.length);$('pending-count').textContent=q.length}
+
+/* ─── UNIFIED CRUD PIPELINE (עם מנגנון שחרור UI מובטח) ─── */
+async function dispatchAction(actionEvent, uiButton = null) {
+  const { action, payload } = actionEvent;
+  const ep = store(K.ep);
+  
+  // 1. שמירת הטקסט המקורי ונעילת ה-UI
+  let origText = '';
+  if (uiButton) {
+    origText = uiButton.getAttribute('data-orig-text') || uiButton.innerHTML;
+    if (!uiButton.getAttribute('data-orig-text')) {
+      uiButton.setAttribute('data-orig-text', origText);
+    }
+    uiButton.disabled = true;
+    uiButton.innerHTML = '⏳ ממתין לשרת...';
+  }
+
+  // 2. הכנת הבקשה
+  let reqBody;
+  let successMsg = '';
+  
+if (action === 'delete') {
+    reqBody = { action: 'delete', id: payload.id, category: payload.category, report_date: payload.report_date };
+    successMsg = '🗑️ דיווח נמחק';
+  } else if (action === 'update') {
+    reqBody = { action: 'editReport', ...payload };
+    successMsg = '✅ דיווח עודכן';
+  } else {
+    reqBody = { ...payload };
+    if (payload.category === 'exit' && payload.workDuration) {
+      successMsg = `🔴 יציאה נרשמה (סך הכל: ${payload.workDuration} שעות)`;
+    } else {
+      successMsg = '✅ הדיווח נשמר בגיליון';
+    }
+  }
+
+  let isSuccess = false;
+  let isOffline = !navigator.onLine;
+
+  // 3. ביצוע השליחה עם Timeout מוגדר מראש (2500ms)
+  if (ep && !isOffline) {
+    try {
+      const fetchPromise = fetch(ep, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
+        body: JSON.stringify(reqBody),
+        mode: 'no-cors',
+        keepalive: true,
+        priority: 'high'
+      });
+
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Timeout')), 2500)
+      );
+
+      await Promise.race([fetchPromise, timeoutPromise]);
+      isSuccess = true;
+    } catch (err) {
+      // במקרה של Timeout או בעיית רשת - השרת יקבל ברקע או שהבקשה תכנס לתור
+      isSuccess = navigator.onLine; 
+    }
+  }
+
+  // 4. עדכון LocalStorage והתורים
+  try {
+    let reps = store(K.reps) || [];
+    if (action === 'create') {
+      payload.sent = isSuccess;
+      reps.unshift(payload);
+      reps = reps.slice(0, 300);
+      if (!isSuccess) addQ(payload);
+    } else if (action === 'update') {
+      payload.sent = isSuccess;
+      const idx = reps.findIndex(r => r.id === payload.id);
+      if (idx >= 0) {
+        const localPayload = { ...payload };
+        delete localPayload.old_date;
+        reps[idx] = localPayload;
+      }
+      if (!isSuccess) addQ(payload);
+    } else if (action === 'delete') {
+      reps = reps.filter(r => r.id !== payload.id);
+      store(K.q, (store(K.q) || []).filter(r => r.id !== payload.id));
+      if (!isSuccess) {
+        const dq = store('mwl_delete_queue') || [];
+        dq.push(payload);
+        store('mwl_delete_queue', dq);
+      }
+    }
+    
+    store(K.reps, reps);
+    pendUI();
+  } finally {
+    // 5. שחרור מובטח של ה-UI (רץ תמיד!)
+    if (uiButton) {
+      uiButton.disabled = false;
+      uiButton.innerHTML = uiButton.getAttribute('data-orig-text') || origText;
+    }
+  }
+
+  // 6. הצגת חיווי מתאים
+  if (isSuccess) {
+    toast(successMsg, 'success', 2500);
+  } else if (!ep) {
+    toast('⚠️ לא מוגדר חיבור - נשמר מקומית בלבד', 'warn', 3500);
+  } else {
+    toast('⚠️ נשמר מקומית - יישלח בסנכרון הבא', 'warn', 3500);
+  }
+
+  // 7. רענון תצוגה
+  histRender();
+  summaryRender();
+  updateSessionBanner();
+
+  return isSuccess;
+}
+
+/* NETWORK */
+function netInit(){
+  // Network sync side-effects only — UI handled by NotificationSystem
+  window.addEventListener('online', ()=>{
+    localStorage.removeItem('mwl_last_full_sync');
+    syncQ().then(()=>bgSync());
+  });
+  pendUI();
+}
+function netQInit(){
+  const c=navigator.connection||navigator.mozConnection||navigator.webkitConnection;if(!c)return;
+  const chk=()=>{if(c.saveData||['2g','slow-2g'].includes(c.effectiveType))toast(t('toastSlowData'),'warn',5000)};
+  c.addEventListener('change',chk);chk();
+}
+
+/* HISTORY */
+function histRender(){
+  const now=new Date(),cutoff=new Date(now);cutoff.setDate(cutoff.getDate()-30);
+  const rs=(store(K.reps)||[])
+    .filter(r=>{const d=new Date(r.timestamp||r.report_date);return d>=cutoff})
+    .sort((a,b)=>{
+      // Sort by actual report date+time, not submission timestamp
+      const keyA=(a.report_date||'')+'T'+(a.report_time&&!a.report_time.includes('-')?a.report_time:'00:00');
+      const keyB=(b.report_date||'')+'T'+(b.report_time&&!b.report_time.includes('-')?b.report_time:'00:00');
+      return keyB>keyA?1:keyB<keyA?-1:0; // newest first
+    })
+    .slice(0,200);
+  $('history-list').innerHTML=rs.length?rs.map(r=>hItem(r,true)).join(''):`<p class="empty">${t('historyEmpty')}</p>`;
+}
+
+
+   
+function hItem(r,showDel=false){
+  const actBtns=showDel?`<div style="display:flex;gap:5px;flex-shrink:0"><button class="btn-g sm" onclick="openEditReport('${r.id}')" style="padding:4px 8px;font-size:.7rem" title="ערוך">✏️</button><button class="btn-d sm" onclick="delReport('${r.id}')" style="padding:4px 8px;font-size:.7rem" title="מחק">🗑</button></div>`:'';
+  return`<div class="hitem" data-id="${r.id}"><div class="hdot ${r.category}"></div><div class="hmeta"><div class="htitle">${r.description||catLbl(r.category)}</div><div class="hsub">${fmtD(r.report_date)} · ${fmtT(r.report_time)}${r.project?' · '+r.project:''}${r.workDuration?' · ⏱'+r.workDuration:''}</div></div><span class="hbadge ${r.category}">${catLbl(r.category)}</span>${actBtns}</div>`;
+}
+
+/* ────────────────────────────────────────────────────
+   EDIT REPORT  v3.7.0
+──────────────────────────────────────────────────── */
+let _editRepId = null;
+let _editRepCat = 'entry';
+
+function openEditReport(id){
+  const reps = store(K.reps)||[];
+  const r = reps.find(x=>x.id===id);
+  if(!r){ toast('\u26a0\ufe0f \u05d3\u05d9\u05d5\u05d5\u05d7 \u05dc\u05d0 \u05e0\u05de\u05e6\u05d0','warn'); return; }
+  _editRepId = id;
+  _editRepCat = r.category||'entry';
+  const[y,mo,d] = (r.report_date||'').split('-');
+  $('edit-report-title').textContent = '\u270f\ufe0f \u05e2\u05e8\u05d9\u05db\u05ea \u05d3\u05d9\u05d5\u05d5\u05d7 \u2014 '+(d||'')+'/'+(mo||'')+'/'+(y||'');
+  $('edit-report-info').textContent = '\u05de\u05d6\u05d4\u05d4: '+id.slice(0,14)+'\u2026  |  \u05e0\u05e9\u05dc\u05d7: '+(r.sent?'\u05db\u05df':'\u05dc\u05d0');
+  $('edit-report-date').value = r.report_date||'';
+  document.querySelectorAll('.edit-cat-btn').forEach(b=>{
+    b.classList.toggle('active', b.dataset.cat === _editRepCat);
+  });
+  _syncEditFields();
+  if(r.category==='task'){
+    $('edit-task-project').value = r.project||'';
+    $('edit-task-desc').value = r.description||'';
+    $('edit-report-duration').value = r.report_time||'';
+    $('edit-report-time').value = '';
+  } else {
+    $('edit-report-time').value = r.report_time||'';
+    $('edit-report-duration').value = '';
+  }
+  $('edit-report-offline-hint').style.display = navigator.onLine?'none':'';
+  openM('modal-edit-report');
+}
+
+function _syncEditFields(){
+  const isTask = _editRepCat==='task';
+  $('edit-task-fields').style.display = isTask?'flex':'none';
+  $('edit-time-wrap').style.display   = isTask?'none':'';
+}
+
+
+function editReportInit(){
+  $('btn-close-edit-report').addEventListener('click',()=>closeM('modal-edit-report'));
+  $('btn-edit-report-cancel').addEventListener('click',()=>closeM('modal-edit-report'));
+  $('btn-edit-report-save').addEventListener('click',saveEditReport);
+  $('modal-edit-report').addEventListener('click',e=>{if(e.target===$('modal-edit-report'))closeM('modal-edit-report');});
+  document.querySelectorAll('.edit-cat-btn').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      document.querySelectorAll('.edit-cat-btn').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      _editRepCat = btn.dataset.cat;
+      _syncEditFields();
+      buzz([10]);
+    });
+  });
+}
+
+function changelogInit(){
+  $('btn-close-changelog')?.addEventListener('click',()=>closeM('modal-changelog'));
+  $('btn-close-changelog2')?.addEventListener('click',()=>closeM('modal-changelog'));
+  $('modal-changelog')?.addEventListener('click',e=>{if(e.target===$('modal-changelog'))closeM('modal-changelog');});
+  $('btn-open-changelog')?.addEventListener('click',()=>openM('modal-changelog'));
+}
+
+
+/* ═══════════════════════════════════════════
+   WORK STANDARD  (WorkStandard sheet + local cache)
+═══════════════════════════════════════════ */
+
+/* Storage helpers */
+function getWStandard(){ return store(K.wstandard)||[]; }
+function saveWStandardLocal(arr){ store(K.wstandard,arr); }
+
+/* Return standard for a specific date-string YYYY-MM-DD */
+/* Classify Notes field → 'vacation' | 'sick' | 'holiday' | 'sabbatical' | 'normal' */
+function classifyNotes(notes){
+  if (!notes) return 'normal';
+  const n = notes.trim().toLowerCase();
+  
+  // זיהוי שבתון / חופשה ממושכת
+  if (/שבתון|sabbatical|לא זמין|חופשה ממושכת/.test(n)) return 'sabbatical';
+  
+  // זיהוי חג אחיד לפי עמודת Notes
+  if (/חג|holiday/.test(n)) return 'holiday';
+
+  // זיהוי חופשה
+  if (/חופש|vacation|חופשה/.test(n)) return 'vacation';
+  
+  // זיהוי מחלה
+  if (/מחלה|חלה|חולה|sick|ill/.test(n)) return 'sick';
+  
+  return 'normal';
+}
+
+function getDayStd(ds){
+  const row=getWStandard().find(r=>r.date===ds);
+  if(!row){
+    // No WorkStandard row — auto-classify by prefs.workDays
+    const dow=new Date(ds).getDay(); // 0=Sun…6=Sat
+    const workDays=getP().workDays||[0,1,2,3,4];
+    if(!workDays.includes(dow)){
+      return{stdHours:0,notes:'',description:'',isWorkDay:false,dayType:'weekend'};
+    }
+    return{stdHours:0,notes:'',description:'',isWorkDay:false,dayType:'normal'};
+  }
+  const h=parseFloat(row.stdHours)||0;
+  const notes=row.notes||'';
+  const description=row.description||'';
+  // Manual row exists → use classifyNotes, then fall back to workDays auto-class
+  let dayType=classifyNotes(notes);
+  if(dayType==='normal' && h===0){
+    const dow=new Date(ds).getDay();
+    const workDays=getP().workDays||[0,1,2,3,4];
+    if(!workDays.includes(dow)) dayType='weekend';
+  }
+  return{stdHours:h,notes,description,isWorkDay:h>0,dayType};
+}
+
+/* Hebrew weekday */
+const HEB_DOW=['ראשון','שני','שלישי','רביעי','חמישי','שישי','שבת'];
+function hebDow(ds){const d=new Date(ds);return HEB_DOW[d.getDay()];}
+
+/* Actual work minutes for a day */
+/* Parse a task report_time string → minutes
+   Duration mode: "H:MM"       → h*60+m
+   Range mode:    "HH:MM-HH:MM" → end-start           */
+function parseTaskMins(rt){
+  if(!rt)return 0;
+  if(rt.includes('-')){
+    const[s,e]=rt.split('-');
+    if(!s||!e)return 0;
+    const[sh,sm]=s.split(':').map(Number);
+    const[eh,em]=e.split(':').map(Number);
+    const d=(eh*60+em)-(sh*60+sm);
+    return d>0?d:0;
+  }
+  const[h,m]=rt.split(':').map(Number);
+  return(h||0)*60+(m||0);
+}
+
+/* Returns {mins, fromTasks, pairs, hasOpen}
+   Aggregates ALL entry/exit pairs for the day (handles multiple check-in/out cycles).
+   hasOpen=true  → there is an unclosed entry (currently inside).
+   fromTasks=true → no pairs found, fell back to task sum.
+*/
+function calcDayWorkMins(ds,reports){
+  const dr=reports.filter(r=>r.report_date===ds);
+  const entries=dr.filter(r=>r.category==='entry').map(r=>r.report_time).filter(Boolean).sort();
+  const exits  =dr.filter(r=>r.category==='exit' ).map(r=>r.report_time).filter(Boolean).sort();
+
+  let totalMins=0;
+  const pairs=[];
+  const usedExits=new Set();
+
+  // For each entry, find the nearest exit that is >= entry time and not yet used
+  for(const enT of entries){
+    const matchExit=exits.find(exT=>exT>=enT&&!usedExits.has(exT));
+    if(matchExit){
+      usedExits.add(matchExit);
+      const[eh,em]=enT.split(':').map(Number);
+      const[xh,xm]=matchExit.split(':').map(Number);
+      const diff=(xh*60+xm)-(eh*60+em);
+      if(diff>0){totalMins+=diff;pairs.push({entry:enT,exit:matchExit,mins:diff});}
+    }
+  }
+
+  // Check for open session (entry without paired exit)
+  const pairedEntries=new Set(pairs.map(p=>p.entry));
+  const hasOpen=entries.some(e=>!pairedEntries.has(e));
+
+  if(pairs.length>0) return{mins:totalMins,fromTasks:false,pairs,hasOpen};
+
+  // Fallback: sum task durations when no closed entry/exit pairs exist
+  // (covers: no entry, no exit, or open session with no exit)
+  const tasks=dr.filter(r=>r.category==='task');
+  if(!tasks.length)return{mins:0,fromTasks:false,pairs:[],hasOpen};
+  const total=tasks.reduce((s,r)=>s+parseTaskMins(r.report_time),0);
+  return{mins:total,fromTasks:true,pairs:[],hasOpen};
+}
+
+/* Full status for a day — With Auto-Compensation for Paid Absences */
+function getDayStatus(ds, reports) {
+  const { stdHours, notes, description, isWorkDay, dayType } = getDayStd(ds);
+  let { mins: actualMins, fromTasks, pairs, hasOpen } = calcDayWorkMins(ds, reports);
+  const minMins = Math.round(stdHours * 60);
+  
+  // מנגנון הפיצוי: אם זה יום מחלה, חופש, חג או שבתון
+  const isPaidAbsence = ['vacation', 'sick', 'holiday', 'sabbatical'].includes(dayType);
+  
+  if (isPaidAbsence && minMins > 0) {
+    // אם המשתמש לא עבד בכלל, או עבד פחות מהתקן - הוא מפוצה בגובה התקן המלא
+    if (actualMins < minMins) {
+      actualMins = minMins; 
+      fromTasks = false; // השעות מגיעות כעת מפיצוי התקן
+    }
+  }
+
+  const wdStr = actualMins > 0 ? `${pad(Math.floor(actualMins / 60))}:${pad(actualMins % 60)}` : '-';
+
+  if (!isWorkDay && !isPaidAbsence) {
+    const st = dayType !== 'normal' && dayType !== 'weekend' ? dayType : (dayType === 'weekend' ? 'weekend' : 'nostandard');
+    return { status: st, actualMins, minMins: 0, diffMins: actualMins, wdStr, notes, description, pct: null, fromTasks, dayType, pairs, hasOpen };
+  }
+
+  const diffMins = actualMins - minMins;
+  // אם זה יום מפוצה והגענו לאיזון מדויק, נציג סטטוס ייעודי כדי שהמשתמש יבין שיש פיצוי
+  const status = isPaidAbsence && diffMins === 0 ? dayType : (diffMins >= 0 ? 'ok' : 'deficit');
+  const pct = minMins > 0 ? Math.min(999, Math.round(actualMins / minMins * 100)) : 100;
+
+  return { status, actualMins, minMins, diffMins, wdStr, notes, description, pct, fromTasks, dayType, pairs, hasOpen };
+}
+ 
+function minsToHHMM(m){
+  if(!m&&m!==0)return'0:00';
+  const sign=m<0?'-':'';const abs=Math.abs(m);
+  return`${sign}${Math.floor(abs/60)}:${pad(abs%60)}`;
+}
+
+/* Sync WorkStandard from sheet → local cache */
+async function syncWStandard(quiet=false){
+  const ep=store(K.ep);
+  if(!ep){
+    if(!quiet)toast(t('syncStatusNoEp'),'warn',4000);
+    return false;
+  }
+  if(!navigator.onLine){
+    if(!quiet)toast(t('toastSavedOffline'),'warn');
+    return false;
+  }
+  try{
+    const res=await fetch(ep+'?action=getWorkStandard&t='+Date.now(),{cache:'no-store'});
+    if(!res.ok)throw new Error('HTTP '+res.status);
+    const data=await res.json();
+
+    /* GAS returned error */
+    if(data.status==='error'){
+      if(!quiet)toast(t('toastSyncError')+': '+(data.message||''),'error',5000);
+      return false;
+    }
+
+    /* GAS is old version — no getWorkStandard action */
+    if(!Array.isArray(data.workStandard)){
+      // Always show this error — user must redeploy GAS
+      toast(t('syncStatusOld'),'warn',7000);
+      return false;
+    }
+
+    /* Don't overwrite local data with an empty server response */
+    const local=getWStandard();
+    if(data.workStandard.length===0&&local.length>0){
+      if(!quiet)toast(t('toastNoDuration'),'warn');
+      return false;
+    }
+
+    saveWStandardLocal(data.workStandard);
+    store('mwl_wstandard_sync',new Date().toLocaleString('he-IL'));
+    summaryRender();
+    if(!quiet)toast(`✅ WorkStandard ${t('sumPeriodDay')} ${data.workStandard.length}`,'success');
+    return true;
+  }catch(err){
+    console.error('[syncWStandard]',err);
+    if(!quiet)toast(t('toastSyncError')+': '+err.message,'error',5000);
+    return false;
+  }
+}
+
+/* Push one day's standard to sheet */
+async function setDayStd(ds,stdHours,notes,description=''){
+  const wd=hebDow(ds);
+  const std=getWStandard();
+  const idx=std.findIndex(r=>r.date===ds);
+  const rec={date:ds,weekDay:wd,stdHours:Number(stdHours)||0,notes:notes||'',description:description||''};
+  if(idx>=0)std[idx]=rec;else std.push(rec);
+  std.sort((a,b)=>a.date<b.date?-1:1);
+  saveWStandardLocal(std);
+  summaryRender();
+  const ep=store(K.ep);
+  if(!ep){toast(t('syncStatusNoEp'),'warn');return;}
+  if(!navigator.onLine){
+    _wstdQueue(rec);
+    toast(t('toastSavedOffline'),'warn');
+    return;
+  }
+  await _wstdSend(rec);
+}
+
+/* Send one WorkStandard record to GAS.
+   MUST use text/plain — application/json triggers CORS preflight
+   which no-cors mode cannot handle and the body is silently dropped. */
+async function _wstdSend(rec){
+  const ep=store(K.ep);if(!ep)return false;
+  try{
+    const body=JSON.stringify({
+      action:'setDayStandard',
+      date:rec.date,weekDay:rec.weekDay,
+      stdHours:rec.stdHours,notes:rec.notes,description:rec.description||''
+    });
+    await fetch(ep,{
+      method:'POST',
+      headers:{'Content-Type':'text/plain;charset=UTF-8'},
+      body,
+      mode:'no-cors'
+    });
+    // no-cors response is opaque — verify by re-syncing
+    setTimeout(()=>syncWStandard(true),1200);
+    toast(t('toastWStdSaved'),'success');
+    return true;
+  }catch(err){
+    console.warn('[wstd send]',err);
+    _wstdQueue(rec);
+    toast(t('toastSendError'),'warn');
+    return false;
+  }
+}
+
+function _wstdQueue(rec){
+  const q=store('mwl_wstandard_queue')||[];
+  const i=q.findIndex(r=>r.date===rec.date);
+  if(i>=0)q[i]=rec;else q.push(rec);
+  store('mwl_wstandard_queue',q);
+}
+
+/* Flush queued wstandard updates when back online */
+async function flushWStandardQueue(){
+  const ep=store(K.ep);if(!ep||!navigator.onLine)return;
+  const q=store('mwl_wstandard_queue')||[];if(!q.length)return;
+  const fail=[];
+  for(const item of q){
+    const ok=await _wstdSend(item);
+    if(!ok)fail.push(item);
+  }
+  store('mwl_wstandard_queue',fail);
+  if(fail.length===0&&q.length>0)toast(t('toastWStdSent'),'success');
+}
+
+/* ─ Daily status card ─ */
+function renderDayWCStatus(ds,reports){
+  const sec=$('day-wc-section');if(!sec)return;
+  const{status,actualMins,minMins,diffMins,wdStr,notes,description,pct,fromTasks,dayType,pairs,hasOpen}=getDayStatus(ds,reports);
+  // Show day name + date in section header
+  const dayHdr=$('day-wc-day-label');
+  if(dayHdr){const[y,m,d]=ds.split('-');dayHdr.textContent=`${hebDow(ds)} · ${d}/${m}/${y}`;}
+  const notesEl=$('day-wc-notes');
+  const dayTypeLabels={vacation:t('statusVacation'),sick:t('statusSick'),holiday:t('statusHoliday'),sabbatical:'🌴 שבתון',weekend:'🔅 לא יום עבודה'};
+  const dayTypeColors={vacation:'var(--amber)',sick:'var(--purple)',holiday:'var(--blue)',sabbatical:'#63cab7',weekend:'var(--text3)'};
+  const dayTypeBg={vacation:'var(--amberDim)',sick:'var(--purpleDim)',holiday:'var(--blueDim)',sabbatical:'rgba(99,202,183,.12)',weekend:'var(--bg3)'};
+  if(notesEl){
+    const displayText=[notes,description].filter(Boolean).join(' — ');
+    notesEl.textContent=displayText;
+    const dtColor=dayTypeColors[dayType]||'var(--amber)';
+    notesEl.style.background=dayTypeBg[dayType]||'var(--amberDim)';
+    notesEl.style.borderLeft=`3px solid ${dtColor}`;
+    notesEl.style.color=dtColor;
+    notesEl.style.display=displayText?'':'none';
+  }
+  $('day-wc-section').dataset.date=ds;
+  let html='';
+   if((status==='vacation'||status==='sick'||status==='holiday'||status==='sabbatical') && minMins > 0){
+       const dtLabel=dayTypeLabels[status]||('📝 '+notes);
+       html+=`<span class="day-status-badge ${status}">${dtLabel} — מפוצה מלא</span>`;
+       html+=`<span style="font-size:.82rem;color:var(--text2);display:block;margin-top:6px">${t('wcStandardLabel')} <strong style="color:var(--text)">${minsToHHMM(minMins)}</strong> (הושלם אוטומטית)</span>`;
+     }else if(status==='vacation'||status==='sick'||status==='holiday'||status==='sabbatical'||status==='weekend'){
+       const dtLabel=dayTypeLabels[status]||('📝 '+notes);
+       html+=`<span class="day-status-badge ${status}">${dtLabel}</span>`;
+       html+=`<span style="font-size:.78rem;color:var(--text3)">${t('wcDayNotCount')}</span>`;
+     }else if(status==='nostandard'){
+    html=`<span class="day-status-badge nodata">${t('wcNoStandard')}</span><span style="font-size:.75rem;color:var(--text3)">${t('wcEditHint')}</span>`;
+  }else{
+    // Show day-type badge alongside work status if relevant
+    if(dayType!=='normal'){
+      html+=`<span class="day-status-badge ${dayType}">${dayTypeLabels[dayType]||dayType}</span>`;
+    }
+    const badge=status==='ok'?'ok':'deficit';
+    const label=status==='ok'?`✅ ${t('statWorkday')}`:"⚠️ "+t('wcStatDeficit');
+    html+=`<span class="day-status-badge ${badge}">${label}</span>`;
+    html+=`<span style="font-size:.82rem;color:var(--text2)">${t('wcActualLabel')} <strong style="color:var(--text)">${wdStr}</strong></span>`;
+    html+=`<span style="font-size:.82rem;color:var(--text2)">${t('wcStandardLabel')} <strong style="color:var(--amber)">${minsToHHMM(minMins)}</strong></span>`;
+    if(status==='deficit')html+=`<span style="font-size:.82rem;color:var(--red)">${t('wcDeficitLabel')} <strong>${minsToHHMM(Math.abs(diffMins))}</strong></span>`;
+    if(status==='ok'&&diffMins>0)html+=`<span style="font-size:.82rem;color:var(--lime)">${t('wcSurplusLabel')} <strong>${minsToHHMM(diffMins)}</strong></span>`;
+    if(fromTasks)html+=`<span style="font-size:.75rem;color:var(--amber);margin-top:2px">${t('wcFromTasks')}</span>`;
+    // Multiple pairs breakdown
+    if(pairs&&pairs.length>1){
+      html+=`<div style="margin-top:8px;font-size:.72rem;color:var(--text3);border-top:1px solid var(--border);padding-top:6px;width:100%">`;
+      html+=`<div style="margin-bottom:3px;font-weight:700;color:var(--text2)">${t('sessionPairs')} ${pairs.length} ${t('sessionCycles')}:</div>`;
+      pairs.forEach((p,i)=>{html+=`<div style="display:flex;gap:8px;padding:1px 0"><span style="color:var(--lime)">🟢 ${p.entry}</span><span style="color:var(--red)">🔴 ${p.exit}</span><span style="color:var(--text3)">${minsToHHMM(p.mins)}</span></div>`;});
+      html+=`</div>`;
+    }
+    // Open session indicator
+    if(hasOpen){
+      html+=`<span style="font-size:.75rem;color:var(--lime);display:flex;align-items:center;gap:5px;margin-top:4px"><span style="width:7px;height:7px;border-radius:50%;background:var(--lime);animation:pulse 1.4s ease infinite;flex-shrink:0"></span>${t('sessionOpenLabel')}</span>`;
+    }
+  }
+  $('day-wc-content').innerHTML=html;
+  // Progress meter
+  const meter=$('day-wc-meter'),mBar=$('day-wc-meter-bar'),mLbl=$('day-wc-meter-label'),mStd=$('day-wc-meter-std');
+  if(meter&&status!=='nostandard'&&minMins>0){
+    const p=Math.min(100,Math.round(actualMins/minMins*100));
+    const col=p>=100?'var(--lime)':p>=80?'var(--amber)':'var(--red)';
+    mBar.style.width=p+'%';mBar.style.background=col;
+    mLbl.textContent=pct+'% '+t('wcStatAchieve');mLbl.style.color=col;
+    mStd.textContent=t('wcStandardLabel')+' '+minsToHHMM(minMins);
+    meter.style.display='';
+  }else if(meter){meter.style.display='none';}
+  // Per-report action list for the day (edit / delete)
+  // Always get-or-create the container so it can be cleared on empty days
+  let repDiv=$('day-rep-actions');
+  if(!repDiv){
+    repDiv=document.createElement('div');
+    repDiv.id='day-rep-actions';
+    repDiv.style.cssText='margin-top:10px;border-top:1px solid var(--border);padding-top:8px;display:flex;flex-direction:column;gap:4px';
+    sec.appendChild(repDiv);
+  }
+  const dayReps=(store(K.reps)||[]).filter(r=>r.report_date===ds);
+  if(dayReps.length){
+    repDiv.style.display='';
+    repDiv.innerHTML=dayReps
+      .sort((a,b)=>{const ta=a.report_time||'',tb=b.report_time||'';return ta<tb?-1:ta>tb?1:0;})
+      .map(r=>hItem(r,true)).join('');
+  } else {
+    // No reports for this day — clear and hide
+    repDiv.innerHTML='';
+    repDiv.style.display='none';
+  }
+  sec.style.display='';
+  // achievement stat card
+  const ac=$('stat-achievement-card');
+  if(ac){
+    ac.style.display='';
+    $('stat-achievement').textContent=pct!=null?`${pct}%`:'—';
+    $('stat-achievement').style.color=pct==null?'var(--text3)':pct>=100?'var(--lime)':pct>=80?'var(--amber)':'var(--red)';
+  }
+}
+
+/* Called from "ערוך תקן" button in daily view */
+function editTodayStd(){
+  const ds=$('day-wc-section').dataset.date||isoD(new Date());
+  editDayConfig(ds);
+}
+
+/* ─ Monthly calendar grid ─ */
+function renderWCCalendar(year,month,reports){
+  const dowRow=$('wc-dow-row'),daysGrid=$('wc-days-grid');
+  if(!dowRow||!daysGrid)return;
+  const todayStr=isoD(new Date());
+  const dows=['א','ב','ג','ד','ה','ו','ש'];
+  dowRow.innerHTML=dows.map(d=>`<div class="wc-dow">${d}</div>`).join('');
+  const firstDay=new Date(year,month,1);
+  const lastDate=new Date(year,month+1,0).getDate();
+  const startDow=firstDay.getDay();
+  let html='';
+  for(let i=0;i<startDow;i++)html+='<div class="wc-empty-cell"></div>';
+  for(let d=1;d<=lastDate;d++){
+    const ds=`${year}-${pad(month+1)}-${pad(d)}`;
+    const{status,actualMins,wdStr,notes,minMins,fromTasks,dayType}=getDayStatus(ds,reports);
+    const isToday=ds===todayStr;
+    const showActual=actualMins>0;
+    const hasStd = minMins > 0;
+
+    // הפרדה מוחלטת בלוגיקה בין סוגי הימים
+    let cellClass = status==='nostandard'?'':status;
+    if (dayType === 'sick') {
+      cellClass = 'sick';
+    } else if (dayType === 'sabbatical') {
+      cellClass = 'sabbatical';
+    } else if (dayType === 'holiday') {
+      cellClass = hasStd ? 'holiday' : 'holiday-nostd';
+    } else if (dayType === 'vacation') {
+      cellClass = hasStd ? 'vacation' : 'vacation-nostd';
+    }
+
+    const stdStr = hasStd ? minsToHHMM(minMins) : '';
+    
+    // אייקונים מופרדים לכל סוג יום
+    let vacIcon = '';
+    if (dayType === 'sick') vacIcon = '🤒';
+    else if (dayType === 'sabbatical') vacIcon = '🌴';
+    else if (dayType === 'holiday') vacIcon = '✡️';
+    else if (dayType === 'vacation') vacIcon = '🏖️';
+    else if (notes) vacIcon = '📝';
+
+    html+=`<div class="wc-cell ${cellClass}${isToday?' today':''}" onclick="editDayConfig('${ds}')">
+      <span class="wc-day-num">${d}</span>
+      ${showActual?`<span class="wc-actual">${wdStr}${fromTasks?'*':''}</span>`:''}
+      ${vacIcon?`<span class="wc-vac-icon" title="${notes}">${vacIcon}</span>`:''}
+    </div>`;
+  }
+  daysGrid.innerHTML=html;
+}
+
+/* ─ Monthly stats ─ */
+function renderMonthlyWCStats(year, month, reports) {
+  const el = $('monthly-wc-stats');
+  if (!el) return;  
+  
+  // פתרון בעיית ה-UI: מעבר ל-Flexbox כדי שהקוביות ימלאו את השורה תמיד ללא "חורים"
+  el.style.display = 'flex';
+  el.style.flexWrap = 'wrap';
+  
+  const now = new Date();
+  const todayStr = isoD(now);
+  
+  const yesterday = new Date(now);
+  yesterday.setDate(yesterday.getDate() - 1);
+  const yesterdayStr = isoD(yesterday);
+
+  const lastDate = new Date(year, month + 1, 0).getDate();
+  
+  let reqMins = 0;
+  let actualMins = 0;
+  let reportedStdWorkDaysCount = 0; // התיקון: ימי עבודה בתקן בלבד
+  let totalStdWorkDays = 0;      
+  let missingReportDays = 0;     
+  let vacDays = 0;
+  let sickDays = 0;
+
+  for (let d = 1; d <= lastDate; d++) {
+    const ds = `${year}-${pad(month + 1)}-${pad(d)}`;
+    const { status, actualMins: am, minMins, dayType, stdHours } = getDayStatus(ds, reports);
+    
+    const isStdWorkDay = minMins > 0 || (stdHours > 0);
+    if (isStdWorkDay) totalStdWorkDays++;
+
+    if (dayType === 'vacation') vacDays++;
+    if (dayType === 'sick') sickDays++;
+
+    const hasReport = am > 0 || ['vacation', 'sick', 'sabbatical'].includes(dayType);
+
+    // התיקון הלוגי: ספירת הדיווחים רק לימי עבודה בתקן, כדי שלא נציג 20/20 כשיש חוסר
+    if (isStdWorkDay && hasReport) {
+      reportedStdWorkDaysCount++;
+    } else if (isStdWorkDay && ds <= yesterdayStr) {
+      missingReportDays++;
+    }
+
+    if (ds <= todayStr && isStdWorkDay) {
+      reqMins += minMins;
+      if (['vacation', 'sick', 'holiday', 'sabbatical'].includes(dayType)) {
+        actualMins += Math.max(am, minMins); 
+      } else {
+        actualMins += am;
+      }
+    }
+  }
+
+  const balanceMins = actualMins - reqMins;
+  const balClass = balanceMins >= 0 ? 'balpos' : 'balneg';
+  const pctAch = reqMins > 0 ? Math.round((actualMins / reqMins) * 100) : null;
+  const pctColor = pctAch == null ? 'var(--text3)' : pctAch >= 100 ? 'var(--lime)' : pctAch >= 80 ? 'var(--amber)' : 'var(--red)';
+
+  // עיצוב אחיד לקוביות כדי שישתרעו על כל הרוחב הפנוי
+  const boxStyle = 'flex: 1 1 calc(33.333% - 6px); min-width: 85px;';
+
+  el.innerHTML = `
+    <div class="wc-stat" style="${boxStyle}"><div class="wc-stat-lbl">ימי עבודה</div><div class="wc-stat-val" style="font-size:.82rem">${reportedStdWorkDaysCount}/${totalStdWorkDays}</div></div>
+    <div class="wc-stat" style="${boxStyle}"><div class="wc-stat-lbl">נדרש עד היום</div><div class="wc-stat-val" style="font-size:.82rem">${minsToHHMM(reqMins)}</div></div>
+    <div class="wc-stat actual-s" style="${boxStyle}"><div class="wc-stat-lbl">בפועל</div><div class="wc-stat-val" style="font-size:.82rem">${minsToHHMM(actualMins)}</div></div>
+    <div class="wc-stat ${balClass}" style="${boxStyle}"><div class="wc-stat-lbl">מאזן</div><div class="wc-stat-val" style="font-size:.82rem">${balanceMins >= 0 ? '+' : ''}${minsToHHMM(balanceMins)}</div></div>
+    <div class="wc-stat" style="border-color:${pctColor}; ${boxStyle}"><div class="wc-stat-lbl">עמידה ביעד</div><div class="wc-stat-val" style="color:${pctColor}">${pctAch != null ? pctAch + '%' : '—'}</div></div>
+    ${missingReportDays > 0 ? `<div class="wc-stat" style="border-color:var(--red); ${boxStyle}">
+      <div class="wc-stat-lbl">ללא דיווח</div>
+      <div class="wc-stat-val" style="color:var(--red)">${missingReportDays}</div>
+    </div>` : ''}
+    ${vacDays > 0 ? `<div class="wc-stat" style="border-color:var(--amber); ${boxStyle}"><div class="wc-stat-lbl">🏖 ימי חופש</div><div class="wc-stat-val" style="color:var(--amber)">${vacDays}</div></div>` : ''}
+    ${sickDays > 0 ? `<div class="wc-stat" style="border-color:var(--purple); ${boxStyle}"><div class="wc-stat-lbl">🤒 ימי מחלה</div><div class="wc-stat-val" style="color:var(--purple)">${sickDays}</div></div>` : ''}
+  `;
+}
+
+   
+/* ─ Edit day modal ─ */
+let _editDs='';
+function editDayConfig(ds){
+  _editDs=ds;
+  const reports=store(K.reps)||[];
+  const{stdHours,notes,description,isWorkDay}=getDayStd(ds);
+  const{actualMins,wdStr,status,diffMins,minMins,pct}=getDayStatus(ds,reports);
+  const[y,m,d]=ds.split('-');
+const displayTitle = description ? `📅 ${d}/${m}/${y} — ${hebDow(ds)} (${description})` : `📅 ${d}/${m}/${y} — ${hebDow(ds)}`;
+$('dayedit-title').textContent = displayTitle;  const infoEl=$('dayedit-info');
+  let infoHtml=`<div style="display:flex;gap:18px;flex-wrap:wrap">
+    <div><div style="font-size:.62rem;color:var(--text3);margin-bottom:2px">${t('sumPeriodDay')}</div><div style="font-weight:700">${hebDow(ds)}</div></div>
+    <div><div style="font-size:.62rem;color:var(--text3);margin-bottom:2px">${t('wcStatActual')}</div><div style="font-weight:700;color:${actualMins>0?'var(--blue)':'var(--text3)'}">${wdStr}</div></div>
+    ${isWorkDay?`<div><div style="font-size:.62rem;color:var(--text3);margin-bottom:2px">${t('labelCurrentStd')}</div><div style="font-weight:700;color:var(--amber)">${minsToHHMM(Math.round(stdHours*60))}</div></div>`:''}
+    ${pct!=null?`<div><div style="font-size:.62rem;color:var(--text3);margin-bottom:2px">${t('labelGoalPct')}</div><div style="font-weight:700;color:${pct>=100?'var(--lime)':pct>=80?'var(--amber)':'var(--red)'}">${pct}%</div></div>`:''}
+  </div>`;
+  if(status==='deficit')infoHtml+=`<div style="margin-top:6px;font-size:.75rem;color:var(--red)">⚠️ ${t('wcDeficitLabel')} ${minsToHHMM(Math.abs(diffMins))}</div>`;
+  infoEl.innerHTML=infoHtml;
+  $('dayedit-stdhours').value=stdHours>0?stdHours:'';
+  $('dayedit-notes').value=notes;
+  $('dayedit-description').value=description;
+  $('dayedit-offline-hint').style.display=navigator.onLine?'none':'';
+  // Wire quick-status buttons
+  const STATUS_NOTES={vacation:'חופש',sick:'מחלה',holiday:'חג',sabbatical:'שבתון',clear:''};
+  const STATUS_DESC={vacation:'',sick:'',holiday:'',sabbatical:'',clear:''};
+  document.querySelectorAll('.status-quick-btn').forEach(btn=>{
+    btn.onclick=()=>{
+      const st=btn.dataset.status;
+      $('dayedit-notes').value=STATUS_NOTES[st]??'';
+      // Don't overwrite user description unless clearing
+      if(st==='clear') $('dayedit-description').value='';
+      if(st!=='clear'&&!$('dayedit-stdhours').value)
+        $('dayedit-stdhours').value='0';
+    };
+  });
+  openM('modal-dayedit');
+}
+
+async function saveDayConfig(){
+  if(!_editDs)return;
+  const stdHours=$('dayedit-stdhours').value===''?0:Number($('dayedit-stdhours').value);
+  const notes=$('dayedit-notes').value.trim();
+  const description=($('dayedit-description')?.value||'').trim();
+  const btn=$('btn-dayedit-save');
+  btn.disabled=true;btn.textContent='...';
+  await setDayStd(_editDs,stdHours,notes,description);
+  btn.disabled=false;btn.textContent=t('btnSaveSync');
+  closeM('modal-dayedit');
+  buzz([20,20]);
+}
+
+/* ─ WorkStandard settings init ─ */
+function workcalInit(){
+  $('btn-open-workcal')?.addEventListener('click',openWorkcalSettings); // moved to hamburger
+  $('btn-close-workcal').addEventListener('click',()=>closeM('modal-workcal'));
+  $('btn-close-workcal2').addEventListener('click',()=>closeM('modal-workcal'));
+  $('modal-workcal').addEventListener('click',e=>{if(e.target===$('modal-workcal'))closeM('modal-workcal')});
+  $('btn-sync-wstandard').addEventListener('click',async()=>{
+    const btn=$('btn-sync-wstandard');
+    btn.disabled=true;btn.textContent=t('toastSyncStart2');
+    await syncWStandard(false);
+    btn.disabled=false;btn.textContent=t('btnSyncFromSheet');
+    updateSyncStatus();
+  });
+  $('btn-close-dayedit').addEventListener('click',()=>closeM('modal-dayedit'));
+  $('btn-dayedit-cancel').addEventListener('click',()=>closeM('modal-dayedit'));
+  $('btn-dayedit-save').addEventListener('click',saveDayConfig);
+  $('modal-dayedit').addEventListener('click',e=>{if(e.target===$('modal-dayedit'))closeM('modal-dayedit')});
+}
+
+function updateSyncStatus(){
+  const el=$('wstandard-sync-status');if(!el)return;
+  const last=store('mwl_wstandard_sync');
+  const count=getWStandard().length;
+  const q=(store('mwl_wstandard_queue')||[]).length;
+  const ep=store(K.ep);
+  let html='';
+  if(!ep){
+    html=`<span style="color:var(--red)">${t('syncStatusNoEp')}</span>`;
+  }else if(last){
+    html=t('syncedStatus',last,count);
+    if(q>0)html+=` · <span style="color:var(--amber)">${t('pendingQueue',q)}</span>`;
+  }else{
+    html=`<span style="color:var(--amber)">${t('notSyncedYet')} "${t('btnSyncFromSheet')}"</span>`;
+    if(q>0)html+=` · ${t('wstdQueue',q)}`;
+  }
+  el.innerHTML=html;
+}
+
+function openWorkcalSettings(){
+  updateSyncStatus();
+  openM('modal-workcal');
+}
+
+
+function toggleMonthlyStats(){
+  const wrap=$('monthly-wc-stats-wrap');
+  const chev=$('monthly-stats-chevron');
+  const details=$('monthly-wc-details');
+  if(!wrap||!details)return;
+  const isOpen=wrap.style.display!=='none';
+  wrap.style.display=isOpen?'none':'';
+  if(chev)chev.style.transform=isOpen?'rotate(0deg)':'rotate(180deg)';
+}
+
+/* ─── Annual summary ─────────────────────────────────────────── */
+function renderAnnualStats(year, reports){
+  const el=$('annual-section');if(!el)return;
+  const todayStr=isoD(new Date());
+  const locale=(window._lang==='he')?'he-IL':'en-US';
+  let totalReq=0,totalAct=0,totalSurplus=0,totalDeficit=0,totalVac=0,totalSick=0;
+  let totalOkDays=0,totalDefDays=0,totalWorkDays=0;
+  const monthRows=[];
+
+  for(let mo=0;mo<12;mo++){
+    const lastDate=new Date(year,mo+1,0).getDate();
+    let req=0,act=0,surplus=0,deficit=0,vac=0,sick=0,okD=0,defD=0,wDays=0;
+    for(let d=1;d<=lastDate;d++){
+      const ds=`${year}-${pad(mo+1)}-${pad(d)}`;
+      if(ds>todayStr)continue;
+      const{status,actualMins:am,minMins,dayType}=getDayStatus(ds,reports);
+      if(dayType==='vacation'||dayType==='holiday')vac++;
+      if(dayType==='sick')sick++;
+      if(dayType==='sabbatical')vac++; // count sabbatical with special days
+      if(status==='nostandard'||status==='weekend')continue;
+      if(['vacation','sick','holiday','sabbatical'].includes(dayType) && minMins===0) continue;
+      wDays++;req+=minMins;act+=am;
+      const diff=am-minMins;
+      if(diff>=0){surplus+=diff;okD++;}else{deficit+=Math.abs(diff);defD++;}
+    }
+    totalReq+=req;totalAct+=act;totalSurplus+=surplus;totalDeficit+=deficit;
+    totalVac+=vac;totalSick+=sick;totalOkDays+=okD;totalDefDays+=defD;totalWorkDays+=wDays;
+    const bal=surplus-deficit;
+    const pct=req>0?Math.round(act/req*100):null;
+    const moName=new Date(year,mo,1).toLocaleString(locale,{month:'long'});
+    const moColor=pct==null?'var(--text3)':pct>=100?'var(--lime)':pct>=80?'var(--amber)':'var(--red)';
+    monthRows.push(`<tr>
+      <td style="padding:5px 10px;font-size:.78rem;color:var(--text2)">${moName}</td>
+      <td style="padding:5px 8px;font-family:'Syne',monospace;font-size:.78rem;text-align:center">${wDays}</td>
+      <td style="padding:5px 8px;font-family:'Syne',monospace;font-size:.78rem;text-align:center;color:var(--blue)">${minsToHHMM(act)}</td>
+      <td style="padding:5px 8px;font-family:'Syne',monospace;font-size:.78rem;text-align:center;color:${bal>=0?'var(--lime)':'var(--red)'}">${bal>=0?'+':''}${minsToHHMM(bal)}</td>
+      <td style="padding:5px 8px;font-size:.78rem;text-align:center;color:${moColor}">${pct!=null?pct+'%':'—'}</td>
+      ${vac>0?`<td style="padding:5px 8px;font-size:.78rem;text-align:center;color:var(--amber)">🏖${vac}</td>`:'<td></td>'}
+      ${sick>0?`<td style="padding:5px 8px;font-size:.78rem;text-align:center;color:var(--purple)">🤒${sick}</td>`:'<td></td>'}
+    </tr>`);
+  }
+
+  const totBal=totalSurplus-totalDeficit;
+  const totPct=totalReq>0?Math.round(totalAct/totalReq*100):null;
+  const totColor=totPct==null?'var(--text3)':totPct>=100?'var(--lime)':totPct>=80?'var(--amber)':'var(--red)';
+
+  el.innerHTML=`
+  <div class="card">
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:12px">
+      <div class="wc-stat actual-s"><div class="wc-stat-lbl">${t('wcStatActual')}</div><div class="wc-stat-val" style="font-size:.82rem">${minsToHHMM(totalAct)}</div></div>
+      <div class="wc-stat"><div class="wc-stat-lbl">${t('wcStatNeeded')}</div><div class="wc-stat-val" style="font-size:.82rem">${minsToHHMM(totalReq)}</div></div>
+      <div class="wc-stat ${totBal>=0?'balpos':'balneg'}"><div class="wc-stat-lbl">${t('wcStatAnnualBal')}</div><div class="wc-stat-val" style="font-size:.82rem">${totBal>=0?'+':''}${minsToHHMM(totBal)}</div></div>
+      <div class="wc-stat" style="border-color:${totColor}"><div class="wc-stat-lbl">${t('wcStatAchieve')}</div><div class="wc-stat-val" style="color:${totColor}">${totPct!=null?totPct+'%':'—'}</div></div>
+      ${totalVac>0?`<div class="wc-stat" style="border-color:var(--amber)"><div class="wc-stat-lbl">🏖 ימי חופש</div><div class="wc-stat-val" style="color:var(--amber)">${totalVac}</div></div>`:''}
+      ${totalSick>0?`<div class="wc-stat" style="border-color:var(--purple)"><div class="wc-stat-lbl">🤒 ימי מחלה</div><div class="wc-stat-val" style="color:var(--purple)">${totalSick}</div></div>`:''}
+    </div>
+    <div style="overflow-x:auto">
+      <table style="width:100%;border-collapse:collapse">
+        <thead><tr style="border-bottom:1px solid var(--border)">
+          <th style="padding:5px 10px;font-size:.62rem;color:var(--text3);text-align:right;font-weight:700">${t('annualMonthCol')}</th>
+          <th style="padding:5px 8px;font-size:.62rem;color:var(--text3)">${t('annualDaysCol')}</th>
+          <th style="padding:5px 8px;font-size:.62rem;color:var(--text3)">${t('annualHoursCol')}</th>
+          <th style="padding:5px 8px;font-size:.62rem;color:var(--text3)">${t('annualBalCol')}</th>
+          <th style="padding:5px 8px;font-size:.62rem;color:var(--text3)">%</th>
+          <th style="padding:5px 8px;font-size:.62rem;color:var(--amber)">${t('annualVacCol')}</th>
+          <th style="padding:5px 8px;font-size:.62rem;color:var(--purple)">${t('annualSickCol')}</th>
+        </tr></thead>
+        <tbody>${monthRows.join('')}</tbody>
+      </table>
+    </div>
+  </div>`;
+}
+
+/* ─── Range summary ──────────────────────────────────────────── */
+function renderRangeStats(from, to, reports){
+  const el=$('annual-section');if(!el)return;
+  if(!from||!to||from>to){el.innerHTML=`<div class='card'><p style='color:var(--text3);text-align:center;padding:16px'>${t('rangeSelectDates')}</p></div>`;return;}
+  const todayStr=isoD(new Date());
+  let req=0,act=0,surplus=0,deficit=0,vac=0,sick=0,okD=0,defD=0,wDays=0;
+  // Iterate days in range
+  const start=new Date(from),end=new Date(to);
+  for(let dt=new Date(start);dt<=end;dt.setDate(dt.getDate()+1)){
+    const ds=isoD(dt);
+    if(ds>todayStr)continue;
+    const{status,actualMins:am,minMins,dayType}=getDayStatus(ds,reports);
+    if(dayType==='vacation'||dayType==='holiday')vac++;
+    if(dayType==='sick')sick++;
+    if(status==='nostandard'||status==='weekend')continue;
+    if(['vacation','sick','holiday','sabbatical'].includes(dayType) && minMins===0) continue;
+    wDays++;req+=minMins;act+=am;
+    const diff=am-minMins;
+    if(diff>=0){surplus+=diff;okD++;}else{deficit+=Math.abs(diff);defD++;}
+  }
+  const bal=surplus-deficit;
+  const pct=req>0?Math.round(act/req*100):null;
+  const pctColor=pct==null?'var(--text3)':pct>=100?'var(--lime)':pct>=80?'var(--amber)':'var(--red)';
+  const rangeDays=Math.round((end-start)/(1000*60*60*24))+1;
+
+  el.innerHTML=`
+  <div class="card">
+    <div style="font-size:.68rem;color:var(--text3);margin-bottom:8px">${t('rangeTotalDays',rangeDays,wDays)}</div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px">
+      <div class="wc-stat actual-s"><div class="wc-stat-lbl">${t('wcStatActual')}</div><div class="wc-stat-val" style="font-size:.82rem">${minsToHHMM(act)}</div></div>
+      <div class="wc-stat"><div class="wc-stat-lbl">${t('wcStatNeeded')}</div><div class="wc-stat-val" style="font-size:.82rem">${minsToHHMM(req)}</div></div>
+      <div class="wc-stat ${bal>=0?'balpos':'balneg'}"><div class="wc-stat-lbl">${t('wcStatBalance')}</div><div class="wc-stat-val" style="font-size:.82rem">${bal>=0?'+':''}${minsToHHMM(bal)}</div></div>
+      <div class="wc-stat" style="border-color:${pctColor}"><div class="wc-stat-lbl">${t('wcStatAchieve')}</div><div class="wc-stat-val" style="color:${pctColor}">${pct!=null?pct+'%':'—'}</div></div>
+      <div class="wc-stat" style="border-color:var(--lime)"><div class="wc-stat-lbl">${t('wcStatOkDays')}</div><div class="wc-stat-val" style="color:var(--lime)">${okD}<span style="font-size:.65rem;color:var(--text3)">/${wDays}</span></div></div>
+      <div class="wc-stat deficit-s"><div class="wc-stat-lbl">${t('wcStatDefDays')}</div><div class="wc-stat-val" style="color:${defD>0?'var(--red)':'var(--text)'}">${defD}<span style="font-size:.65rem;color:var(--text3)">/${wDays}</span></div></div>
+      ${vac>0?`<div class="wc-stat" style="border-color:var(--amber)"><div class="wc-stat-lbl">🏖 ימי חופש</div><div class="wc-stat-val" style="color:var(--amber)">${vac}</div></div>`:''}
+      ${sick>0?`<div class="wc-stat" style="border-color:var(--purple)"><div class="wc-stat-lbl">🤒 ימי מחלה</div><div class="wc-stat-val" style="color:var(--purple)">${sick}</div></div>`:''}
+    </div>
+  </div>`;
+}
+
+/* SUMMARY */
+function summaryInit(){
+  document.querySelectorAll('.sum-tab').forEach(btn=>btn.addEventListener('click',()=>{
+    document.querySelectorAll('.sum-tab').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');ST.sumPer=btn.dataset.period;ST.sumOff=0;summaryRender();
+  }));
+  $('sum-prev').addEventListener('click',()=>{ST.sumOff--;summaryRender();buzz([15])});
+  $('sum-next').addEventListener('click',()=>{ST.sumOff++;summaryRender();buzz([15])});
+  $('btn-today')?.addEventListener('click',()=>{goToday();buzz([15]);});
+  $('btn-range-go')?.addEventListener('click',()=>summaryRender());
+  workcalInit();
+}
+
+
+   
+function goToday(){ST.sumOff=0;summaryRender();}
+function summaryRender(){
+  const rs=store(K.reps)||[],now=new Date();let fil=[],lbl='';
+  const lblEl=$('sum-period-label')||$('sum-lbl'); // support both IDs
+  if(ST.sumPer==='day'){
+    const tgt=new Date(now);tgt.setDate(tgt.getDate()+ST.sumOff);
+    const ds=isoD(tgt);fil=rs.filter(r=>r.report_date===ds);lbl=fmtD(ds);
+    // Aggregate ALL entry/exit pairs (not just first/last)
+    const{mins:dayMins,hasOpen}=calcDayWorkMins(ds,rs);
+    let wdStr=dayMins>0?`${pad(Math.floor(dayMins/60))}:${pad(dayMins%60)}`:'-';
+    if(hasOpen)wdStr+=' ⬤'; // indicate open session
+    const wdEl=$('stat-workday');if(wdEl)wdEl.textContent=wdStr;
+    const wdCard=$('stat-workday-card');if(wdCard)wdCard.style.display='';
+    const dCard=$('stat-days-card');if(dCard)dCard.style.display='none';
+    // Work calendar daily status
+    const mwcSec=$('monthly-wc-section');if(mwcSec)mwcSec.style.display='none';
+    const annSec2=$('annual-section');if(annSec2)annSec2.style.display='none';
+    const riSec=$('range-period-inputs');if(riSec)riSec.style.display='none';
+    const expBtn=$('btn-export-range');if(expBtn)expBtn.style.display='none';const shrBtn=$('btn-share-range');if(shrBtn)shrBtn.style.display='none';
+    // day-rep-actions inside renderDayWCStatus replaces summary-list in day view
+    const sumCard=$('summary-list')?.closest('.card');if(sumCard)sumCard.style.display='none';
+    renderDayWCStatus(ds,rs);
+    $('sum-prev').disabled=false;
+    $('sum-next').disabled=false;
+    const todayBtnD=$('btn-today');if(todayBtnD){todayBtnD.style.display='';todayBtnD.disabled=ST.sumOff===0;todayBtnD.style.opacity=ST.sumOff===0?'0.4':'1';}
+  }else if(ST.sumPer==='month'){
+    const tgt=new Date(now.getFullYear(),now.getMonth()+ST.sumOff,1);
+    const y=tgt.getFullYear(),mo=tgt.getMonth();
+    fil=rs.filter(r=>{const d=new Date(r.report_date);return d.getFullYear()===y&&d.getMonth()===mo;});
+    const locale=(window._lang==='he')?'he-IL':'en-US';
+    lbl=`${tgt.toLocaleString(locale,{month:'long'})} ${y}`;
+    const wdEl=$('stat-workday');if(wdEl)wdEl.textContent='-';
+    const wdCard=$('stat-workday-card');if(wdCard)wdCard.style.display='none';
+    const dCard=$('stat-days-card');
+    if(dCard){dCard.style.display='';const dDays=new Set(fil.map(r=>r.report_date)).size;const dEl=$('stat-days');if(dEl)dEl.textContent=dDays;}
+    const dwcSec=$('day-wc-section');if(dwcSec)dwcSec.style.display='none';
+    const sumCardM=$('summary-list')?.closest('.card');if(sumCardM)sumCardM.style.display='';
+    const annSec=$('annual-section');if(annSec)annSec.style.display='none';
+    const mwcSec=$('monthly-wc-section');if(mwcSec)mwcSec.style.display='';
+    $('range-period-inputs').style.display='none';
+    renderMonthlyWCStats(y,mo,rs);
+    renderWCCalendar(y,mo,rs);
+    $('sum-prev').disabled=false;
+    const todayBtn=$('btn-today');if(todayBtn)todayBtn.style.display=ST.sumOff===0?'none':'';
+    $('sum-next').disabled=false;
+  }else if(ST.sumPer==='year'){
+    const y=now.getFullYear()+ST.sumOff;
+    fil=rs.filter(r=>r.report_date&&r.report_date.startsWith(String(y)));
+    lbl=t('annualYear',y);
+    [$('stat-workday-card'),$('stat-days-card'),$('stat-achievement-card')].forEach(el=>{if(el)el.style.display='none';});
+    [$('day-wc-section'),$('monthly-wc-section')].forEach(el=>{if(el)el.style.display='none';});
+    const sumCardY=$('summary-list')?.closest('.card');if(sumCardY)sumCardY.style.display='';
+    $('range-period-inputs').style.display='none';
+    const annSec=$('annual-section');if(annSec){annSec.style.display='';renderAnnualStats(y,rs);}
+    const todayBtn=$('btn-today');if(todayBtn)todayBtn.style.display=ST.sumOff===0?'none':'';
+    $('sum-prev').disabled=false;$('sum-next').disabled=false;
+  }else if(ST.sumPer==='range'){
+    lbl=t('rangePeriod');
+    const from=$('range-from')?.value,to=$('range-to')?.value;
+    $('range-period-inputs').style.display='';
+    if(from&&to&&from<=to){
+      fil=rs.filter(r=>r.report_date>=from&&r.report_date<=to);
+      lbl=`${fmtD(from)} – ${fmtD(to)}`;
+    }else{fil=[];}
+    [$('stat-workday-card')].forEach(el=>{if(el)el.style.display='none';});
+    [$('day-wc-section'),$('monthly-wc-section')].forEach(el=>{if(el)el.style.display='none';});
+    const sumCardY=$('summary-list')?.closest('.card');if(sumCardY)sumCardY.style.display='';
+    const annSec=$('annual-section');if(annSec){annSec.style.display='';renderRangeStats(from,to,rs);}
+    const todayBtn=$('btn-today');if(todayBtn)todayBtn.style.display='none';
+    const dCard=$('stat-days-card');
+    if(dCard){dCard.style.display='';const dDays=new Set(fil.map(r=>r.report_date)).size;const dEl=$('stat-days');if(dEl)dEl.textContent=dDays;}
+    $('sum-prev').disabled=true;$('sum-next').disabled=true;
+  }
+  if(lblEl)lblEl.textContent=lbl;
+  $('stat-entries').textContent=fil.filter(r=>r.category==='entry').length;
+  $('stat-exits').textContent=fil.filter(r=>r.category==='exit').length;
+  $('stat-tasks').textContent=fil.filter(r=>r.category==='task').length;
+  // Sum task durations only
+  let taskMins=0;
+  fil.filter(r=>r.category==='task').forEach(r=>{
+    if(!r.report_time)return;
+    if(r.report_time.includes('-')){
+      const[s,e]=r.report_time.split('-');
+      const[sh,sm]=s.split(':').map(Number),[eh,em]=e.split(':').map(Number);
+      const d=(eh*60+em)-(sh*60+sm);if(d>0)taskMins+=d;
+    }else if(r.report_time.includes(':')){
+      const[hh2,mm2]=r.report_time.split(':').map(Number);
+      taskMins+=((hh2||0)*60)+(mm2||0);
+    }
+  });
+  const hh=Math.floor(taskMins/60),mm=taskMins%60;
+  $('stat-hours').textContent=mm>0?`${hh}:${pad(mm)}`:`${hh}`;
+  // Ensure summary-list card is visible (was hidden in day view)
+  if(ST.sumPer!=='day'){
+    const sumCard=$('summary-list')?.closest('.card');if(sumCard)sumCard.style.display='';
+  }
+  $('summary-list').innerHTML=fil.length?fil.map(r=>hItem(r,true)).join(''):`<p class="empty">${t('summaryEmpty')}</p>`;
+}
+
+/* SETTINGS */
+function settingsInit(){
+  $('btn-close-settings').addEventListener('click',()=>closeM('modal-settings'));
+  $('btn-close-help').addEventListener('click',()=>closeM('modal-help'));
+  $('modal-help').addEventListener('click',e=>{if(e.target===$('modal-help'))closeM('modal-help')});
+  $('btn-save-settings').addEventListener('click',settingsSave);
+  $('btn-sync-reports').addEventListener('click',async()=>{
+    const ep=store(K.ep);
+    if(!ep){toast(t('toastSyncReportsNoEp'),'warn');return;}
+    if(!navigator.onLine){toast(t('toastSyncReportsOffline'),'warn');return;}
+    const btn=$('btn-sync-reports');
+    btn.disabled=true;
+    const origText=btn.textContent;
+    btn.textContent=t('toastSyncStart2')||'⏳ מסנכרן...';
+    toast(t('toastSyncStart2'),'warn',1500);
+    try{
+      // Force re-fetch by clearing ETag
+      localStorage.removeItem('mwl_etag_reports');
+      // Also sweep unsent locals into queue before pulling
+      const rAll=store(K.reps)||[];
+      const qAll=store(K.q)||[];
+      const qIds=new Set(qAll.map(r=>r.id));
+      const unsent=rAll.filter(r=>!r.sent&&!qIds.has(r.id));
+      if(unsent.length){store(K.q,[...qAll,...unsent]);pendUI();}
+      await syncQ_silent(); // push unsent first
+      const imported=await syncFromSheet(); // pull from sheet
+      toast(imported>0?t('toastSyncReports',imported):t('toastSyncReportsUpToDate'),'success',3000);
+    }catch(e){
+      toast(t('toastSyncReportsError'),'error',4000);
+    }finally{
+      btn.disabled=false;btn.textContent=origText;
+    }
+  });
+
+  $('btn-add-project').addEventListener('click',projAdd);
+  $('btn-sync-projects')?.addEventListener('click',syncProjects);
+  $('new-project').addEventListener('keydown',e=>{if(e.key==='Enter')projAdd()});
+  $('modal-settings').addEventListener('click',e=>{if(e.target===$('modal-settings'))closeM('modal-settings')});
+  $('modal-reset').addEventListener('click',e=>{if(e.target===$('modal-reset'))closeM('modal-reset')});
+  document.querySelectorAll('.seg-btn[data-lang]').forEach(btn=>btn.addEventListener('click',()=>{
+    document.querySelectorAll('.seg-btn[data-lang]').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');applyLang(btn.dataset.lang);buzz([20]);
+  }));
+}
+function openM(id){
+  $(id).classList.remove('hidden');document.body.style.overflow='hidden';
+  history.pushState({ui:'modal',id},'');
+  if(id==='modal-settings'){
+    $('settings-endpoint').value=store(K.ep)||'';
+    $('settings-sheet-url').value=store(K.sheetUrl)||'';
+    const sheetUrl=store(K.sheetUrl);
+    $('sheet-link-section').style.display=sheetUrl?'':'none';
+    if(sheetUrl)$('sheet-link').href=sheetUrl;
+    prefsLoadUI();projChipsRender();
+    const lang=window._lang||'he';
+    document.querySelectorAll('.seg-btn[data-lang]').forEach(b=>b.classList.toggle('active',b.dataset.lang===lang));
+    // v3.7.0 additions
+    profileLoad();
+    roundingLoad();
+    themeSettingsSync();
+    wstdSyncStatusInline();
+    aboutTabRender();
+    // Restore last settings tab
+    const lastTab=_lastSettingsTab||(()=>{try{return sessionStorage.getItem('mwl_stab')||'ui';}catch{return'ui';}})();
+    switchSettingsTab(lastTab);
+  }
+}
+function closeM(id){$(id).classList.add('hidden');document.body.style.overflow='';}
+function settingsSave(){
+  const ep=$('settings-endpoint').value.trim();
+  if(ep)store(K.ep,ep);else localStorage.removeItem(K.ep);
+  const su=$('settings-sheet-url').value.trim();
+  if(su)store(K.sheetUrl,su);else localStorage.removeItem(K.sheetUrl);
+  prefsSave();
+  profileSave(); // v3.7.0
+  toast(t('toastSettingsSaved'),'success');buzz([20,20,40]);closeM('modal-settings');updateMenuSheetLink();
+}
+
+/* PROJECTS */
+function projLoad(){const ps=store(K.proj)||[];$('projects-list').innerHTML=ps.map(p=>`<option value="${p}">`).join('')}
+function projAdd(){
+  const inp=$('new-project'),name=inp.value.trim();if(!name)return;
+  const ps=store(K.proj)||[];
+  if(ps.map(p=>p.toLowerCase()).includes(name.toLowerCase())){toast(t('toastProjectExists')||'⚠️ פרויקט כבר קיים','warn');inp.value='';return;}
+  ps.push(name);store(K.proj,ps);projLoad();
+  toast(t('toastProjectAdded'),'success');
+  inp.value='';projChipsRender();
+  pushProjectToSheet(name);
+}
+function projChipsRender(){$('projects-chips').innerHTML=(store(K.proj)||[]).map(p=>`<div class="chip"><span>${p}</span><button class="chip-x" onclick="projRemove('${encodeProjectName(p)}')">✕</button></div>`).join('')}
+function encodeProjectName(n){return encodeURIComponent(n)}
+function projRemove(encoded){
+  const name=decodeURIComponent(encoded);
+  store(K.proj,(store(K.proj)||[]).filter(p=>p!==name));projLoad();projChipsRender();
+  removeProjectFromSheet(name);
+}
+
+
+
+/* ═══════════════════════════════════════════════════════
+   DELTA SYNC FUNCTIONS — 60 DAYS TIME WINDOW (FIXED)
+   ═══════════════════════════════════════════════════════ */
+
+/* חישוב תאריך נוכחי פחות 60 ימים בפורמט YYYY-MM-DD */
+function getDeltaStartDate() {
+  const d = new Date();
+  d.setDate(d.getDate() - 60);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+/* Background sync on launch — Runs dynamic Delta Sync (60 days window) */
+async function bgSync() {
+  const ep = store(K.ep);
+  if (!ep || !navigator.onLine) return;
+
+  const lastFull = store('mwl_last_full_sync');
+  if (lastFull && (Date.now() - Number(lastFull)) < 3 * 60 * 1000) return;
+
+  // 1. איסוף דיווחים מקומיים שלא נשלחו
+  const reps = store(K.reps) || [];
+  const q = store(K.q) || [];
+  const qIds = new Set(q.map(r => r.id));
+  const unsent = reps.filter(r => !r.sent && !qIds.has(r.id));
+  if (unsent.length) {
+    store(K.q, [...q, ...unsent]);
+    pendUI();
+  }
+
+  // 2. ריקון תור ההוצאה
+  await flushWStandardQueue();
+  await syncQ_silent();
+
+  // 3. הרצת סנכרון דלתא (60 ימים אחורה)
+  const deltaDate = getDeltaStartDate();
+  const success = await syncFromSheet(deltaDate);
+
+  // 4. משיכת WorkStandard ממוקד
+  await syncWStandardDelta(deltaDate);
+
+  if (success >= 0) {
+    store('mwl_last_full_sync', String(Date.now()));
+  }
+  summaryRender();
+}
+
+/* פונקציית משיכת דיווחים מהגיליון — מתוקנת למיון ומיזוג נכון */
+async function syncFromSheet(fromDate = '') {
+  const ep = store(K.ep);
+  if (!ep || !navigator.onLine) return 0;
+  try {
+    const headers = {};
+    const etag = fromDate ? null : store('mwl_etag_reports');
+    if (etag) headers['If-None-Match'] = etag;
+
+    let url = ep + '?action=getReports';
+    if (fromDate) url += `&fromDate=${fromDate}&t=${Date.now()}`;
+    else url += `&t=${Date.now()}`;
+
+    const res = await fetch(url, { headers, cache: 'no-store' });
+    if (res.status === 304) return 0;
+    
+    if (!fromDate) {
+      const newEtag = res.headers.get('ETag');
+      if (newEtag) store('mwl_etag_reports', newEtag);
+    }
+    
+    const data = await res.json();
+    if (!Array.isArray(data.reports)) return 0;
+
+    let local = store(K.reps) || [];
+
+    // נרמול תאריכים ושעות
+    const normDate = s => {
+      if (!s) return ''; const t = String(s).trim();
+      if (/^\d{4}-\d{2}-\d{2}/.test(t)) return t.slice(0, 10);
+      const m = t.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+      if (m) return `${m[3]}-${m[2].padStart(2, '0')}-${m[1].padStart(2, '0')}`;
+      const d = new Date(s); return isNaN(d) ? t : `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    };
+
+    data.reports.forEach(r => { 
+      r.report_date = normDate(r.report_date); 
+      if (r.category === 'entry' || r.category === 'exit') r.report_time = normTimeStr(r.report_time); 
+    });
+
+    // ✨ מפתח מיון כרונולוגי יורד מדויק (YYYY-MM-DDTHH:MM)
+    const getSortKey = r => {
+      const d = r.report_date || '0000-00-00';
+      const t = (r.report_time && !r.report_time.includes('-')) ? r.report_time : '00:00';
+      return `${d}T${t}`;
+    };
+
+    if (fromDate) {
+      // א. שמירת נתונים היסטוריים הישנים מחלון ה-60 יום
+      let olderLocal = local.filter(r => r.report_date < fromDate);
+      if (Array.isArray(data.allSheetIds)) {
+        const sheetIdsSet = new Set(data.allSheetIds.map(String));
+        olderLocal = olderLocal.filter(r => !r.sent || sheetIdsSet.has(String(r.id)));
+      }
+      
+      // ב. שמירת רשומות אופליין מקומיות שטרם נשלחו בתוך החלון
+      const unsentLocalInWindow = local.filter(r => r.report_date >= fromDate && !r.sent);
+      const serverReportIds = new Set(data.reports.map(r => String(r.id)));
+      const unsentToKeep = unsentLocalInWindow.filter(r => !serverReportIds.has(String(r.id)));
+
+      // ג. מיזוג הנתונים החדשים מהשרת + אופליין שלא נשלח + נתונים ישנים
+      const merged = [...data.reports, ...unsentToKeep, ...olderLocal];
+      merged.sort((a, b) => getSortKey(b).localeCompare(getSortKey(a)));
+      store(K.reps, merged.slice(0, 500));
+    } else {
+      // סנכרון מלא
+      const sheetIds = new Set(data.reports.map(r => String(r.id)).filter(Boolean));
+      const localUnsent = local.filter(r => !r.sent && !sheetIds.has(String(r.id)));
+      
+      const merged = [...data.reports, ...localUnsent];
+      merged.sort((a, b) => getSortKey(b).localeCompare(getSortKey(a)));
+      store(K.reps, merged.slice(0, 500));
+    }
+
+    if (Array.isArray(data.projects)) {
+      const localP = store(K.proj) || [];
+      const toAdd = data.projects.filter(p => !localP.includes(p));
+      if (toAdd.length) { store(K.proj, [...localP, ...toAdd]); projLoad(); projChipsRender(); }
+    }
+
+    histRender(); updateSessionBanner();
+    return data.reports.length;
+  } catch (e) { 
+    console.warn('[syncFromSheet Failure]', e); 
+    return 0; 
+  }
+}
+
+/* משיכת תקן שעות ממוקדת ברקע לחלון ה-60 יום */
+async function syncWStandardDelta(fromDate) {
+  const ep = store(K.ep);
+  if (!ep || !navigator.onLine) return false;
+  try {
+    const res = await fetch(`${ep}?action=getWorkStandard&fromDate=${fromDate}&t=${Date.now()}`, { cache: 'no-store' });
+    if (!res.ok) return false;
+    const data = await res.json();
+    if (!Array.isArray(data.workStandard)) return false;
+
+    let localWStd = store(K.wstandard) || [];
+    localWStd = localWStd.filter(r => r.date < fromDate);
+    
+    const finalWStd = [...data.workStandard, ...localWStd].sort((a, b) => a.date.localeCompare(b.date));
+    store(K.wstandard, finalWStd);
+    store('mwl_wstandard_sync', new Date().toLocaleString('he-IL'));
+    return true;
+  } catch (_) { 
+    return false; 
+  }
+}
+
+
+/* ─── פונקציות שליחה מסונכרנות ומורחבות לבקשות מהירות ─── */
+
+async function send(rep,ep){
+  try{
+    await fetch(ep,{method:'POST',headers:{'Content-Type':'text/plain;charset=UTF-8'},body:JSON.stringify(rep),mode:'no-cors',keepalive:true});
+    markSent(rep.id);
+  }catch{addQ(rep);pendUI();}
+}
+
+/* ─── שליחה מיידית וסנכרון אוטומטי מועדף ─── */
+
+async function syncQ() {
+  const ep = store(K.ep);
+  if (!ep || !navigator.onLine) return;
+  
+  const q = store(K.q) || [];
+  const delQ = store(K.delQ) || [];
+  
+  if (!q.length && !delQ.length) return;
+
+  const snapshot = [...q];
+  store(K.q, []); 
+  pendUI();
+  
+  let ok = 0;
+  const fail = [];
+
+  for (const r of snapshot) {
+    try {
+      await fetch(ep, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
+        body: JSON.stringify(r),
+        mode: 'no-cors',
+        keepalive: true,
+        priority: 'high'
+      });
+      markSent(r.id);
+      ok++;
+    } catch {
+      fail.push(r);
+    }
+  }
+
+  if (fail.length) {
+    const current = store(K.q) || [];
+    const ids = new Set(current.map(x => x.id));
+    fail.forEach(r => { if (!ids.has(r.id)) current.push(r); });
+    store(K.q, current);
+  }
+
+  pendUI();
+  await flushDeleteQueue();
+  await flushWStandardQueue();
+  
+  if (ok > 0) {
+    toast(t('toastSynced', ok), 'success');
+  }
+}
+
+/* ─── מאזינים אוטומטיים לתעדוף סנכרון ברקע (מתוקן) ─── */
+
+// 1. סנכרון מיידי ברגע שהמכשיר חוזר להיות אונליין
+window.addEventListener('online', async () => {
+  console.log('📶 Network is online. Triggering immediate sync...');
+  await syncQ();
+  if (typeof bgSync === 'function') {
+    await bgSync();
+  }
+});
+
+// 2. סנכרון אוטומטי בעת חזרה לאפליקציה/כרטיסייה (Visibility Change)
+document.addEventListener('visibilitychange', async () => {
+  if (document.visibilityState === 'visible' && navigator.onLine) {
+    const q = store(K.q) || [];
+    const delQ = store(K.delQ) || [];
+    if (q.length || delQ.length) {
+      await syncQ();
+    }
+  }
+});
+
+async function delReport(id){
+  if(!confirm(t('confirmDelReport')||'למחוק דיווח זה?'))return;
+  const all=store(K.reps)||[];
+  const rep=all.find(r=>r.id===id);
+  if(!rep) return;
+  
+  // נעילת רשימת ההיסטוריה בזמן הביצוע כדי למנוע לחיצות כפולות
+  const hList = $('history-list');
+  if (hList) hList.style.pointerEvents = 'none';
+  
+  await dispatchAction({ 
+    action: 'delete', 
+    payload: { id, category: rep.category, report_date: rep.report_date } 
+  }, null);
+  
+  if (hList) hList.style.pointerEvents = 'auto';
+}
+
+async function saveEditReport(){
+  if(!_editRepId) return;
+  const reps = store(K.reps)||[];
+  const idx = reps.findIndex(x=>x.id===_editRepId);
+  if(idx<0){ toast('\u26a0\ufe0f דיווח לא נמצא','warn'); return; }
+  
+  const date = $('edit-report-date').value;
+  if(!date){ toast('\u26a0\ufe0f נא למלא תאריך','warn'); return; }
+  
+  const isTask = _editRepCat==='task';
+  let report_time, description='', project='';
+  if(isTask){
+    report_time = ($('edit-report-duration').value||'').trim();
+    description = ($('edit-task-desc').value||'').trim();
+    project     = ($('edit-task-project').value||'').trim();
+    if(!project){ toast('\u26a0\ufe0f נא למלא פרויקט','warn'); return; }
+    if(!report_time){ toast('\u26a0\ufe0f נא למלא משך','warn'); return; }
+    const ps=store(K.proj)||[];
+    if(!ps.includes(project)){ps.push(project);store(K.proj,ps);projLoad();}
+  } else {
+    report_time = ($('edit-report-time').value||'').trim();
+    if(!report_time){ toast('\u26a0\ufe0f נא למלא שעה','warn'); return; }
+    report_time = applyRounding(report_time);
+  }
+  
+  const oldDate = reps[idx].report_date;
+  const updated = {...reps[idx], report_date:date, report_time, category:_editRepCat, description, project, edited:new Date().toISOString()};
+  
+  // ── Unified Pipeline Call ──
+  const success = await dispatchAction({ 
+    action: 'update', 
+    payload: { ...updated, old_date: oldDate } 
+  }, $('btn-edit-report-save'));
+  
+  // סגירת המודאל רק אם הפעולה תועדה כהלכה (גם אם באופליין)
+  closeM('modal-edit-report');
+  buzz([20,40]);
+}
+
+async function flushDeleteQueue(){
+  const ep=store(K.ep);
+  if(!ep||!navigator.onLine)return;
+  const q=store(K.delQ)||[];if(!q.length)return;
+  const fail=[];
+  for(const item of q){
+    try{
+      await fetch(ep,{method:'POST',headers:{'Content-Type':'text/plain;charset=UTF-8'},
+        body:JSON.stringify({action:'delete',id:item.id,category:item.category,report_date:item.report_date}),mode:'no-cors',keepalive:true});
+    }catch{fail.push(item);}
+  }
+  store(K.delQ,fail);
+}
+
+async function pushProjectToSheet(name){
+  const ep=store(K.ep);
+  if(!ep||!navigator.onLine)return;
+  try{await fetch(ep,{method:'POST',headers:{'Content-Type':'text/plain;charset=UTF-8'},body:JSON.stringify({action:'addProject',project:name}),mode:'no-cors',keepalive:true});}catch(_){}
+}
+
+async function removeProjectFromSheet(name){
+  const ep=store(K.ep);
+  if(!ep||!navigator.onLine)return;
+  try{await fetch(ep,{method:'POST',headers:{'Content-Type':'text/plain;charset=UTF-8'},body:JSON.stringify({action:'deleteProject',project:name}),mode:'no-cors',keepalive:true});}catch(_){}
+}
+
+
+/* Bi-directional project sync (called from settings "Sync Projects" button) */
+async function syncProjects(){
+  const ep=store(K.ep);
+  if(!ep){toast(t('toastNoEndpointSync'),'warn');return;}
+  if(!navigator.onLine){toast(t('toastSavedOffline'),'warn');return;}
+  toast('🔄 '+t('toastSyncStart'),'success',1500);
+  try{
+    const res=await fetch(ep+'?action=getProjects&t='+Date.now(),{cache:'no-store'});
+    const data=await res.json();
+    const remote=Array.isArray(data.projects)?data.projects:[];
+    const local=store(K.proj)||[];
+    const toAdd=remote.filter(p=>!local.includes(p));
+    const final=[...local,...toAdd];
+    store(K.proj,final);projLoad();projChipsRender();
+    for(const p of local.filter(pp=>!remote.includes(pp)))await pushProjectToSheet(p);
+    toast(t('toastProjectSynced')||'✅ פרויקטים סונכרנו','success');
+  }catch(_){toast(t('toastSyncError'),'error');}
+}
+
+/* SERVICE WORKER */
+function swInit(){
+  if(!('serviceWorker'in navigator))return;
+  navigator.serviceWorker.register('./sw.js',{scope:'./'}).then(reg=>{
+    ST.swReg=reg;
+    if(reg.waiting) showUpd();
+    reg.addEventListener('updatefound',()=>{
+      const sw=reg.installing;
+      sw.addEventListener('statechange',()=>{
+        if(sw.state==='installed'&&navigator.serviceWorker.controller) showUpd();
+      });
+    });
+    setInterval(()=>reg.update().catch(()=>{}), 30*60*1000);
+  }).catch(()=>{});
+}
+function showUpd(newVer){
+  // Delegate to NotificationSystem; also handle SW waiting
+  NotificationSystem.showUpdatePrompt(newVer, ()=>{
+    buzz([30,30,60]);
+    if(ST.swReg?.waiting){
+      ST.swReg.waiting.postMessage({type:'SKIP_WAITING'});
+    }
+  });
+}
+
+/* INSTALL PROMPT */
+function installInit(){
+  // Handled by NotificationSystem.initInstallPrompt()
+  // Keep buzz on install confirm
+  document.getElementById('installAcceptBtn')?.addEventListener('click',()=>buzz([30,20,60]));
+}
+
+/* SWIPE */
+function swipeInit(){
+  const el=$('main-scroll');
+  el.addEventListener('touchstart',e=>{ST.swX=e.touches[0].clientX;ST.swY=e.touches[0].clientY},{passive:true});
+  el.addEventListener('touchend',e=>{
+    const dx=e.changedTouches[0].clientX-ST.swX,dy=e.changedTouches[0].clientY-ST.swY;
+    if(Math.abs(dx)<40||Math.abs(dy)>Math.abs(dx))return;
+    const tabs=['report','history','summary'],idx=tabs.indexOf(document.querySelector('.tab-btn.active')?.dataset.tab);
+    const rtl=document.documentElement.dir==='rtl',next=(rtl?dx<0:dx>0)?idx-1:idx+1;
+    if(next>=0&&next<tabs.length)switchTab(tabs[next]);
+  },{passive:true});
+}
+
+/* PULL TO REFRESH - סנכרון בלבד ללא טעינה מחדש של העמוד */
+function ptrInit(){
+  const scroll=$('main-scroll'),ind=$('ptr');
+  scroll.addEventListener('touchstart',e=>{if(!getP().pullRefresh)return;ST.pullY=e.touches[0].clientY;ST.pulling=scroll.scrollTop===0},{passive:true});
+  scroll.addEventListener('touchmove',e=>{if(!ST.pulling||!getP().pullRefresh)return;if(e.touches[0].clientY-ST.pullY>60){ind.classList.remove('hidden');ind.classList.add('visible');ind.querySelector('.ptr-icon').classList.add('spin')}},{passive:true});
+  scroll.addEventListener('touchend',()=>{
+    if(!ST.pulling)return;
+    if(!ind.classList.contains('hidden')){
+      setTimeout(()=>{
+        ind.classList.remove('visible');
+        ind.classList.add('hidden');
+        ind.querySelector('.ptr-icon').classList.remove('spin');
+        // אם מוגדרת פונקציית סנכרון ברקע, היא תופעל כאן בלבד ללא רענון עמוד
+        if(typeof bgSync === 'function') bgSync();
+      },600);
+    }
+    ST.pulling=false;
+  });
+}
+
+/* ─ HELP TABS ─ */
+function hTab(btn){
+  const id=btn.dataset.htab;
+  document.querySelectorAll('.htab-btn').forEach(b=>b.classList.toggle('active',b===btn));
+  document.querySelectorAll('.htab-pnl').forEach(p=>p.style.display='none');
+  const panel=document.getElementById('htab-'+id);
+  if(panel){panel.style.display='flex';}
+}
+/* DOWNLOAD GS — fetches from companion google-apps-script.gs file */
+async function downloadGS(){
+  try{
+    const res=await fetch('./google-apps-script.gs');
+    if(!res.ok)throw new Error(res.status);
+    const code=await res.text();
+    const b=new Blob([code],{type:'text/plain'});
+    const a=document.createElement('a');a.href=URL.createObjectURL(b);
+    a.download='google-apps-script.gs';document.body.appendChild(a);a.click();
+    setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1000);
+    toast('⬇️ '+(t('helpBtnDownloadGS')||'Downloading...'),'success');
+  }catch(e){
+    toast(t('toastGasNotFound'),'warn',4000);
+  }
+}
+/* SCROLL */
+function scrollSave(){const s=$('main-scroll');if(s)store('mwl_scroll',s.scrollTop)}
+function scrollInit(){
+  const s=$('main-scroll'),pos=store('mwl_scroll');
+  if(pos&&s)s.scrollTop=pos;
+  s?.addEventListener('scroll',scrollSave,{passive:true});
+}
+
+/* ═══════════════════════════════════════════════════════
+   SETTINGS TABS  v3.7.0
+   ═══════════════════════════════════════════════════════ */
+let _lastSettingsTab = null;
+
+function settingsTabsInit(){
+  document.querySelectorAll('.stab-btn').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      const id=btn.dataset.stab;
+      switchSettingsTab(id);
+    });
+  });
+}
+
+function switchSettingsTab(id){
+  document.querySelectorAll('.stab-btn').forEach(b=>b.classList.toggle('active',b.dataset.stab===id));
+  document.querySelectorAll('.stab-pnl').forEach(p=>p.classList.toggle('active',p.id===`stab-${id}`));
+  _lastSettingsTab=id;
+  try{sessionStorage.setItem('mwl_stab',id);}catch(_){}
+}
+
+/* ═══════════════════════════════════════════════════════
+   PROFILE  v3.7.0
+   ═══════════════════════════════════════════════════════ */
+function profileLoad(){
+  const p=store(K.profile)||{name:'',role:''};
+  const nameEl=$('settings-username'),roleEl=$('settings-userrole');
+  if(nameEl)nameEl.value=p.name||'';
+  if(roleEl)roleEl.value=p.role||'';
+  profileDisplayUpdate(p);
+}
+
+function profileDisplayUpdate(p){
+  const dn=$('profile-name-display'),dr=$('profile-role-display'),da=$('profile-avatar-display');
+  if(dn)dn.textContent=p.name||'משתמש';
+  if(dr)dr.textContent=p.role||'תפקיד';
+  if(da){
+    const first=(p.name||'').trim().charAt(0).toUpperCase();
+    da.textContent=first||'👤';
+  }
+}
+
+function profileSave(){
+  const nameEl=$('settings-username'),roleEl=$('settings-userrole');
+  const p={name:(nameEl?.value||'').trim(),role:(roleEl?.value||'').trim()};
+  store(K.profile,p);
+  profileDisplayUpdate(p);
+}
+
+function profileInit(){
+  // Live update as user types
+  $('settings-username')?.addEventListener('input',()=>{
+    const p=store(K.profile)||{};
+    p.name=($('settings-username').value||'').trim();
+    profileDisplayUpdate(p);
+  });
+  $('settings-userrole')?.addEventListener('input',()=>{
+    const p=store(K.profile)||{};
+    p.role=($('settings-userrole').value||'').trim();
+    profileDisplayUpdate(p);
+  });
+}
+
+/* ═══════════════════════════════════════════════════════
+   TIME ROUNDING  v3.7.0
+   ═══════════════════════════════════════════════════════ */
+function roundingInit(){
+  document.querySelectorAll('.seg-btn[data-round]').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      document.querySelectorAll('.seg-btn[data-round]').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      store(K.rounding,parseInt(btn.dataset.round)||0);
+      buzz([10]);
+    });
+  });
+}
+
+function roundingLoad(){
+  const r=store(K.rounding)||0;
+  document.querySelectorAll('.seg-btn[data-round]').forEach(b=>{
+    b.classList.toggle('active',parseInt(b.dataset.round||'0')===r);
+  });
+}
+
+/** Apply rounding to a time string "HH:MM" → "HH:MM" */
+function applyRounding(timeStr){
+  const mins=store(K.rounding)||0;
+  if(!mins||!timeStr)return timeStr;
+  const[h,m]=timeStr.split(':').map(Number);
+  const total=h*60+m;
+  const rounded=Math.round(total/mins)*mins;
+  return`${pad(Math.floor(rounded/60)%24)}:${pad(rounded%60)}`;
+}
+
+/* ═══════════════════════════════════════════════════════
+   CLIENTS / PROJECTS / TASKS  v3.7.0
+   ═══════════════════════════════════════════════════════ */
+
+
+/* ── Accessors ────────────────────────────────────────── */
+
+/* ── CRM Sync (Task Definitions only) ────────────────── */
+
+
+
+
+
+
+
+
+
+/* ── CRM Init ─────────────────────────────────────────── */
+
+/* ═══════════════════════════════════════════════════════
+   EXPORT  v3.7.0
+   ═══════════════════════════════════════════════════════ */
+function exportCSV(){
+  const reps=store(K.reps)||[];
+  if(!reps.length){toast('⚠️ אין דיווחים לייצוא','warn');return;}
+  const header='report_date,report_time,category,description,project,id';
+  const rows=reps.map(r=>[
+    r.report_date||'',
+    r.report_time||'',
+    r.category||'',
+    `"${(r.description||'').replace(/"/g,'""')}"`,
+    `"${(r.project||'').replace(/"/g,'""')}"`,
+    r.id||''
+  ].join(','));
+  const csv='\uFEFF'+header+'\n'+rows.join('\n'); // BOM for Hebrew
+  const b=new Blob([csv],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(b);
+  a.download=`worklog-export-${isoD(new Date())}.csv`;
+  document.body.appendChild(a);a.click();
+  setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1000);
+  toast('📄 CSV יוצא בהצלחה','success');buzz([20,40]);
+}
+
+async function exportXLSX(){
+  const reps=store(K.reps)||[];
+  if(!reps.length){toast('⚠️ אין דיווחים לייצוא','warn');return;}
+  try{
+    await loadSheetJS();
+    const rows=reps.map(r=>({
+      report_date:r.report_date||'',
+      report_time:r.report_time||'',
+      category:r.category||'',
+      description:r.description||'',
+      project:r.project||'',
+      id:r.id||''
+    }));
+    const ws=XLSX.utils.json_to_sheet(rows,{header:['report_date','report_time','category','description','project','id']});
+    ws['!cols']=[{wch:14},{wch:16},{wch:10},{wch:36},{wch:22},{wch:22}];
+    const wb=XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb,ws,'דיווחים');
+    const buf=XLSX.write(wb,{type:'array',bookType:'xlsx'});
+    const b=new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+    const a=document.createElement('a');a.href=URL.createObjectURL(b);
+    a.download=`worklog-export-${isoD(new Date())}.xlsx`;
+    document.body.appendChild(a);a.click();
+    setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1000);
+    toast('📊 Excel יוצא בהצלחה','success');buzz([20,40]);
+  }catch(e){toast('❌ שגיאה בייצוא: '+e.message,'error',4000);}
+}
+
+/* ─ Period Excel Export (2 sheets: Attendance + Tasks)  v3.7.0 ─ */
+async function buildReportWorkbook(fromDate, toDate){
+  /* Build and return { wb, attRows, taskRows, wsRows, wlRows, projRows, filename }
+     Throws on error — callers handle catch. */
+  await loadSheetJS();
+  
+  let periodReps = [];
+  const ep = store(K.ep);
+  
+  // משיכת נתונים היסטוריים מלאים מהשרת כדי לעקוף את מגבלת 300 הרשומות הלוקאלית
+  if (ep && navigator.onLine) {
+    try {
+      const res = await fetch(`${ep}?action=getReports&fromDate=${fromDate}&t=${Date.now()}`);
+      const data = await res.json();
+      if (data && Array.isArray(data.reports)) {
+        periodReps = data.reports.filter(r => r.report_date >= fromDate && r.report_date <= toDate);
+      }
+    } catch(e) {
+      console.warn('[buildReportWorkbook] Failed to fetch remote history', e);
+    }
+  }
+
+  // Fallback למטמון המקומי במקרה של שגיאה או עבודה באופליין
+  if (!periodReps.length) {
+    const reps = store(K.reps) || [];
+    periodReps = reps.filter(r => r.report_date >= fromDate && r.report_date <= toDate);
+  }
+
+  if(!periodReps.length) throw new Error('no_data');
+
+/* ── Sheet 1: Attendance ──────────────────────────────── */
+  const ATT_COLS=['Date','Entry','Exit','Duration','Daily Standard','Deviation','Note'];
+  const attRows=[];
+  const startDt = new Date(fromDate);
+  const endDt = new Date(toDate);
+  for(let dt = new Date(startDt); dt <= endDt; dt.setDate(dt.getDate()+1)){
+    const ds = isoD(dt);
+    const { status, minMins, actualMins, dayType, notes } = getDayStatus(ds, periodReps);
+    const isPaid = ['vacation','sick','holiday','sabbatical'].includes(dayType);
+    const stdStr = minMins > 0 ? minsToHHMM(minMins) : '';
+    const { pairs, mins: rawMins } = calcDayWorkMins(ds, periodReps);
+    
+    // דלג אם אין דיווחים ביום זה, אלא אם כן מדובר ביום היעדרות מזכה
+    if(!pairs.length && !(isPaid && minMins > 0)) continue;
+    
+    const devMins = minMins > 0 ? actualMins - minMins : null;
+    const devStr = devMins !== null ? (devMins >= 0 ? '+' : '') + minsToHHMM(Math.abs(devMins)) : '';
+    
+    if(!pairs.length && isPaid && minMins > 0){
+      attRows.push([ds, '—', '—', minsToHHMM(actualMins), stdStr, devStr, notes || dayType]);
+    } else if(pairs.length === 1){
+      attRows.push([ds, pairs[0].entry, pairs[0].exit, minsToHHMM(pairs[0].mins), stdStr, devStr, notes || '']);
+    } else if(pairs.length > 1){
+      attRows.push([ds, pairs[0].entry, pairs[pairs.length-1].exit, minsToHHMM(rawMins), stdStr, devStr, notes || '']);
+      pairs.forEach(p=>attRows.push([ds, p.entry, p.exit, minsToHHMM(p.mins), '', '', '']));
+    }
+  }
+
+  /* ── Sheet 2: Tasks ──────────────────────────────────── */
+  const TASK_COLS=['Date','Duration','Project','Description'];
+  const taskRows=periodReps
+    .filter(r=>r.category==='task')
+    .map(r=>[r.report_date||'',r.report_time||'',r.project||'',r.description||'']);
+
+  /* ── Sheet 3: WorkStandard ───────────────────────────── */
+  const WS_COLS=['Date','Day','Standard Hours','Notes','Description'];
+  const wsRows=getWStandard()
+    .filter(r=>r.date>=fromDate&&r.date<=toDate)
+    .sort((a,b)=>a.date<b.date?-1:1)
+    .map(r=>[r.date||'',r.weekDay||'',r.stdHours||0,r.notes||'',r.description||'']);
+
+  /* ── Sheet 4: WorkLog ───────────────────────────────────
+     All raw reports in the period (entries, exits, tasks)   */
+  const WL_COLS=['Date','Time','Category','Description','Project','ID'];
+  const catLabel={entry:'כניסה',exit:'יציאה',task:'משימה'};
+  const wlRows=periodReps
+    .sort((a,b)=>a.report_date<b.report_date?-1:a.report_date>b.report_date?1:
+                 (a.report_time||'')<(b.report_time||'')?-1:1)
+    .map(r=>[
+      r.report_date||'',
+      r.report_time||'',
+      catLabel[r.category]||r.category||'',
+      r.description||'',
+      r.project||'',
+      r.id||''
+    ]);
+
+  /* ── Sheet 5: Projects ──────────────────────────────────
+     All projects that appear in the period                  */
+  const PROJ_COLS=['Project'];
+  const projSet=new Set(periodReps.filter(r=>r.project).map(r=>r.project));
+  // Also include all saved projects
+  (store(K.proj)||[]).forEach(p=>projSet.add(p));
+  const projRows=[...projSet].sort().map(p=>[p]);
+
+  /* ── Build workbook ──────────────────────────────────── */
+  const wb=XLSX.utils.book_new();
+
+  const ws1=XLSX.utils.aoa_to_sheet([ATT_COLS,...attRows]);
+  ws1['!cols']=[{wch:13},{wch:9},{wch:9},{wch:10},{wch:16},{wch:12}];
+  XLSX.utils.book_append_sheet(wb,ws1,'Attendance');
+
+  const ws2=XLSX.utils.aoa_to_sheet([TASK_COLS,...(taskRows.length?taskRows:[['אין משימות']])]);
+  ws2['!cols']=[{wch:13},{wch:10},{wch:22},{wch:36}];
+  XLSX.utils.book_append_sheet(wb,ws2,'Tasks');
+
+  const ws3=XLSX.utils.aoa_to_sheet([WS_COLS,...(wsRows.length?wsRows:[['אין נתוני תקן']])]);
+  ws3['!cols']=[{wch:13},{wch:12},{wch:16},{wch:22},{wch:22}];
+  XLSX.utils.book_append_sheet(wb,ws3,'WorkStandard');
+
+  const ws4=XLSX.utils.aoa_to_sheet([WL_COLS,...wlRows]);
+  ws4['!cols']=[{wch:13},{wch:9},{wch:9},{wch:36},{wch:22},{wch:26}];
+  XLSX.utils.book_append_sheet(wb,ws4,'WorkLog');
+
+  const ws5=XLSX.utils.aoa_to_sheet([PROJ_COLS,...(projRows.length?projRows:[['אין פרויקטים']])]);
+  ws5['!cols']=[{wch:30}];
+  XLSX.utils.book_append_sheet(wb,ws5,'Projects');
+
+  const filename=`worklog-${fromDate}_${toDate}.xlsx`;
+  return{wb, attRows, taskRows, wsRows, wlRows, projRows, filename};
+}
+
+/* Save to local file */
+async function exportPeriodXLSX(){
+  const fromDate=($('range-from')?.value||'').trim();
+  const toDate=($('range-to')?.value||'').trim();
+  if(!fromDate||!toDate){toast('⚠️ בחר תאריך התחלה וסיום','warn',3000);return;}
+  if(fromDate>toDate){toast('⚠️ תאריך התחלה חייב להיות לפני תאריך הסיום','warn',3000);return;}
+  try{
+    const{wb,attRows,taskRows,wsRows,wlRows,projRows,filename}=await buildReportWorkbook(fromDate,toDate);
+    const buf=XLSX.write(wb,{type:'array',bookType:'xlsx'});
+    const blob=new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+    _triggerDownload(blob,filename);
+    toast(`📊 ייוצא — ${attRows.length} נוכחות · ${taskRows.length} משימות · ${wlRows.length} דיווחים`,'success',3500);
+    buzz([20,40]);
+  }catch(e){
+    if(e.message==='no_data'){toast('⚠️ אין דיווחים בתקופה הנבחרת','warn',3000);return;}
+    console.error('[exportPeriod]',e);
+    toast('❌ שגיאה בייצוא: '+e.message,'error',4000);
+  }
+}
+
+/* Share via Web Share API (mobile) — fallback to save */
+/* Pre-built blob ready for sharing — built on "הצג" click, not on share click.
+   Web Share API requires transient user activation which expires in ~1s.
+   Any async work BEFORE navigator.share() risks losing the activation window.
+   Solution: build the workbook eagerly when the range is shown, cache it,
+   then share synchronously (within the same click event). */
+let _shareBlob = null, _shareFilename = null;
+
+async function prepareShareBlob(){
+  // Called after "הצג" — builds the workbook in the background
+  const fromDate=($('range-from')?.value||'').trim();
+  const toDate=($('range-to')?.value||'').trim();
+  _shareBlob=null; _shareFilename=null;
+  if(!fromDate||!toDate||fromDate>toDate) return;
+  try{
+    await loadSheetJS();
+    const{wb,filename}=await buildReportWorkbook(fromDate,toDate);
+    const buf=XLSX.write(wb,{type:'array',bookType:'xlsx'});
+    _shareBlob=new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+    _shareFilename=filename;
+  }catch(_){ _shareBlob=null; }
+}
+
+async function shareReport(){
+  const fromDate=($('range-from')?.value||'').trim();
+  const toDate=($('range-to')?.value||'').trim();
+  if(!fromDate||!toDate){toast('⚠️ בחר תאריך התחלה וסיום','warn',3000);return;}
+  if(fromDate>toDate){toast('⚠️ תאריך התחלה חייב להיות לפני תאריך הסיום','warn',3000);return;}
+
+  if(!_shareBlob){
+    // Blob not ready → download and cache for next tap
+    toast('⏳ מכין קובץ...','info',1500);
+    try{
+      await loadSheetJS();
+      const{wb,filename}=await buildReportWorkbook(fromDate,toDate);
+      const buf=XLSX.write(wb,{type:'array',bookType:'xlsx'});
+      _shareBlob=new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+      _shareFilename=filename;
+    }catch(e){
+      toast(e.message==='no_data'?'⚠️ אין דיווחים בתקופה הנבחרת':'❌ שגיאה: '+e.message,'warn',3000);
+      return;
+    }
+    _triggerDownload(_shareBlob,_shareFilename);
+    toast('📊 הקובץ הורד — לחץ שוב לשיתוף','info',3000);
+    return;
+  }
+
+  // Blob pre-built → share immediately (no await before navigator.share)
+  const blob=_shareBlob, filename=_shareFilename;
+
+  // No Web Share support → download
+  if(!navigator.share){
+    _triggerDownload(blob,filename);
+    toast('📊 הקובץ הורד','success',2000);
+    return;
+  }
+
+  // Try file share first, fall back to text-only, then download
+  const file=new File([blob],filename,{type:blob.type});
+  let shareData;
+  try{
+    if(navigator.canShare&&navigator.canShare({files:[file]})){
+      shareData={title:'MyWorkLog דוח',text:`${fromDate} — ${toDate}`,files:[file]};
+    } else {
+      shareData={title:'MyWorkLog דוח',text:`דוח נוכחות ${fromDate} — ${toDate}`};
+    }
+  }catch(_){
+    shareData={title:'MyWorkLog דוח',text:`דוח נוכחות ${fromDate} — ${toDate}`};
+  }
+
+  try{
+    await navigator.share(shareData);
+    toast('✅ דוח שותף','success',2000);
+  }catch(e){
+    if(e.name==='AbortError') return; // user dismissed — do nothing
+    // Share failed: if was file share, retry as text-only
+    if(shareData.files){
+      try{
+        await navigator.share({title:'MyWorkLog דוח',text:`דוח נוכחות ${fromDate} — ${toDate}`});
+        toast('✅ שותף (ללא קובץ)','success',2000);
+        return;
+      }catch(e2){
+        if(e2.name==='AbortError') return;
+      }
+    }
+    // All share attempts failed → download
+    _triggerDownload(blob,filename);
+    toast('📊 הקובץ הורד','success',2000);
+  }
+}
+
+function _triggerDownload(blob,filename){
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download=filename;
+  document.body.appendChild(a);a.click();
+  setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1000);
+}
+
+function exportInit(){
+  $('btn-export-csv')?.addEventListener('click',exportCSV);
+  $('btn-export-xlsx')?.addEventListener('click',exportXLSX);
+  $('btn-export-range')?.addEventListener('click',exportPeriodXLSX);
+  $('btn-share-range')?.addEventListener('click',shareReport);
+  $('btn-open-import-from-settings')?.addEventListener('click',()=>{closeM('modal-settings');openImportModal();});
+  // Invalidate pre-built blob when range dates change
+  const invalidateBlob=()=>{_shareBlob=null;_shareFilename=null;};
+  $('range-from')?.addEventListener('change',invalidateBlob);
+  $('range-to')?.addEventListener('change',invalidateBlob);
+  // Show export + share buttons after "הצג" is clicked in range view
+  // Also pre-build the share blob so share() can fire synchronously
+  $('btn-range-go')?.addEventListener('click',()=>{
+    const expBtn=$('btn-export-range');if(expBtn) expBtn.style.display='';
+    const shrBtn=$('btn-share-range');if(shrBtn) shrBtn.style.display='';
+    prepareShareBlob(); // fire-and-forget: ready by the time user taps share
+  });
+}
+
+/* ═══════════════════════════════════════════════════════
+   ABOUT TAB   
+   ═══════════════════════════════════════════════════════ */
+function aboutTabRender(){
+  // Version
+  const av=$('about-version');if(av)av.textContent='v'+VER;
+  // PWA installed status
+  const pwaEl=$('about-pwa-status');
+  if(pwaEl){
+    const installed=window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone===true;
+    pwaEl.textContent=installed?'✅ מותקן':'🌐 פתוח בדפדפן';
+    pwaEl.style.color=installed?'var(--lime)':'var(--text3)';
+  }
+  // SW status
+  const swEl=$('about-sw-status');
+  if(swEl){
+    const hasSW='serviceWorker'in navigator&&navigator.serviceWorker.controller;
+    swEl.textContent=hasSW?'✅ פעיל':'⚠️ לא פעיל';
+    swEl.style.color=hasSW?'var(--lime)':'var(--amber)';
+  }
+  // Data count
+  const dcEl=$('about-data-count');
+  if(dcEl){const n=(store(K.reps)||[]).length;dcEl.textContent=`${n} דיווחים`;}
+  // Last sync
+  const lsEl=$('about-last-sync');
+  if(lsEl){const ls=store('mwl_last_full_sync');lsEl.textContent=ls?new Date(Number(ls)).toLocaleString('he-IL'):'לא סונכרן';}
+  // Reset button in about
+// Reset button in about
+  const btnResetAbout = $('btn-open-reset-about');
+  if(btnResetAbout){
+    btnResetAbout.onclick = () => { closeM('modal-settings'); openM('modal-reset'); };
+  }
+}
+
+/* ═══════════════════════════════════════════════════════
+   THEME BUTTON IN SETTINGS  v3.7.0
+   ═══════════════════════════════════════════════════════ */
+function themeSettingsSync(){
+  const isDark=!document.body.classList.contains('light');
+  const lbl=$('theme-label-settings');
+  if(lbl)lbl.textContent=isDark?'🌙 מצב כהה':'☀️ מצב בהיר';
+}
+
+/* ═══════════════════════════════════════════════════════
+   WORKCAL SYNC INLINE (in connection tab)  v3.7.0
+   ═══════════════════════════════════════════════════════ */
+function wstdSyncStatusInline(){
+  const el=$('wstandard-sync-status-inline');if(!el)return;
+  const last=store('mwl_wstandard_sync');
+  const count=getWStandard().length;
+  const ep=store(K.ep);
+  if(!ep){el.textContent='⚠️ Endpoint לא הוגדר';return;}
+  el.textContent=last?`✅ סנכרן: ${last} · ${count} ימים`:'לא סונכרן עדיין';
+}
+
+/**
+ * פתיחת המודאל המאוחד לתחזוקת המערכת והאיפוס.
+ * מופעלת אך ורק בלחיצה על תג הגרסה או מכפתור התחזוקה בהגדרות.
+ */
+function openResetMaintenanceModal() {
+    openM('modal-reset');
+}
+   
+</script>
 
 <!-- IMPORT MODAL -->
 <div id="modal-import" class="moverlay hidden" role="dialog" aria-modal="true">

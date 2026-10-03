@@ -1,6 +1,6 @@
-// MyWorkLog Service Worker v4.4.9 (עדכון גרסה קריטי לשבירת הלולאה)
+// MyWorkLog Service Worker v4.4.8
 // Strategy: Cache-First for app shell, Network-First for GAS API calls
-const APP_VERSION = '4.4.9'; 
+const APP_VERSION = '4.4.8';
 const CACHE_SHELL = `mwl-shell-${APP_VERSION}`;
 const CACHE_DATA  = `mwl-data-${APP_VERSION}`;
 
@@ -20,7 +20,7 @@ self.addEventListener('install', e => {
       .then(c => Promise.allSettled(
         SHELL_ASSETS.map(u => c.add(u).catch(() => {}))
       ))
-      // הוסר ה-skipWaiting האוטומטי כדי למנוע השתלטות אגרסיבית
+      .then(() => self.skipWaiting())
   );
 });
 
@@ -33,7 +33,15 @@ self.addEventListener('activate', e => {
           .map(k => caches.delete(k))
       ))
       .then(() => self.clients.claim())
-      // הוסר הבלוק שמבצע client.navigate כופה רענון
+      .then(() => self.clients.matchAll({ type: 'window' }))
+      .then(clients => {
+        // After taking control, reload all open tabs so they get fresh assets
+        clients.forEach(client => {
+          if (client.url && 'navigate' in client) {
+            client.navigate(client.url);
+          }
+        });
+      })
   );
 });
 
