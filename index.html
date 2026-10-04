@@ -797,8 +797,6 @@ details summary::-webkit-details-marker{display:none}
 <div class="stats-grid">
         <div class="stat-card"><div class="stat-lbl" data-i18n="statEntries">כניסות</div><div class="stat-val" id="stat-entries">0</div></div>
         <div class="stat-card"><div class="stat-lbl" data-i18n="statExits">יציאות</div><div class="stat-val" id="stat-exits">0</div></div>
-        <div class="stat-card"><div class="stat-lbl" data-i18n="statTasks">משימות</div><div class="stat-val" id="stat-tasks">0</div></div>
-        <div class="stat-card"><div class="stat-lbl" data-i18n="statHours">שעות משימה</div><div class="stat-val" id="stat-hours">0</div></div>
       </div>
             <!-- Daily status (day view only) -->
       <div id="day-wc-section" class="card" style="display:none">
@@ -3340,9 +3338,9 @@ function renderMonthlyWCStats(year, month, reports) {
   const el = $('monthly-wc-stats');
   if (!el) return;  
   
-  // פתרון בעיית ה-UI: מעבר ל-Flexbox כדי שהקוביות ימלאו את השורה תמיד ללא "חורים"
   el.style.display = 'flex';
-  el.style.flexWrap = 'wrap';
+  el.style.flexDirection = 'column';
+  el.style.gap = '8px';
   
   const now = new Date();
   const todayStr = isoD(now);
@@ -3355,7 +3353,7 @@ function renderMonthlyWCStats(year, month, reports) {
   
   let reqMins = 0;
   let actualMins = 0;
-  let reportedStdWorkDaysCount = 0; // התיקון: ימי עבודה בתקן בלבד
+  let reportedStdWorkDaysCount = 0; 
   let totalStdWorkDays = 0;      
   let missingReportDays = 0;     
   let vacDays = 0;
@@ -3368,12 +3366,12 @@ function renderMonthlyWCStats(year, month, reports) {
     const isStdWorkDay = minMins > 0 || (stdHours > 0);
     if (isStdWorkDay) totalStdWorkDays++;
 
-    if (dayType === 'vacation') vacDays++;
+    // ספירת ימי חופש: יום עם תקן שדווח עליו חופש
+    if (dayType === 'vacation' && isStdWorkDay) vacDays++;
     if (dayType === 'sick') sickDays++;
 
     const hasReport = am > 0 || ['vacation', 'sick', 'sabbatical'].includes(dayType);
 
-    // התיקון הלוגי: ספירת הדיווחים רק לימי עבודה בתקן, כדי שלא נציג 20/20 כשיש חוסר
     if (isStdWorkDay && hasReport) {
       reportedStdWorkDaysCount++;
     } else if (isStdWorkDay && ds <= yesterdayStr) {
@@ -3395,23 +3393,36 @@ function renderMonthlyWCStats(year, month, reports) {
   const pctAch = reqMins > 0 ? Math.round((actualMins / reqMins) * 100) : null;
   const pctColor = pctAch == null ? 'var(--text3)' : pctAch >= 100 ? 'var(--lime)' : pctAch >= 80 ? 'var(--amber)' : 'var(--red)';
 
-  // עיצוב אחיד לקוביות כדי שישתרעו על כל הרוחב הפנוי
   const boxStyle = 'flex: 1 1 calc(33.333% - 6px); min-width: 85px;';
 
   el.innerHTML = `
-    <div class="wc-stat" style="${boxStyle}"><div class="wc-stat-lbl">ימי עבודה</div><div class="wc-stat-val" style="font-size:.82rem">${reportedStdWorkDaysCount}/${totalStdWorkDays}</div></div>
-    <div class="wc-stat" style="${boxStyle}"><div class="wc-stat-lbl">נדרש עד היום</div><div class="wc-stat-val" style="font-size:.82rem">${minsToHHMM(reqMins)}</div></div>
-    <div class="wc-stat actual-s" style="${boxStyle}"><div class="wc-stat-lbl">בפועל</div><div class="wc-stat-val" style="font-size:.82rem">${minsToHHMM(actualMins)}</div></div>
-    <div class="wc-stat ${balClass}" style="${boxStyle}"><div class="wc-stat-lbl">מאזן</div><div class="wc-stat-val" style="font-size:.82rem">${balanceMins >= 0 ? '+' : ''}${minsToHHMM(balanceMins)}</div></div>
-    <div class="wc-stat" style="border-color:${pctColor}; ${boxStyle}"><div class="wc-stat-lbl">עמידה ביעד</div><div class="wc-stat-val" style="color:${pctColor}">${pctAch != null ? pctAch + '%' : '—'}</div></div>
-    ${missingReportDays > 0 ? `<div class="wc-stat" style="border-color:var(--red); ${boxStyle}">
-      <div class="wc-stat-lbl">ללא דיווח</div>
-      <div class="wc-stat-val" style="color:var(--red)">${missingReportDays}</div>
-    </div>` : ''}
-    ${vacDays > 0 ? `<div class="wc-stat" style="border-color:var(--amber); ${boxStyle}"><div class="wc-stat-lbl">🏖 ימי חופש</div><div class="wc-stat-val" style="color:var(--amber)">${vacDays}</div></div>` : ''}
-    ${sickDays > 0 ? `<div class="wc-stat" style="border-color:var(--purple); ${boxStyle}"><div class="wc-stat-lbl">🤒 ימי מחלה</div><div class="wc-stat-val" style="color:var(--purple)">${sickDays}</div></div>` : ''}
+    <!-- שורת מדדים ראשית -->
+    <div style="display:flex; flex-wrap:wrap; gap:6px; width:100%;">
+      <div class="wc-stat" style="${boxStyle}"><div class="wc-stat-lbl">ימי עבודה</div><div class="wc-stat-val" style="font-size:.82rem">${reportedStdWorkDaysCount}/${totalStdWorkDays}</div></div>
+      <div class="wc-stat" style="${boxStyle}"><div class="wc-stat-lbl">נדרש עד היום</div><div class="wc-stat-val" style="font-size:.82rem">${minsToHHMM(reqMins)}</div></div>
+      <div class="wc-stat actual-s" style="${boxStyle}"><div class="wc-stat-lbl">בפועל</div><div class="wc-stat-val" style="font-size:.82rem">${minsToHHMM(actualMins)}</div></div>
+      <div class="wc-stat ${balClass}" style="${boxStyle}"><div class="wc-stat-lbl">מאזן</div><div class="wc-stat-val" style="font-size:.82rem">${balanceMins >= 0 ? '+' : ''}${minsToHHMM(balanceMins)}</div></div>
+      <div class="wc-stat" style="border-color:${pctColor}; ${boxStyle}"><div class="wc-stat-lbl">עמידה ביעד</div><div class="wc-stat-val" style="color:${pctColor}">${pctAch != null ? pctAch + '%' : '—'}</div></div>
+    </div>
+
+    <!-- שורה חדשה ייעודית: ימי מחלה, ימי חופש (הצהרה בתקן), ימים ללא דיווח -->
+    <div style="display:flex; gap:6px; width:100%; border-top:1px solid var(--border); padding-top:6px; margin-top:2px;">
+      <div class="wc-stat" style="flex:1; border-color:var(--purple);">
+        <div class="wc-stat-lbl">🤒 ימי מחלה</div>
+        <div class="wc-stat-val" style="color:var(--purple); font-size:.82rem;">${sickDays}</div>
+      </div>
+      <div class="wc-stat" style="flex:1; border-color:var(--amber);">
+        <div class="wc-stat-lbl">🏖 ימי חופש</div>
+        <div class="wc-stat-val" style="color:var(--amber); font-size:.82rem;">${vacDays}</div>
+      </div>
+      <div class="wc-stat" style="flex:1; border-color:${missingReportDays > 0 ? 'var(--red)' : 'var(--border)'};">
+        <div class="wc-stat-lbl">⚠️ ללא דיווח</div>
+        <div class="wc-stat-val" style="color:${missingReportDays > 0 ? 'var(--red)' : 'var(--text3)'}; font-size:.82rem;">${missingReportDays}</div>
+      </div>
+    </div>
   `;
 }
+   
 
    
 /* ─ Edit day modal ─ */
@@ -3722,25 +3733,9 @@ function summaryRender(){
     $('sum-prev').disabled=true;$('sum-next').disabled=true;
   }
   if(lblEl)lblEl.textContent=lbl;
-if ($('stat-entries'))$('stat-entries').textContent = fil.filter(r => r.category === 'entry').length;
-  if ($('stat-exits'))$('stat-exits').textContent = fil.filter(r => r.category === 'exit').length;
-  if ($('stat-tasks'))$('stat-tasks').textContent = fil.filter(r => r.category === 'task').length;
-
-  // Sum task durations only
-  let taskMins=0;
-  fil.filter(r=>r.category==='task').forEach(r=>{
-    if(!r.report_time)return;
-    if(r.report_time.includes('-')){
-      const[s,e]=r.report_time.split('-');
-      const[sh,sm]=s.split(':').map(Number),[eh,em]=e.split(':').map(Number);
-      const d=(eh*60+em)-(sh*60+sm);if(d>0)taskMins+=d;
-    }else if(r.report_time.includes(':')){
-      const[hh2,mm2]=r.report_time.split(':').map(Number);
-      taskMins+=((hh2||0)*60)+(mm2||0);
-    }
-  });
-   const hh=Math.floor(taskMins/60),mm=taskMins%60;
-  if ($('stat-hours'))$('stat-hours').textContent = mm > 0 ? `${hh}:${pad(mm)}` : `${hh}`;
+if ($('stat-entries')) $('stat-entries').textContent = fil.filter(r => r.category === 'entry').length;
+if ($('stat-exits')) $('stat-exits').textContent = fil.filter(r => r.category === 'exit').length;
+   
   // Ensure summary-list card is visible (was hidden in day view)
   if(ST.sumPer!=='day'){
     const sumCard=$('summary-list')?.closest('.card');if(sumCard)sumCard.style.display='';
