@@ -1560,8 +1560,10 @@ details summary::-webkit-details-marker{display:none}
 </div>
 
 
-<script src="app.js"></script>
-<script src="i18n.js"></script>
+<!-- שימוש ב-PHP/Template Engine או הזרקה ידנית של מספר הגרסה בסיומת -->
+<script src="app.js?v=4.4.9"></script>
+<script src="i18n.js?v=4.4.9"></script>
+   
 <script>
 /* ─────────────────────────────────────────────────────
    i18n
@@ -1695,19 +1697,19 @@ const NotificationSystem = {
     } catch (_) { /* silent — offline or missing */ }
   },
 
-  showUpdatePrompt(newVer, onUpdate) {
+showUpdatePrompt(newVer, onUpdate) {
     const el = document.getElementById('updatePrompt');
     if (!el) return;
     el.classList.add('visible');
 
-    document.getElementById('updateNowBtn').onclick = async () => {
+    document.getElementById('updateNowBtn').onclick = () => {
       el.classList.remove('visible');
       if (onUpdate) onUpdate();
-      if ('caches' in window) {
-        const keys = await caches.keys();
-        await Promise.all(keys.map(k => caches.delete(k)));
+      
+      // איתות ל-Service Worker הממתין לעבור למצב פעיל, ללא רענון ידני מכאן
+      if (window.ST && window.ST.swReg && window.ST.swReg.waiting) {
+        window.ST.swReg.waiting.postMessage({ type: 'SKIP_WAITING' });
       }
-      window.location.reload();
     };
   }
 }
@@ -1966,18 +1968,29 @@ function backBtnInit(){
 
 /* VERSION */
 function verCheck(){
-  const prev=store(K.ver);
-  const isUpgrade = prev && prev !== VER;
+  const prev = store(K.ver);
+  const isUpgrade = prev && prev !== (typeof VER !== 'undefined' ? VER : '3.7.0'); // הגנה מפני VER חסר
 
   if(isUpgrade){
-    // Clear SW caches so new assets load
-    if('caches'in window) caches.keys().then(ks=>ks.forEach(k=>caches.delete(k)));
-    // Migrate data — NEVER deletes existing user data, only adds missing keys
-    migrateData(prev);
-    console.info(`[verCheck] upgraded ${prev} → ${VER}`);
+    // יצירת גיבוי למקרה של קריסה במיגרציה (Rollback Mechanism)
+    const backupData = {
+      reps: localStorage.getItem('mwl_reports'),
+      prefs: localStorage.getItem('mwl_prefs')
+    };
+
+    try {
+      migrateData(prev);
+      console.info(`[verCheck] upgraded ${prev} → ${VER}`);
+    } catch (err) {
+      console.error('[verCheck] Migration failed, rolling back!', err);
+      // שחזור הנתונים למצב תקין ועצירת השדרוג
+      if(backupData.reps) localStorage.setItem('mwl_reports', backupData.reps);
+      if(backupData.prefs) localStorage.setItem('mwl_prefs', backupData.prefs);
+      return; // עצירה - לא נשמור את הגרסה החדשה כיוון שנכשלנו
+    }
   }
 
-  store(K.ver,VER);
+  store(K.ver, VER);
   document.querySelectorAll('.vbadge').forEach(el=>el.textContent=t('versionLabel',VER));
 }
 
@@ -4227,6 +4240,15 @@ async function syncProjects(){
 /* SERVICE WORKER */
 function swInit(){
   if(!('serviceWorker'in navigator))return;
+  
+  // מניעת לולאת רענון כפולה
+  let refreshing = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (refreshing) return;
+    refreshing = true;
+    window.location.reload();
+  });
+
   navigator.serviceWorker.register('./sw.js',{scope:'./'}).then(reg=>{
     ST.swReg=reg;
     if(reg.waiting) showUpd();
