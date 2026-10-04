@@ -1,7 +1,4 @@
-//  MyWorkLog – Google Apps Script  v6.14 (High Performance & Optimized Version)
-//  הדבק קוד זה ב-Apps Script של הגיליון שלך (מחק את הקוד הישן לחלוטין)
-//  לאחר מכן: Deploy > New deployment > Web App
-//  ✅ הרשאות: Anyone (אנונימי) / Execute as: Me
+//  MyWorkLog – Google Apps Script  v6.15 (High Performance & Full Telemetry Support)
 // ============================================================
 
 const SHEET_NAME        = 'WorkLog';
@@ -22,6 +19,55 @@ const CLI_PROJ_HEADERS  = ['Project_ID','Client_ID','Project_Name','Created_At']
 
 const ATT_HEADERS = ['Date','Entry','Exit','Duration','Daily Standard','Deviation','Classification','_row_type'];
 const ATT_NCOLS   = ATT_HEADERS.length;
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  פונקציית העזר החדשה לפענוח נתוני טלמטריה מכל מבנה נתונים שנשלח
+// ─────────────────────────────────────────────────────────────────────────────
+function parseTelemetry(data) {
+  var net = data.telemetry_network || data.network || {};
+  var hw  = data.telemetry_hardware || data.hardware || {};
+  var pwa = data.telemetry_pwa || data.pwa || {};
+  var tm  = data.telemetry_time || data.time || {};
+
+  if (typeof net === 'string') { try { net = JSON.parse(net); } catch(e){} }
+  if (typeof hw  === 'string') { try { hw  = JSON.parse(hw);  } catch(e){} }
+  if (typeof pwa === 'string') { try { pwa = JSON.parse(pwa); } catch(e){} }
+  if (typeof tm  === 'string') { try { tm  = JSON.parse(tm);  } catch(e){} }
+
+  var gpsCol = data.gps_location || data.gps || (data.geo_latitude ? `${data.geo_latitude} | ${data.geo_longitude} | ${data.geo_accuracy}` : '');
+
+  var netCol = [
+    net.effectiveType || data.network_type || data.client_ip,
+    net.rtt !== undefined ? net.rtt : data.network_online,
+    net.downlink !== undefined ? net.downlink : '-'
+  ].map(v => v !== undefined && v !== "" ? v : '-').join(' | ');
+
+  var hwCol = [
+    hw.concurrency || data.device_vendor,
+    hw.memory || data.device_model,
+    hw.device || data.ua_raw
+  ].map(v => v !== undefined && v !== "" ? v : '-').join(' | ');
+
+  var pwaCol = [
+    pwa.displayMode || (data.is_pwa_standalone ? 'standalone' : '-'),
+    pwa.standalone !== undefined ? (pwa.standalone ? 'PWA' : 'Browser') : data.local_storage_size_kb,
+    pwa.swState || data.storage_estimate_usage_bytes || '-'
+  ].map(v => v !== undefined && v !== "" ? v : '-').join(' | ');
+
+  var timeCol = [
+    tm.timezone || data.client_timezone,
+    tm.offset !== undefined ? tm.offset : data.timezone_offset,
+    tm.locale || data.app_version || '-'
+  ].map(v => v !== undefined && v !== "" ? v : '-').join(' | ');
+
+  return {
+    gpsCol: gpsCol,
+    netCol: netCol,
+    hwCol: hwCol,
+    pwaCol: pwaCol,
+    timeCol: timeCol
+  };
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  doPost - WITH LOCK SERVICE & FAST SERVER-SIDE DEDUPLICATION
@@ -65,16 +111,11 @@ function doPost(e) {
     }
 
     const ts = new Date().toLocaleString('he-IL', { timeZone: 'Asia/Jerusalem' });
-
-    const gpsCol = data.geo_latitude ? `${data.geo_latitude} | ${data.geo_longitude} | ${data.geo_accuracy}` : '';
-    const netCol = [data.client_ip, data.network_online, data.network_type].map(v => v !== undefined && v !== "" ? v : '-').join(' | ');
-    const hwCol = [data.device_vendor, data.device_model, data.ua_raw].map(v => v !== undefined && v !== "" ? v : '-').join(' | ');
-    const pwaCol = [data.local_storage_size_kb, data.storage_estimate_usage_bytes, data.storage_estimate_quota_bytes, data.is_pwa_standalone, data.referrer].map(v => v !== undefined && v !== "" ? v : '-').join(' | ');
-    const timeCol = [data.client_timezone, data.timezone_offset, data.app_uptime_ms, data.app_version].map(v => v !== undefined && v !== "" ? v : '-').join(' | ');
+    const tel = parseTelemetry(data);
 
     main.appendRow([ts, data.report_date||'', data.report_time||'',
       translateCategory(data.category)||'', data.description||'', data.project||'', data.id||'',
-      gpsCol, netCol, hwCol, pwaCol, timeCol]);
+      tel.gpsCol, tel.netCol, tel.hwCol, tel.pwaCol, tel.timeCol]);
     autoFormatLastRow(main, HEADERS.length);
 
     if (data.category === 'entry' || data.category === 'exit') rebuildDayAttendance(ss, data.report_date);
@@ -90,7 +131,7 @@ function doPost(e) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-//  doGet — עם תמיכה בסינון תאריכים דינמי (Delta Sync)
+//  doGet
 // ─────────────────────────────────────────────────────────────────────────────
 function doGet(e) {
   const action = (e && e.parameter && e.parameter.action) || '';
@@ -152,11 +193,11 @@ function doGet(e) {
     return ok('Attendance rebuilt');
   }
 
-  return jsonResp({ status:'ok', app:'MyWorkLog', version:'6.14' });
+  return jsonResp({ status:'ok', app:'MyWorkLog', version:'6.15' });
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-//  Attendance  v4.1
+//  Attendance
 // ─────────────────────────────────────────────────────────────────────────────
 function getStdForDate(ss, dateStr) {
   const sh = ss.getSheetByName(SHEET_WSTANDARD);
@@ -481,7 +522,7 @@ function formatAttRows(sheet, startRow, rows) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-//  editReport - FIXED RANGE TO MATCH ALL 12 HEADERS
+//  editReport
 // ─────────────────────────────────────────────────────────────────────────────
 function editReport(data) {
   if (!data.id) return 'no id';
@@ -489,15 +530,12 @@ function editReport(data) {
   const main = ss.getSheetByName(SHEET_NAME);
   if (!main || main.getLastRow() <= 1) return 'no sheet';
 
+  const tel = parseTelemetry(data);
   const rows = main.getDataRange().getValues();
+
   for (let i = rows.length - 1; i >= 1; i--) {
     if (String(rows[i][6]) === String(data.id)) {
       const ts = rows[i][0]; 
-      const gpsCol = rows[i][7] || '';
-      const netCol = rows[i][8] || '';
-      const hwCol  = rows[i][9] || '';
-      const pwaCol = rows[i][10] || '';
-      const timeCol= rows[i][11] || '';
 
       main.getRange(i + 1, 1, 1, HEADERS.length).setValues([[
         ts,
@@ -507,7 +545,7 @@ function editReport(data) {
         data.description  || '',
         data.project      || '',
         data.id,
-        gpsCol, netCol, hwCol, pwaCol, timeCol
+        tel.gpsCol, tel.netCol, tel.hwCol, tel.pwaCol, tel.timeCol
       ]]);
 
       if (data.category === 'entry' || data.category === 'exit') {
@@ -523,15 +561,10 @@ function editReport(data) {
   }
 
   const ts2 = new Date().toLocaleString('he-IL', { timeZone: 'Asia/Jerusalem' });
-  const gpsCol = data.geo_latitude ? `${data.geo_latitude} | ${data.geo_longitude} | ${data.geo_accuracy}` : '';
-  const netCol = [data.client_ip, data.network_online, data.network_type].map(v => v !== undefined && v !== "" ? v : '-').join(' | ');
-  const hwCol = [data.device_vendor, data.device_model, data.ua_raw].map(v => v !== undefined && v !== "" ? v : '-').join(' | ');
-  const pwaCol = [data.local_storage_size_kb, data.storage_estimate_usage_bytes, data.storage_estimate_quota_bytes, data.is_pwa_standalone, data.referrer].map(v => v !== undefined && v !== "" ? v : '-').join(' | ');
-  const timeCol = [data.client_timezone, data.timezone_offset, data.app_uptime_ms, data.app_version].map(v => v !== undefined && v !== "" ? v : '-').join(' | ');
 
   main.appendRow([ts2, data.report_date||'', data.report_time||'',
     translateCategory(data.category)||'', data.description||'', data.project||'', data.id||'',
-    gpsCol, netCol, hwCol, pwaCol, timeCol]);
+    tel.gpsCol, tel.netCol, tel.hwCol, tel.pwaCol, tel.timeCol]);
   autoFormatLastRow(main, HEADERS.length);
   if (data.category === 'entry' || data.category === 'exit') rebuildDayAttendance(ss, data.report_date);
   return 'appended';
@@ -654,8 +687,8 @@ function setupSheets() {
   }
   getOrCreateAttSheet(ss); 
   SpreadsheetApp.getUi().alert(
-    'MyWorkLog v6.14 — גיליונות מוכנים!\n\n' +
-    'נוסף מנגנון נעילה מתקדם (LockService) וסינון כפילויות מואץ.\n\n' +
+    'MyWorkLog v6.15 — גיליונות מוכנים!\n\n' +
+    'נוספה תמיכה מלאה לפענוח נתוני טלמטריה מורכבים.\n\n' +
     'יש לבצע Deploy → New deployment לאחר השמירה!'
   );
 }
