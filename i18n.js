@@ -260,7 +260,7 @@ const I18N = {
   sessionLoading            : {he:'טוען...',en:'Loading...'},
   sessionOpen               : {he:'בפנים מ-',en:'Active since '},
   sessionClosed             : {he:'לא דווחה כניסה להיום',en:'No check-in today'},
-  sessionClosedWithHours    : {he:'לא נמצאת',en:'Checked out'},
+  sessionClosedWithHours    : {he:' נמצאת',en:'Checked out'},
   sessionBlockEntry         : {he:'הנך כבר רשום כנמצא — עליך לדווח יציאה לפני כניסה חדשה',en:'Already checked in — please check out before a new entry'},
   sessionBlockExit          : {he:'לא נמצאה כניסה פעילה להיום — עליך לדווח כניסה תחילה',en:'No active check-in today — please check in first'},
   sessionOpenLabel          : {he:'סשן פתוח — טרם דווחה יציאה',en:'Open session — no exit recorded'},
