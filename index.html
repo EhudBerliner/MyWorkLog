@@ -2686,7 +2686,7 @@ function buildRep(date,time){
     const ps=store(K.proj)||[];
     if(proj&&!ps.includes(proj)){ps.push(proj);store(K.proj,ps);projLoad();}
     if(ST.dur==='duration'){
-      const h=parseInt($('dur-hours').value)\vert{}\vert{}0,m=parseInt($('dur-minutes').value)||0;
+      const h=parseInt($('dur-hours').value)||0,m=parseInt($('dur-minutes').value)||0;
       if(!h&&!m){toast(t('toastNoDuration'),'warn');buzz([80]);return null}
       rTime=`${pad(h)}:${pad(m)}`;
     }else{
