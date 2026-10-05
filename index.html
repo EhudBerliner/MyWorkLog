@@ -3096,9 +3096,23 @@ function getDayStatus(ds, reports) {
 
   const wdStr = actualMins > 0 ? `${pad(Math.floor(actualMins / 60))}:${pad(actualMins % 60)}` : '-';
 
-  if (!isWorkDay && !isPaidAbsence) {
-    const st = dayType !== 'normal' && dayType !== 'weekend' ? dayType : (dayType === 'weekend' ? 'weekend' : 'nostandard');
-    return { status: st, actualMins, minMins: 0, diffMins: actualMins, wdStr, notes, description, pct: null, fromTasks, dayType, pairs, hasOpen };
+if (!isWorkDay && !isPaidAbsence) {
+    // יום ללא תקן (חג, שבתון, סוף שבוע): minMins נשאר 0, וה-actualMins נרשם כעודף ישיר במאזן
+    const st = (dayType !== 'normal') ? dayType : 'nostandard';
+    return { 
+      status: st, 
+      actualMins, 
+      minMins: 0, 
+      diffMins: actualMins, // כל שעת עבודה היא עודף חיובי
+      wdStr, 
+      notes, 
+      description, 
+      pct: null, 
+      fromTasks, 
+      dayType, 
+      pairs, 
+      hasOpen 
+    };
   }
 
   const diffMins = actualMins - minMins;
