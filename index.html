@@ -4711,9 +4711,14 @@ async function shareReport(){
   if(!fromDate||!toDate){toast('⚠️ בחר תאריך התחלה וסיום','warn',3000);return;}
   if(fromDate>toDate){toast('⚠️ תאריך התחלה חייב להיות לפני תאריך הסיום','warn',3000);return;}
 
+  // 1. בדיקת תמיכה במימוש API של שיתוף קבצים בדפדפן
+  if(!navigator.share || !navigator.canShare){
+    toast('⚠️ השיתוף אינו נתמך בדפדפן זה','warn',3500);
+    return;
+  }
+
+  // 2. הכנת ה-Blob במידה ועדיין לא מוכן (למשל בלחיצה ראשונה)
   if(!_shareBlob){
-    // Blob not ready → download and cache for next tap
-    toast('⏳ מכין קובץ...','info',1500);
     try{
       await loadSheetJS();
       const{wb,filename}=await buildReportWorkbook(fromDate,toDate);
@@ -4724,52 +4729,32 @@ async function shareReport(){
       toast(e.message==='no_data'?'⚠️ אין דיווחים בתקופה הנבחרת':'❌ שגיאה: '+e.message,'warn',3000);
       return;
     }
-    _triggerDownload(_shareBlob,_shareFilename);
-    toast('📊 הקובץ הורד — לחץ שוב לשיתוף','info',3000);
+  }
+
+  const blob = _shareBlob;
+  const filename = _shareFilename;
+  const file = new File([blob], filename, {type: blob.type});
+
+  // 3. אימות שהדפדפן מסוגל לשתף את הקובץ הספציפי
+  if(!navigator.canShare({files:[file]})){
+    toast('⚠️️ השיתוף אינו נתמך בדפדפן זה','warn',3500);
     return;
   }
 
-  // Blob pre-built → share immediately (no await before navigator.share)
-  const blob=_shareBlob, filename=_shareFilename;
-
-  // No Web Share support → download
-  if(!navigator.share){
-    _triggerDownload(blob,filename);
-    toast('📊 הקובץ הורד','success',2000);
-    return;
-  }
-
-  // Try file share first, fall back to text-only, then download
-  const file=new File([blob],filename,{type:blob.type});
-  let shareData;
+  // 4. הפעלת מנגנון השיתוף הטבעי (Native Share)
   try{
-    if(navigator.canShare&&navigator.canShare({files:[file]})){
-      shareData={title:'MyWorkLog דוח',text:`${fromDate} — ${toDate}`,files:[file]};
-    } else {
-      shareData={title:'MyWorkLog דוח',text:`דוח נוכחות ${fromDate} — ${toDate}`};
-    }
-  }catch(_){
-    shareData={title:'MyWorkLog דוח',text:`דוח נוכחות ${fromDate} — ${toDate}`};
-  }
-
-  try{
-    await navigator.share(shareData);
+    await navigator.share({
+      title: 'MyWorkLog דוח',
+      text: `${fromDate} — ${toDate}`,
+      files: [file]
+    });
     toast('✅ דוח שותף','success',2000);
   }catch(e){
-    if(e.name==='AbortError') return; // user dismissed — do nothing
-    // Share failed: if was file share, retry as text-only
-    if(shareData.files){
-      try{
-        await navigator.share({title:'MyWorkLog דוח',text:`דוח נוכחות ${fromDate} — ${toDate}`});
-        toast('✅ שותף (ללא קובץ)','success',2000);
-        return;
-      }catch(e2){
-        if(e2.name==='AbortError') return;
-      }
-    }
-    // All share attempts failed → download
-    _triggerDownload(blob,filename);
-    toast('📊 הקובץ הורד','success',2000);
+    // התעלמות במקרה של ביטול יזום ע"י המשתמש בחלון השיתוף
+    if(e.name === 'AbortError') return;
+    
+    // בכל שגיאה אחרת - הצגת הודעת אזהרה בבאנר בלבד (ללא הורדה)
+    toast('⚠️ השיתוף אינו נתמך בדפדפן זה','warn',3500);
   }
 }
 
