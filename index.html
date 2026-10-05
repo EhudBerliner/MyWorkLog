@@ -3419,26 +3419,26 @@ function renderMonthlyWCStats(year, month, reports) {
     const isStdWorkDay = minMins > 0 || (stdHours > 0);
     if (isStdWorkDay) totalStdWorkDays++;
 
-    // ספירת ימי חופש: יום עם תקן שדווח עליו חופש
-    if (dayType === 'vacation' && isStdWorkDay) vacDays++;
-    if (dayType === 'sick') sickDays++;
+// ספירת ימי חופש: יום עם תקן שדווח עליו חופש
+        if (dayType === 'vacation' && isStdWorkDay) vacDays++;
+        if (dayType === 'sick') sickDays++;
 
-    const hasReport = am > 0 || ['vacation', 'sick', 'sabbatical'].includes(dayType);
+        const hasReport = am > 0 || ['vacation', 'sick', 'sabbatical'].includes(dayType);
 
-    if (isStdWorkDay && hasReport) {
-      reportedStdWorkDaysCount++;
-    } else if (isStdWorkDay && ds <= yesterdayStr) {
-      missingReportDays++;
-    }
+        if (isStdWorkDay && hasReport) {
+          reportedStdWorkDaysCount++;
+        } else if (isStdWorkDay && ds <= yesterdayStr) {
+          missingReportDays++;
+        }
 
-    if (ds <= todayStr && isStdWorkDay) {
-      reqMins += minMins;
-      if (['vacation', 'sick', 'holiday', 'sabbatical'].includes(dayType)) {
-        actualMins += Math.max(am, minMins); 
-      } else {
-        actualMins += am;
-      }
-    }
+        if (ds <= todayStr && isStdWorkDay) {
+          reqMins += minMins;
+          if (['vacation', 'sick', 'holiday', 'sabbatical'].includes(dayType)) {
+            actualMins += Math.max(am, minMins); 
+          } else {
+            actualMins += am;
+          }
+        }
   }
 
   const balanceMins = actualMins - reqMins;
@@ -3598,15 +3598,25 @@ function renderAnnualStats(year, reports){
     for(let d=1;d<=lastDate;d++){
       const ds=`${year}-${pad(mo+1)}-${pad(d)}`;
       if(ds>todayStr)continue;
-      const{status,actualMins:am,minMins,dayType}=getDayStatus(ds,reports);
-      if(dayType==='vacation'||dayType==='holiday')vac++;
-      if(dayType==='sick')sick++;
-      if(dayType==='sabbatical')vac++; // count sabbatical with special days
-      if(status==='nostandard'||status==='weekend')continue;
-      if(['vacation','sick','holiday','sabbatical'].includes(dayType) && minMins===0) continue;
-      wDays++;req+=minMins;act+=am;
-      const diff=am-minMins;
-      if(diff>=0){surplus+=diff;okD++;}else{deficit+=Math.abs(diff);defD++;}
+const{status,actualMins:am,minMins,dayType}=getDayStatus(ds,reports);
+
+              // 1. צבירת שעות בפועל והתקן מתבצעת תמיד (לפי הערה 3)
+              act += am;
+              req += minMins;
+              
+              const diff = am - minMins;
+              if (diff >= 0) { surplus += diff; } else { deficit += Math.abs(diff); }
+
+              // 2. צבירת מוני ימים מתבצעת רק עבור ימים בעלי תקן (לפי הערה 2 ו-3)
+              if (minMins > 0) {
+                  wDays++;
+                  if (diff >= 0) { okD++; } else { defD++; }
+                  
+                  // ימי חג ושבתון לא נצברים במונים, רק חופשה ומחלה בתקן
+                  if (dayType === 'vacation') vac++;
+                  if (dayType === 'sick') sick++;
+              }
+       
     }
     totalReq+=req;totalAct+=act;totalSurplus+=surplus;totalDeficit+=deficit;
     totalVac+=vac;totalSick+=sick;totalOkDays+=okD;totalDefDays+=defD;totalWorkDays+=wDays;
@@ -3667,14 +3677,24 @@ function renderRangeStats(from, to, reports){
   for(let dt=new Date(start);dt<=end;dt.setDate(dt.getDate()+1)){
     const ds=isoD(dt);
     if(ds>todayStr)continue;
-    const{status,actualMins:am,minMins,dayType}=getDayStatus(ds,reports);
-    if(dayType==='vacation'||dayType==='holiday')vac++;
-    if(dayType==='sick')sick++;
-    if(status==='nostandard'||status==='weekend')continue;
-    if(['vacation','sick','holiday','sabbatical'].includes(dayType) && minMins===0) continue;
-    wDays++;req+=minMins;act+=am;
-    const diff=am-minMins;
-    if(diff>=0){surplus+=diff;okD++;}else{deficit+=Math.abs(diff);defD++;}
+const{status,actualMins:am,minMins,dayType}=getDayStatus(ds,reports);
+
+            // שעות בפועל נכנסות למונה ללא קשר לקיום תקן (לפי הערה 3)
+            act += am;
+            req += minMins;
+            
+            const diff = am - minMins;
+            if (diff >= 0) { surplus += diff; } else { deficit += Math.abs(diff); }
+
+            // צבירת מוני ימים רק לימים בעלי תקן (לפי הערה 2)
+            if (minMins > 0) {
+                wDays++;
+                if (diff >= 0) { okD++; } else { defD++; }
+                
+                if (dayType === 'vacation') vac++;
+                if (dayType === 'sick') sick++;
+            }
+     
   }
   const bal=surplus-deficit;
   const pct=req>0?Math.round(act/req*100):null;
