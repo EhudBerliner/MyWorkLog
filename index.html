@@ -2069,56 +2069,6 @@ function vBadgeInit(){
   });
 }
    
-async function hardReset(){
-  const kR=$('reset-keep-reports').checked, kS=$('reset-keep-settings').checked, kQ=$('reset-keep-queue').checked;
-  
-  // שמירת הנתונים המבוקשים לפני הניקוי
-  const sR=kR?store(K.reps):null;
-  const sE=kS?store(K.ep):null, sSU=kS?store(K.sheetUrl):null;
-  const sP=kS?store(K.proj):null, sTH=kS?store(K.theme):null, sLN=kS?store(K.lang):null, sPR=kS?store(K.prefs):null;
-  const sQ=kQ?store(K.q):null;
-  const sRO=kS?store(K.rounding):null;
-  const sPR2=kS?store(K.profile):null;
-
-  // מנגנון הגנה: מונע מתהליך מחיקה לתקוע את האפליקציה מעבר לשנייה אחת
-  const withTimeout = (p, ms = 1000) => Promise.race([p, new Promise(r => setTimeout(r, ms))]);
-
-  try {
-    localStorage.clear();
-    sessionStorage.clear();
-    document.cookie.split(';').forEach(c => document.cookie = c.replace(/^ +/, '').replace(/=.*/, '=;expires=' + new Date().toUTCString() + ';path=/'));
-
-    if ('serviceWorker' in navigator) {
-      const regs = await withTimeout(navigator.serviceWorker.getRegistrations()) || [];
-      await Promise.all(regs.map(r => withTimeout(r.unregister())));
-    }
-    if ('caches' in window) {
-      const keys = await withTimeout(caches.keys()) || [];
-      await Promise.all(keys.map(k => withTimeout(caches.delete(k))));
-    }
-    if ('indexedDB' in window && indexedDB.databases) {
-      try {
-        const dbs = await withTimeout(indexedDB.databases()) || [];
-        dbs.forEach(db => { if (db.name) indexedDB.deleteDatabase(db.name); });
-      } catch(_) {}
-    }
-  } catch (err) {
-    console.warn('[hardReset]', err);
-  } finally {
-    // שחזור הנתונים שנבחרו לשמירה
-    if(sR)store(K.reps,sR);
-    if(sE)store(K.ep,sE); if(sSU)store(K.sheetUrl,sSU);
-    if(sP)store(K.proj,sP); if(sTH)store(K.theme,sTH); if(sLN)store(K.lang,sLN); if(sPR)store(K.prefs,sPR);
-    if(sQ)store(K.q,sQ);
-    if(sRO!==null)store(K.rounding,sRO);
-    if(sPR2)store(K.profile,sPR2);
-
-    buzz([100,50,100]);
-    // רענון כפוי מהשרת לעקיפת ה-Cache
-    window.location.href = window.location.origin + window.location.pathname + '?reset=' + Date.now();
-  }
-}
-
 /* THEME */
 function themeInit(){
   const s=store(K.theme),dark=s!==null?s==='dark':window.matchMedia('(prefers-color-scheme:dark)').matches;
@@ -4840,13 +4790,6 @@ function wstdSyncStatusInline(){
   el.textContent=last?`✅ סנכרן: ${last} · ${count} ימים`:'לא סונכרן עדיין';
 }
 
-/**
- * פתיחת המודאל המאוחד לתחזוקת המערכת והאיפוס.
- * מופעלת אך ורק בלחיצה על תג הגרסה או מכפתור התחזוקה בהגדרות.
- */
-function openResetMaintenanceModal() {
-    openM('modal-reset');
-}
    
 </script>
 
