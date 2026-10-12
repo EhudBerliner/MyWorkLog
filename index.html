@@ -1701,20 +1701,10 @@ const NotificationSystem = {
   },
 
 showUpdatePrompt(newVer, onUpdate) {
-    const el = document.getElementById('updatePrompt');
-    if (!el) return;
-    el.classList.add('visible');
-
-    document.getElementById('updateNowBtn').onclick = () => {
-      el.classList.remove('visible');
-      if (onUpdate) onUpdate();
-      
-      // איתות ל-Service Worker הממתין לעבור למצב פעיל, ללא רענון ידני מכאן
-      if (window.ST && window.ST.swReg && window.ST.swReg.waiting) {
-        window.ST.swReg.waiting.postMessage({ type: 'SKIP_WAITING' });
-      }
-    };
+    // במקום באנר חוסם - הצגת Toast קצר המודיע שהעדכון יחול בפתיחה הבאה
+    toast('🆕 גרסה חדשה הורדה ותופעל אוטומטית בפתיחה הבאה', 'info', 4000);
   }
+   
 }
 window.NotificationSystem = NotificationSystem;
 
@@ -1907,10 +1897,34 @@ async function executeReset() {
   }
 }
    
-// ── טריגר לסנכרון אוטומטי בחזרה מפעילות ברקע ──
+// ── ניהול זמן פעילות אחרון וריענון חכם בחזרה מחוסר פעילות ──
+let lastActiveTime = Date.now();
+const IDLE_TIMEOUT_MS = 5 * 60 * 1000; // 5 דקות חוסר פעילות
+
+// עדכון חותמת זמן בכל אינטראקציה של המשתמש
+['mousemove', 'keydown', 'touchstart', 'scroll'].forEach(evt => {
+  window.addEventListener(evt, () => {
+    lastActiveTime = Date.now();
+  }, { passive: true });
+});
+
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'visible') {
-    // השהייה קלה כדי לתת לדפדפן לרענן את הממשק לפני פעולת הרשת
+    const timeInactive = Date.now() - lastActiveTime;
+
+    // 1. אם עברו מעל 5 דקות של חוסר פעילות וקיימת גרסה חדשה שממתינה — מעדכנים ומפנה
+    if (timeInactive >= IDLE_TIMEOUT_MS && navigator.serviceWorker) {
+      navigator.serviceWorker.getRegistration().then(reg => {
+        if (reg && reg.waiting) {
+          reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+          window.location.reload();
+          return;
+        }
+      });
+    }
+
+    // 2. איפוס זמן פעילות והרצת סנכרון רקע רגיל
+    lastActiveTime = Date.now();
     setTimeout(() => {
       try {
         if (typeof bgSync === 'function') bgSync();
