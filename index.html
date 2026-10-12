@@ -605,10 +605,13 @@ details summary::-webkit-details-marker{display:none}
       <button class="ibtn" id="btn-close-menu" data-i18n="menuClose" data-i18n-attr="aria-label" aria-label="סגור">✕</button>
     </div>
 
-   <nav class="menu-nav">
+<nav class="menu-nav">
       <button class="menu-item" data-tab="report"  data-i18n="menuReport">דיווח</button>
       <button class="menu-item" data-tab="history" data-i18n="menuHistory">היסטוריה</button>
       <button class="menu-item" data-tab="summary" data-i18n="menuSummary">סיכום</button>
+      <hr class="menu-div"/>
+      <!-- כפתור סנכרון מלא מגיליון -->
+      <button class="menu-item" id="menu-full-sync-btn">🔄 סנכרון מלא מגיליון</button>
       <hr class="menu-div"/>
       <button class="menu-item" id="menu-theme-btn"data-i18n="menuThemeDark">🌙 מצב כהה</button>
       <hr class="menu-div"/>
@@ -2129,18 +2132,75 @@ function switchTab(name){
   history.pushState({ui:'tab',name},'');
 }
 
+/* ═══════════════════════════════════════════════════════
+   FULL UNLIMITED SYNC — סנכרון מלא ללא הגבלת 60 ימים
+   ═══════════════════════════════════════════════════════ */
+async function fullSyncUnlimited() {
+  const ep = store(K.ep);
+  if (!ep) {
+    toast(t('toastSyncReportsNoEp') || '⚠️ Endpoint לא הוגדר', 'warn');
+    return;
+  }
+  if (!navigator.onLine) {
+    toast(t('toastSyncReportsOffline') || '⚠️ אין חיבור לאינטרנט', 'warn');
+    return;
+  }
+
+  menuClose(); // סגירת תפריט ההמבורגר
+  toast('🔄 מתחיל סנכרון מלא של כל הנתונים...', 'info', 2500);
+
+  try {
+    // 1. שליחת כל הדיווחים והשינויים הממתינים בתור (Offline Queues)
+    await syncQ_silent();
+    await flushWStandardQueue();
+    await flushDeleteQueue();
+
+    // 2. איפוס ETags לצורך כפיית משיכה מלאה מול הגיליון ללא מטמון 304
+    localStorage.removeItem('mwl_etag_reports');
+    localStorage.removeItem('mwl_etag_wstd');
+
+    // 3. הרצת סנכרון מלא במקביל — ללא העברת fromDate / deltaDate
+    const [reportsCount, wstdSuccess] = await Promise.all([
+      syncFromSheet(),      // משיכת כל הדיווחים ללא הגבלת תאריכים
+      syncWStandard(true),  // משיכת כל תקן השעות
+      syncProjects()        // סנכרון פרויקטים
+    ]);
+
+    // 4. עדכון חותמת זמן של סנכרון מלא
+    store('mwl_last_full_sync', String(Date.now()));
+
+    // 5. רענון מלא של כל רכיבי ה-UI
+    histRender();
+    summaryRender();
+    updateSessionBanner();
+    if (typeof wstdSyncStatusInline === 'function') wstdSyncStatusInline();
+    if (typeof updateSyncStatus === 'function') updateSyncStatus();
+
+    // 6. הודעת חיווי מפורטת
+    const repMsg = reportsCount > 0 ? `${reportsCount} דיווחים סונכרנו` : 'כל הדיווחים מעודכנים';
+    const wstdMsg = wstdSuccess ? 'תקן שעות עודכן' : 'תקן שעות ללא שינוי';
+
+    toast(`✅ סנכרון מלא הושלם! (${repMsg}, ${wstdMsg})`, 'success', 4000);
+    buzz([30, 30, 60]);
+
+  } catch (err) {
+    console.error('[fullSyncUnlimited Error]', err);
+    toast('❌ שגיאה במהלך הסנכרון המלא', 'error', 4000);
+  }
+}
+
 /* MENU */
 function menuInit(){
-  $('btn-hamburger')?.addEventListener('click',menuOpen);
-  $('btn-close-menu')?.addEventListener('click',menuClose);
-  $('menu-overlay')?.addEventListener('click',menuClose);
-  $('menu-settings-btn')?.addEventListener('click',()=>{menuClose();openM('modal-settings')});
-  $('menu-help-btn')?.addEventListener('click',()=>{menuClose();openM('modal-help')});
-  $('menu-gs-btn')?.addEventListener('click',()=>{menuClose();downloadGS();});
-  $('menu-import-btn')?.addEventListener('click',()=>{menuClose();openImportModal();});
-  $('menu-theme-btn')?.addEventListener('click',()=>{
+  $('btn-hamburger')?.addEventListener('click',menuOpen);$('btn-close-menu')?.addEventListener('click',menuClose);
+  $('menu-overlay')?.addEventListener('click',menuClose);$('menu-settings-btn')?.addEventListener('click',()=>{menuClose();openM('modal-settings')});
+  $('menu-help-btn')?.addEventListener('click',()=>{menuClose();openM('modal-help')});$('menu-gs-btn')?.addEventListener('click',()=>{menuClose();downloadGS();});
+  $('menu-import-btn')?.addEventListener('click',()=>{menuClose();openImportModal();});$('menu-theme-btn')?.addEventListener('click',()=>{
     applyTheme(document.body.classList.contains('light')?'dark':'light');buzz([20]);
   });
+  
+  // 💡 חיבור כפתור הסנכרון המלא החדש
+  $('menu-full-sync-btn')?.addEventListener('click', fullSyncUnlimited);
+
   document.querySelectorAll('.menu-item[data-tab]').forEach(el=>el.addEventListener('click',()=>switchTab(el.dataset.tab)));
   updateMenuSheetLink();
   $('menu-wstandard-btn')?.addEventListener('click',()=>{menuClose();openWorkcalSettings();});
