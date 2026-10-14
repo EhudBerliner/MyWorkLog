@@ -665,9 +665,11 @@ details summary::-webkit-details-marker{display:none}
           <button class="cat-btn"        data-cat="exit"  data-i18n="catExit">🔴 יציאה</button>
           <button class="cat-btn"        data-cat="task"  data-i18n="catTask" disabled>📋 משימה</button>
         </div>
-        <div id="session-banner" class="session-banner closed" style="margin-top:10px">
+         
+      <div id="session-banner" class="session-banner closed" style="margin-top:10px">
           <span class="session-dot"></span>
-          <span id="session-banner-text"data-i18n="sessionLoading">טוען...</span>
+          <span id="session-banner-text" data-i18n="sessionLoading">טוען...</span>
+          <span id="session-timer" style="display:none; font-weight:bold; margin-right:auto; font-family:'Syne',monospace; background:var(--glass2); padding:2px 8px; border-radius:12px;">00:00:00</span>
         </div>
       </div>
 
@@ -2545,13 +2547,22 @@ function validateExit(date, reports){
   return null;
 }
 
+let activeSessionInterval = null;
+
 /** Update the session status banner on the report tab */
 function updateSessionBanner(){
   const banner=$('session-banner');
   const txt=$('session-banner-text');
+  const timerEl=$('session-timer');
   if(!banner||!txt)return;
   const reports=store(K.reps)||[];
   const open=getOpenSession(reports);
+
+  // ניקוי טיימר קודם במידה וקיים
+  if (activeSessionInterval) {
+    clearInterval(activeSessionInterval);
+    activeSessionInterval = null;
+  }
 
   // Also compute today's accumulated work
   const today=isoD(new Date());
@@ -2562,9 +2573,38 @@ function updateSessionBanner(){
     banner.className='session-banner open';
     banner.querySelector('.session-dot').classList.add('pulse');
     txt.textContent=t('sessionOpen')+open.report_time+accStr;
+
+    if (timerEl) {
+      timerEl.style.display = 'inline-block';
+      
+      const updateTimer = () => {
+        const now = new Date();
+        const [eh, em] = open.report_time.split(':').map(Number);
+        const entryDate = new Date();
+        entryDate.setHours(eh, em, 0, 0);
+        
+        let diffMs = now - entryDate;
+        if (diffMs < 0) diffMs = 0; // במקרה של דיווח עתידי
+        
+        const hrs = String(Math.floor(diffMs / 3600000)).padStart(2, '0');
+        const mins = String(Math.floor((diffMs % 3600000) / 60000)).padStart(2, '0');
+        const secs = String(Math.floor((diffMs % 60000) / 1000)).padStart(2, '0');
+        
+        timerEl.textContent = `⏱️ ${hrs}:${mins}:${secs}`;
+      };
+
+      updateTimer();
+      activeSessionInterval = setInterval(updateTimer, 1000);
+    }
   }else{
     banner.className='session-banner closed';
     banner.querySelector('.session-dot').classList.remove('pulse');
+    
+    if (timerEl) {
+      timerEl.style.display = 'none';
+      timerEl.textContent = '';
+    }
+
     if(accMins>0){
       txt.textContent=t('sessionClosedWithHours')+accStr;
     }else{
