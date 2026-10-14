@@ -3790,87 +3790,144 @@ function summaryInit(){
 
    
 function goToday(){ST.sumOff=0;summaryRender();}
-function summaryRender(){
-  const rs=store(K.reps)||[],now=new Date();let fil=[],lbl='';
-  const lblEl=$('sum-period-label')||$('sum-lbl'); // support both IDs
-  if(ST.sumPer==='day'){
-    const tgt=new Date(now);tgt.setDate(tgt.getDate()+ST.sumOff);
-    const ds=isoD(tgt);fil=rs.filter(r=>r.report_date===ds);lbl=fmtD(ds);
-    // Aggregate ALL entry/exit pairs (not just first/last)
-    const{mins:dayMins,hasOpen}=calcDayWorkMins(ds,rs);
-    let wdStr=dayMins>0?`${pad(Math.floor(dayMins/60))}:${pad(dayMins%60)}`:'-';
-    if(hasOpen)wdStr+=' ⬤'; // indicate open session
-    const wdEl=$('stat-workday');if(wdEl)wdEl.textContent=wdStr;
-    const wdCard=$('stat-workday-card');if(wdCard)wdCard.style.display='';
-    const dCard=$('stat-days-card');if(dCard)dCard.style.display='none';
-    // Work calendar daily status
-    const mwcSec=$('monthly-wc-section');if(mwcSec)mwcSec.style.display='none';
-    const annSec2=$('annual-section');if(annSec2)annSec2.style.display='none';
-    const riSec=$('range-period-inputs');if(riSec)riSec.style.display='none';
-    const expBtn=$('btn-export-range');if(expBtn)expBtn.style.display='none';const shrBtn=$('btn-share-range');if(shrBtn)shrBtn.style.display='none';
-    // day-rep-actions inside renderDayWCStatus replaces summary-list in day view
-    const sumCard=$('summary-list')?.closest('.card');if(sumCard)sumCard.style.display='none';
-    renderDayWCStatus(ds,rs);
-    $('sum-prev').disabled=false;
-    $('sum-next').disabled=false;
-    const todayBtnD=$('btn-today');if(todayBtnD){todayBtnD.style.display='';todayBtnD.disabled=ST.sumOff===0;todayBtnD.style.opacity=ST.sumOff===0?'0.4':'1';}
-  }else if(ST.sumPer==='month'){
-    const tgt=new Date(now.getFullYear(),now.getMonth()+ST.sumOff,1);
-    const y=tgt.getFullYear(),mo=tgt.getMonth();
-    fil=rs.filter(r=>{const d=new Date(r.report_date);return d.getFullYear()===y&&d.getMonth()===mo;});
-    const locale=(window._lang==='he')?'he-IL':'en-US';
-    lbl=`${tgt.toLocaleString(locale,{month:'long'})} ${y}`;
-    const wdEl=$('stat-workday');if(wdEl)wdEl.textContent='-';
-    const wdCard=$('stat-workday-card');if(wdCard)wdCard.style.display='none';
-    const dCard=$('stat-days-card');
-    if(dCard){dCard.style.display='';const dDays=new Set(fil.map(r=>r.report_date)).size;const dEl=$('stat-days');if(dEl)dEl.textContent=dDays;}
-    const dwcSec=$('day-wc-section');if(dwcSec)dwcSec.style.display='none';
-    const sumCardM=$('summary-list')?.closest('.card');if(sumCardM)sumCardM.style.display='';
-    const annSec=$('annual-section');if(annSec)annSec.style.display='none';
-    const mwcSec=$('monthly-wc-section');if(mwcSec)mwcSec.style.display='';
-    $('range-period-inputs').style.display='none';
-    renderMonthlyWCStats(y,mo,rs);
-    renderWCCalendar(y,mo,rs);
-    $('sum-prev').disabled=false;
-    const todayBtn=$('btn-today');if(todayBtn)todayBtn.style.display=ST.sumOff===0?'none':'';
-    $('sum-next').disabled=false;
-  }else if(ST.sumPer==='year'){
-    const y=now.getFullYear()+ST.sumOff;
-    fil=rs.filter(r=>r.report_date&&r.report_date.startsWith(String(y)));
-    lbl=t('annualYear',y);
-    [$('stat-workday-card'),$('stat-days-card'),$('stat-achievement-card')].forEach(el=>{if(el)el.style.display='none';});
-    [$('day-wc-section'),$('monthly-wc-section')].forEach(el=>{if(el)el.style.display='none';});
-    const sumCardY=$('summary-list')?.closest('.card');if(sumCardY)sumCardY.style.display='';
-    $('range-period-inputs').style.display='none';
-    const annSec=$('annual-section');if(annSec){annSec.style.display='';renderAnnualStats(y,rs);}
-    const todayBtn=$('btn-today');if(todayBtn)todayBtn.style.display=ST.sumOff===0?'none':'';
-    $('sum-prev').disabled=false;$('sum-next').disabled=false;
-  }else if(ST.sumPer==='range'){
-    lbl=t('rangePeriod');
-    const from=$('range-from')?.value,to=$('range-to')?.value;
-    $('range-period-inputs').style.display='';
-    if(from&&to&&from<=to){
-      fil=rs.filter(r=>r.report_date>=from&&r.report_date<=to);
-      lbl=`${fmtD(from)} – ${fmtD(to)}`;
-    }else{fil=[];}
-    [$('stat-workday-card')].forEach(el=>{if(el)el.style.display='none';});
-    [$('day-wc-section'),$('monthly-wc-section')].forEach(el=>{if(el)el.style.display='none';});
-    const sumCardY=$('summary-list')?.closest('.card');if(sumCardY)sumCardY.style.display='';
-    const annSec=$('annual-section');if(annSec){annSec.style.display='';renderRangeStats(from,to,rs);}
-    const todayBtn=$('btn-today');if(todayBtn)todayBtn.style.display='none';
-    const dCard=$('stat-days-card');
-    if(dCard){dCard.style.display='';const dDays=new Set(fil.map(r=>r.report_date)).size;const dEl=$('stat-days');if(dEl)dEl.textContent=dDays;}
-    $('sum-prev').disabled=true;$('sum-next').disabled=true;
-  }
-  if(lblEl)lblEl.textContent=lbl;
-if ($('stat-entries')) $('stat-entries').textContent = fil.filter(r => r.category === 'entry').length;
-if ($('stat-exits')) $('stat-exits').textContent = fil.filter(r => r.category === 'exit').length;
    
-  // Ensure summary-list card is visible (was hidden in day view)
-  if(ST.sumPer!=='day'){
-    const sumCard=$('summary-list')?.closest('.card');if(sumCard)sumCard.style.display='';
+function summaryRender(){
+  const rs = store(K.reps) || [], now = new Date();
+  let fil = [], lbl = '';
+  const lblEl = $('sum-period-label') \vert{}\vert{}$('sum-lbl');
+
+  if (ST.sumPer === 'day') {
+    const tgt = new Date(now);
+    tgt.setDate(tgt.getDate() + ST.sumOff);
+    const ds = isoD(tgt);
+    
+    fil = rs.filter(r => r.report_date === ds);
+    lbl = fmtD(ds); // הצגת התאריך היומי התקין (לדוגמה: 14/10/2026)
+
+    const { mins: dayMins, hasOpen } = calcDayWorkMins(ds, rs);
+    let wdStr = dayMins > 0 ? `${pad(Math.floor(dayMins / 60))}:${pad(dayMins % 60)}` : '-';
+    if (hasOpen) wdStr += ' ⬤';
+    
+    const wdEl = $('stat-workday'); 
+    if (wdEl) wdEl.textContent = wdStr;
+    
+    // ניהול תצוגת אלמנטים
+    if ($('stat-workday-card'))$('stat-workday-card').style.display = '';
+    if ($('stat-days-card'))$('stat-days-card').style.display = 'none';
+    if ($('monthly-wc-section'))$('monthly-wc-section').style.display = 'none';
+    if ($('annual-section'))$('annual-section').style.display = 'none';
+    if ($('range-period-inputs'))$('range-period-inputs').style.display = 'none';
+    if ($('btn-export-range'))$('btn-export-range').style.display = 'none';
+    if ($('btn-share-range'))$('btn-share-range').style.display = 'none';
+
+    // הצגת הכרטיסייה היומית ופירוט הדיווחים היומי
+    const dayWcSec = $('day-wc-section');
+    if (dayWcSec) dayWcSec.style.display = '';
+
+    renderDayWCStatus(ds, rs);
+
+    $('sum-prev').disabled = false;
+    $('sum-next').disabled = false;
+    
+    const todayBtnD = $('btn-today');
+    if (todayBtnD) {
+      todayBtnD.style.display = '';
+      todayBtnD.disabled = ST.sumOff === 0;
+      todayBtnD.style.opacity = ST.sumOff === 0 ? '0.4' : '1';
+    }
+  } else if (ST.sumPer === 'month') {
+    const tgt = new Date(now.getFullYear(), now.getMonth() + ST.sumOff, 1);
+    const y = tgt.getFullYear(), mo = tgt.getMonth();
+    fil = rs.filter(r => {
+      const d = new Date(r.report_date);
+      return d.getFullYear() === y && d.getMonth() === mo;
+    });
+    const locale = (window._lang === 'he') ? 'he-IL' : 'en-US';
+    lbl = `${tgt.toLocaleString(locale, { month: 'long' })} ${y}`;
+
+    if ($('stat-workday-card'))$('stat-workday-card').style.display = 'none';
+    if ($('stat-days-card')) {$('stat-days-card').style.display = '';
+      const dDays = new Set(fil.map(r => r.report_date)).size;
+      if ($('stat-days'))$('stat-days').textContent = dDays;
+    }
+    if ($('day-wc-section'))$('day-wc-section').style.display = 'none';
+    if ($('annual-section'))$('annual-section').style.display = 'none';
+    if ($('monthly-wc-section'))$('monthly-wc-section').style.display = '';
+    if ($('range-period-inputs'))$('range-period-inputs').style.display = 'none';
+
+    renderMonthlyWCStats(y, mo, rs);
+    renderWCCalendar(y, mo, rs);
+
+    $('sum-prev').disabled = false;
+    $('sum-next').disabled = false;
+    if ($('btn-today'))$('btn-today').style.display = ST.sumOff === 0 ? 'none' : '';
+
+  } else if (ST.sumPer === 'year') {
+    const y = now.getFullYear() + ST.sumOff;
+    fil = rs.filter(r => r.report_date && r.report_date.startsWith(String(y)));
+    lbl = t('annualYear', y);
+
+    [$('stat-workday-card'), $('stat-days-card'),$('stat-achievement-card')].forEach(el => { if (el) el.style.display = 'none'; });
+    [$('day-wc-section'),$('monthly-wc-section')].forEach(el => { if (el) el.style.display = 'none'; });
+
+    if ($('range-period-inputs'))$('range-period-inputs').style.display = 'none';
+    const annSec = $('annual-section');
+    if (annSec) {
+      annSec.style.display = '';
+      renderAnnualStats(y, rs);
+    }
+
+    if ($('btn-today')) $('btn-today').style.display = ST.sumOff === 0 ? 'none' : '';$('sum-prev').disabled = false;
+    $('sum-next').disabled = false;
+
+  } else if (ST.sumPer === 'range') {
+    lbl = t('rangePeriod');
+    const from = $('range-from')?.value, to =$('range-to')?.value;
+    if ($('range-period-inputs'))$('range-period-inputs').style.display = '';
+
+    if (from && to && from <= to) {
+      fil = rs.filter(r => r.report_date >= from && r.report_date <= to);
+      lbl = `${fmtD(from)} – ${fmtD(to)}`;
+    } else {
+      fil = [];
+    }
+
+    if ($('stat-workday-card'))$('stat-workday-card').style.display = 'none';
+    [$('day-wc-section'),$('monthly-wc-section')].forEach(el => { if (el) el.style.display = 'none'; });
+
+    const annSec = $('annual-section');
+    if (annSec) {
+      annSec.style.display = '';
+      renderRangeStats(from, to, rs);
+    }
+
+    if ($('btn-today'))$('btn-today').style.display = 'none';
+    if ($('stat-days-card')) {$('stat-days-card').style.display = '';
+      const dDays = new Set(fil.map(r => r.report_date)).size;
+      if ($('stat-days'))$('stat-days').textContent = dDays;
+    }
+
+    $('sum-prev').disabled = true;
+    $('sum-next').disabled = true;
   }
-  $('summary-list').innerHTML=fil.length?fil.map(r=>hItem(r,true)).join(''):`<p class="empty">${t('summaryEmpty')}</p>`;
+
+  // עדכון טקסט הכותרת
+  if (lblEl) lblEl.textContent = lbl;
+
+  // עדכון מוני כניסות/יציאות
+  if ($('stat-entries'))$('stat-entries').textContent = fil.filter(r => r.category === 'entry').length;
+  if ($('stat-exits'))$('stat-exits').textContent = fil.filter(r => r.category === 'exit').length;
+
+  // הצגת/הסתרת רשימת הפירוט
+  const sumCard = $('summary-list')?.closest('.card');
+  if (sumCard) {
+    sumCard.style.display = (ST.sumPer === 'day') ? 'none' : '';
+  }
+
+  const sumList = $('summary-list');
+  if (sumList) {
+    sumList.innerHTML = fil.length ? fil.map(r => hItem(r, true)).join('') : `<p class="empty">${t('summaryEmpty')}</p>`;
+  }
 }
 
 /* SETTINGS */
