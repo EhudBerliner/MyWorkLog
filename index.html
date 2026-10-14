@@ -67,7 +67,7 @@ button:disabled {
 .workday-chip input{position:absolute;opacity:0;width:0;height:0}
 .workday-chip:has(input:checked){background:var(--limeDim);border-color:var(--lime);color:var(--lime)}
 
-/* ── NOTIFICATION SYSTEM v4.5.1 ── */
+/* ── NOTIFICATION SYSTEM v4.5.2 ── */
 .offline-banner{position:fixed;top:0;left:0;right:0;
   background:var(--red,#ef4444);color:#fff;text-align:center;
   padding:calc(var(--safeT,0px)+8px) 16px 8px;
@@ -807,12 +807,20 @@ details summary::-webkit-details-marker{display:none}
         <div class="stat-card"><div class="stat-lbl" data-i18n="statEntries">כניסות</div><div class="stat-val" id="stat-entries">0</div></div>
         <div class="stat-card"><div class="stat-lbl" data-i18n="statExits">יציאות</div><div class="stat-val" id="stat-exits">0</div></div>
       </div>
-            <!-- Daily status (day view only) -->
+
+       <!-- Daily status (day view only) -->
       <div id="day-wc-section" class="card" style="display:none">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
           <div style="display:flex;flex-direction:column;gap:2px"><div class="wc-sect-lbl" style="margin:0">&#9200; &#1514;&#1511;&#1503; &#1497;&#1493;&#1501;</div><div id="day-wc-day-label" style="font-size:.72rem;color:var(--text3);font-weight:500"></div></div>
           <button id="btn-edit-today-std" class="btn-g sm" onclick="editTodayStd()" style="font-size:.7rem;padding:4px 10px">&#9998; &#1506;&#1512;&#1493;&#1498; &#1514;&#1511;&#1503;</button>
         </div>
+
+        <!-- לוח שנה ממוזער לדוח היומי -->
+        <div id="day-mini-cal" style="margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid var(--border)">
+          <div id="day-wc-dow-row" class="wc-dow-row"></div>
+          <div id="day-wc-days-grid" class="wc-days-grid"></div>
+        </div>
+
         <div id="day-wc-notes" style="display:none;font-size:.78rem;color:var(--amber);margin-bottom:6px;padding:5px 10px;background:var(--amberDim);border-radius:var(--rxs)"></div>
         <div id="day-wc-content" class="day-status-row"><span class="day-status-badge nodata">&#1488;&#1497;&#1503; &#1504;&#1514;&#1493;&#1504;&#1497;&#1501;</span></div>
         <div id="day-wc-meter" style="display:none;margin-top:8px">
@@ -824,6 +832,7 @@ details summary::-webkit-details-marker{display:none}
           </div>
         </div>
       </div>
+       
       <!-- Annual / range summary (year + range views) -->
       <div id="annual-section" style="display:none"></div>
       <!-- Monthly work calendar (month view only) -->
@@ -1570,8 +1579,8 @@ details summary::-webkit-details-marker{display:none}
 
 
 <!-- שימוש ב-PHP/Template Engine או הזרקה ידנית של מספר הגרסה בסיומת -->
-<script src="app.js?v=4.5.1"></script>
-<script src="i18n.js?v=4.5.1"></script>
+<script src="app.js?v=4.5.2"></script>
+<script src="i18n.js?v=4.5.2"></script>
    
 <script>
 /* ─────────────────────────────────────────────────────
@@ -1581,12 +1590,12 @@ details summary::-webkit-details-marker{display:none}
 /* BOOT */
 
 /* ═══════════════════════════════════════════════════════
-   NOTIFICATION SYSTEM  v4.5.1
+   NOTIFICATION SYSTEM  v4.5.2
    Manages: Offline banner · PWA Install · Update Prompt · Toast
    ═══════════════════════════════════════════════════════ */
 const NotificationSystem = {
   settings: { showNetworkStatus: true },
-  currentVersion: '4.5.1',
+  currentVersion: '4.5.2',
   deferredInstallPrompt: null,
   _wasOffline: false,   // track previous state for auto-cleanup
 
@@ -3279,6 +3288,10 @@ async function flushWStandardQueue(){
 /* ─ Daily status card ─ */
 function renderDayWCStatus(ds,reports){
   const sec=$('day-wc-section');if(!sec)return;
+  
+  // הפעלת רינדור לוח השנה היומי
+  renderDayMiniCalendar(ds, reports);
+
   const{status,actualMins,minMins,diffMins,wdStr,notes,description,pct,fromTasks,dayType,pairs,hasOpen}=getDayStatus(ds,reports);
   // Show day name + date in section header
   const dayHdr=$('day-wc-day-label');
