@@ -2569,10 +2569,11 @@ function updateSessionBanner(){
   const{mins:accMins}=calcDayWorkMins(today,reports);
   const accStr=accMins>0?` · ${t('wcStatActual')}: ${minsToHHMM(accMins)}`:'';
 
-  if(open){
+if(open){
     banner.className='session-banner open';
     banner.querySelector('.session-dot').classList.add('pulse');
-    txt.textContent=t('sessionOpen')+open.report_time+accStr;
+    // עדכון מיידי של הטקסט עם שעת הכניסה שנמצאה
+    txt.textContent = (typeof t === 'function' && t('sessionOpen') ? t('sessionOpen') : 'כניסה רשומה: ') + open.report_time + accStr;
 
     if (timerEl) {
       timerEl.style.display = 'inline-block';
@@ -2584,7 +2585,7 @@ function updateSessionBanner(){
         entryDate.setHours(eh, em, 0, 0);
         
         let diffMs = now - entryDate;
-        if (diffMs < 0) diffMs = 0; // במקרה של דיווח עתידי
+        if (diffMs < 0) diffMs = 0;
         
         const hrs = String(Math.floor(diffMs / 3600000)).padStart(2, '0');
         const mins = String(Math.floor((diffMs % 3600000) / 60000)).padStart(2, '0');
@@ -2606,11 +2607,12 @@ function updateSessionBanner(){
     }
 
     if(accMins>0){
-      txt.textContent=t('sessionClosedWithHours')+accStr;
+      txt.textContent=(typeof t === 'function' && t('sessionClosedWithHours') ? t('sessionClosedWithHours') : 'משמרת הסתיימה') + accStr;
     }else{
-      txt.textContent=t('sessionClosed');
+      txt.textContent=(typeof t === 'function' && t('sessionClosed') ? t('sessionClosed') : 'אין משמרת פעילה');
     }
   }
+
 }
 
 function catInit(){
@@ -2876,8 +2878,7 @@ if (action === 'delete') {
       isSuccess = navigator.onLine; 
     }
   }
-
-  // 4. עדכון LocalStorage והתורים
+// 4. עדכון LocalStorage והתורים
   try {
     let reps = store(K.reps) || [];
     if (action === 'create') {
@@ -2904,14 +2905,17 @@ if (action === 'delete') {
       }
     }
     
+    // שמירה מפורשת לזיכרון לפני עדכון הרכיבים
     store(K.reps, reps);
     pendUI();
   } finally {
-    // 5. שחרור מובטח של ה-UI (רץ תמיד!)
+    // 5. שחרור מובטח של ה-UI ורענון תצוגת הבאנר המקומי
     if (uiButton) {
       uiButton.disabled = false;
       uiButton.innerHTML = uiButton.getAttribute('data-orig-text') || origText;
     }
+    // רענון מיידי של תצוגת השעון והבאנר בסיום התהליך
+    updateSessionBanner();
   }
 
   // 6. הצגת חיווי מתאים
@@ -2923,12 +2927,12 @@ if (action === 'delete') {
     toast('⚠️ נשמר מקומית - יישלח בסנכרון הבא', 'warn', 3500);
   }
 
-  // 7. רענון תצוגה
+  // 7. רענון שאר רכיבי התצוגה
   histRender();
   summaryRender();
-  updateSessionBanner();
 
   return isSuccess;
+
 }
 
 /* NETWORK */
