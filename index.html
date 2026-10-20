@@ -33,8 +33,8 @@
   --r:18px;--rs:10px;--rxs:6px;
   --shadow:0 2px 12px rgba(0,0,0,.4);--shadowLg:0 8px 40px rgba(0,0,0,.6);
   --safeT:env(safe-area-inset-top,0px);--safeB:env(safe-area-inset-bottom,0px);
-  --fui:'Syne','Noto Sans Hebrew',sans-serif;
-  --fhe:'Noto Sans Hebrew','Syne',sans-serif;
+  --fui:'Noto Sans Hebrew',sans-serif;
+  --fhe:'Noto Sans Hebrew',sans-serif;
 }
 body.light{
   --bg0:#f0f0f6;--bg1:#f8f8fc;--bg2:#ffffff;--bg3:#eeeef8;
@@ -43,8 +43,8 @@ body.light{
   --text:#1a1a2e;--text2:#5a5a7a;--text3:#aaaacc;
 }
 body.no-anim *{animation:none!important;transition:none!important}
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;font-family:'Noto Sans Hebrew',sans-serif;}
+   
 html,body{height:100%;background:var(--bg0);color:var(--text);
   font-family:var(--fhe);font-size:16px;-webkit-font-smoothing:antialiased;
   overflow-x:hidden;touch-action:manipulation;overscroll-behavior:none}
