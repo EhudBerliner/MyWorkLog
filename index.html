@@ -2572,8 +2572,10 @@ function updateSessionBanner(){
 if(open){
     banner.className='session-banner open';
     banner.querySelector('.session-dot').classList.add('pulse');
-    // עדכון מיידי של הטקסט עם שעת הכניסה שנמצאה
-    txt.textContent = (typeof t === 'function' && t('sessionOpen') ? t('sessionOpen') : 'כניסה רשומה: ') + open.report_time + accStr;
+    
+    // בנה את הטקסט המלא בצורה מפורשת עם שעת הכניסה שנמצאה:
+    const prefix = (typeof t === 'function' && t('sessionOpen')) ? t('sessionOpen') : 'כניסה רשומה: ';
+    txt.textContent = `${prefix} ${open.report_time}${accStr}`;
 
     if (timerEl) {
       timerEl.style.display = 'inline-block';
