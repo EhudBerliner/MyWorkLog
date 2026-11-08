@@ -1,4 +1,4 @@
-//  MyWorkLog – Google Apps Script  v6.15 (High Performance & Full Telemetry Support)
+//  MyWorkLog – Google Apps Script  v6.17 
 // ============================================================
 
 const SHEET_NAME        = 'WorkLog';
@@ -313,12 +313,14 @@ function rebuildDayAttendance(ss, dateStr) {
 
   const newRows = [];
 
-  if (pairs.length === 0 && isPaidAbsence) {
-    newRows.push([dateStr, 'מחלה', 'מחלה', fmtMins(totalMins), stdStr, devStr, classification, 'single']);
-  } else if (pairs.length <= 1 && !openEntry) {
-    const p = pairs[0] || { entry: 'מחלה', exit: 'מחלה' };
-    newRows.push([dateStr, p.entry, p.exit, fmtMins(totalMins), stdStr, devStr, classification, 'single']);
-  } else {
+  const absenceLabel = classification || 'היעדרות מוצדקת';
+
+if (pairs.length === 0 && isPaidAbsence) {
+  newRows.push([dateStr, absenceLabel, absenceLabel, fmtMins(totalMins), stdStr, devStr, classification, 'single']);
+} else if (pairs.length <= 1 && !openEntry) {
+  const p = pairs[0] || { entry: absenceLabel, exit: absenceLabel };
+  newRows.push([dateStr, p.entry, p.exit, fmtMins(totalMins), stdStr, devStr, classification, 'single']);
+} else {
     const firstEntry = pairs.length>0 ? pairs[0].entry : openEntry;
     const lastExit   = pairs.length>0 ? pairs[pairs.length-1].exit : '';
     newRows.push([dateStr, firstEntry, lastExit, fmtMins(totalMins), stdStr, devStr, classification, 'summary']);
@@ -345,7 +347,7 @@ function rebuildDayAttendance(ss, dateStr) {
     }
   }
 
-  if (insertBefore !== -1) {
+if (insertBefore !== -1) {
     sheet.insertRowsBefore(insertBefore, newRows.length);
     sheet.getRange(insertBefore, 1, newRows.length, ATT_NCOLS).setValues(newRows);
     formatAttRows(sheet, insertBefore, newRows);
@@ -354,6 +356,9 @@ function rebuildDayAttendance(ss, dateStr) {
     sheet.getRange(firstNew, 1, newRows.length, ATT_NCOLS).setValues(newRows);
     formatAttRows(sheet, firstNew, newRows);
   }
+
+  // 🛠️ תיקון: מיון כרונולוגי של הגיליון מהמוקדם למאוחר
+  sortAttendanceSheet(sheet);
 }
 
 function rebuildAllAttendance() {
@@ -461,13 +466,16 @@ function rebuildAllAttendance() {
     }
   });
 
-  const sheet = getOrCreateAttSheet(ss);
+const sheet = getOrCreateAttSheet(ss);
   if (sheet.getLastRow() > 1) sheet.deleteRows(2, sheet.getLastRow()-1);
 
   if (allRows.length > 0) {
     sheet.getRange(2, 1, allRows.length, ATT_NCOLS).setValues(allRows);
     formatAttRows(sheet, 2, allRows);
   }
+
+  // 🛠️ תיקון: מיון כרונולוגי של הגיליון מהמוקדם למאוחר בסיום הבנייה מחדש
+  sortAttendanceSheet(sheet);
 }
 
 function getOrCreateAttSheet(ss) {
@@ -521,6 +529,18 @@ function formatAttRows(sheet, startRow, rows) {
   });
 }
 
+/**
+ * ממיינת את גיליון Attendance לפי עמודה A (תאריך) מהמוקדם למאוחר
+ */
+function sortAttendanceSheet(attSheet) {
+  const lastRow = attSheet.getLastRow();
+  // מיון מבוצע רק אם קיימות שורות נתונים מעבר לשורת הכותרת
+  if (lastRow > 1) {
+    const lastCol = attSheet.getLastColumn();
+    // מיון הטווח החל משורה 2 לפי עמודה 1 (תאריך) בסדר עולה
+    attSheet.getRange(2, 1, lastRow - 1, lastCol).sort({ column: 1, ascending: true });
+  }
+}
 // ─────────────────────────────────────────────────────────────────────────────
 //  editReport
 // ─────────────────────────────────────────────────────────────────────────────
