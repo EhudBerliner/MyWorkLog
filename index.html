@@ -67,7 +67,7 @@ button:disabled {
 .workday-chip input{position:absolute;opacity:0;width:0;height:0}
 .workday-chip:has(input:checked){background:var(--limeDim);border-color:var(--lime);color:var(--lime)}
 
-/* ── NOTIFICATION SYSTEM v4.5.3 ── */
+/* ── NOTIFICATION SYSTEM v4.5.4 ── */
 .offline-banner{position:fixed;top:0;left:0;right:0;
   background:var(--red,#ef4444);color:#fff;text-align:center;
   padding:calc(var(--safeT,0px)+8px) 16px 8px;
@@ -1572,8 +1572,8 @@ details summary::-webkit-details-marker{display:none}
 
 
 <!-- שימוש ב-PHP/Template Engine או הזרקה ידנית של מספר הגרסה בסיומת -->
-<script src="app.js?v=4.5.3"></script>
-<script src="i18n.js?v=4.5.3"></script>
+<script src="app.js?v=4.5.4"></script>
+<script src="i18n.js?v=4.5.4"></script>
    
 <script>
 /* ─────────────────────────────────────────────────────
@@ -1583,12 +1583,12 @@ details summary::-webkit-details-marker{display:none}
 /* BOOT */
 
 /* ═══════════════════════════════════════════════════════
-   NOTIFICATION SYSTEM  v4.5.3
+   NOTIFICATION SYSTEM  v4.5.4
    Manages: Offline banner · PWA Install · Update Prompt · Toast
    ═══════════════════════════════════════════════════════ */
 const NotificationSystem = {
   settings: { showNetworkStatus: true },
-  currentVersion: '4.5.3',
+  currentVersion: '4.5.4',
   deferredInstallPrompt: null,
   _wasOffline: false,   // track previous state for auto-cleanup
 
@@ -1816,7 +1816,7 @@ document.addEventListener('DOMContentLoaded', () => {
       NotificationSystem.init(typeof VER !== 'undefined' ? VER : '3.7.0');
     }
 
-    if (window.history && window.history.replaceState) {
+if (window.history && window.history.replaceState) {
       history.replaceState({ ui: 'tab', name: 'report' }, '');
     }
   } catch (err) {
@@ -1824,6 +1824,13 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   safeSplashExit(bootFailsafe);
+
+  // סנכרון רקע אוטומטי של 60 הימים האחרונים בעליית המערכת (ללא חסימת ממשק)
+  setTimeout(() => {
+    if (typeof bgSync === 'function') {
+      bgSync(true).catch(err => console.warn('[Boot AutoSync]', err));
+    }
+  }, 400);
 });
 
 function openResetMaintenanceModal() {
@@ -4017,44 +4024,58 @@ function getDeltaStartDate() {
 }
 
 /* Background sync on launch — Runs dynamic Delta Sync (60 days window) */
-async function bgSync() {
+async function bgSync(forceBoot = false) {
   const ep = store(K.ep);
   if (!ep || !navigator.onLine) return;
 
-  const lastFull = store('mwl_last_full_sync');
-  if (lastFull && (Date.now() - Number(lastFull)) < 3 * 60 * 1000) return;
+  // מניעת ריצות כפולות במקביל
+  if (ST._bgSyncing) return;
 
-  // 1. איסוף דיווחים מקומיים שלא נשלחו
-  const reps = store(K.reps) || [];
-  const q = store(K.q) || [];
-  const qIds = new Set(q.map(r => r.id));
-  const unsent = reps.filter(r => !r.sent && !qIds.has(r.id));
-  if (unsent.length) {
-    store(K.q, [...q, ...unsent]);
-    pendUI();
+  // בדיקת Cooldown רק כשהאפליקציה כבר פתוחה ברקע (לא בעלייה ראשונית)
+  if (!forceBoot) {
+    const lastFull = store('mwl_last_full_sync');
+    if (lastFull && (Date.now() - Number(lastFull)) < 3 * 60 * 1000) return;
   }
 
-  // 2. ריקון תור ההוצאה
-  await flushWStandardQueue();
-  await syncQ_silent();
+  ST._bgSyncing = true;
+  try {
+    // 1. איסוף דיווחים מקומיים שלא נשלחו
+    const reps = store(K.reps) || [];
+    const q = store(K.q) || [];
+    const qIds = new Set(q.map(r => r.id));
+    const unsent = reps.filter(r => !r.sent && !qIds.has(r.id));
+    if (unsent.length) {
+      store(K.q, [...q, ...unsent]);
+      pendUI();
+    }
 
-  // 3. הרצת סנכרון דלתא (60 ימים אחורה)
-  const deltaDate = getDeltaStartDate();
-  const success = await syncFromSheet(deltaDate);
+    // 2. ריקון תורים מקומיים ממתינים (אופליין)
+    await flushDeleteQueue();
+    await flushWStandardQueue();
+    await syncQ_silent();
 
-  // 4. משיכת WorkStandard ממוקד
-  await syncWStandardDelta(deltaDate);
+    // 3. הרצת סנכרון דלתא של 60 הימים האחרונים במקביל (דיווחים + תקן שעות)
+    const deltaDate = getDeltaStartDate();
+    const [syncedCount] = await Promise.all([
+      syncFromSheet(deltaDate),
+      syncWStandardDelta(deltaDate)
+    ]);
 
-  if (success >= 0) {
-    store('mwl_last_full_sync', String(Date.now()));
+    if (syncedCount >= 0) {
+      store('mwl_last_full_sync', String(Date.now()));
+    }
+    summaryRender();
+  } catch (err) {
+    console.warn('[bgSync aborted/offline]:', err);
+  } finally {
+    ST._bgSyncing = false;
   }
-  summaryRender();
 }
 
-/* פונקציית משיכת דיווחים מהגיליון — מתוקנת למיון ומיזוג נכון */
+/* פונקציית משיכת דיווחים מהגיליון — כולל הגנת Timeout */
 async function syncFromSheet(fromDate = '') {
   const ep = store(K.ep);
-  if (!ep || !navigator.onLine) return 0;
+  if (!ep || !navigator.onLine) return -1;
   try {
     const headers = {};
     const etag = fromDate ? null : store('mwl_etag_reports');
@@ -4064,7 +4085,12 @@ async function syncFromSheet(fromDate = '') {
     if (fromDate) url += `&fromDate=${fromDate}&t=${Date.now()}`;
     else url += `&t=${Date.now()}`;
 
-    const res = await fetch(url, { headers, cache: 'no-store' });
+    const fetchOpts = { headers, cache: 'no-store' };
+    if (typeof AbortSignal !== 'undefined' && AbortSignal.timeout) {
+      fetchOpts.signal = AbortSignal.timeout(6000); // ניתוק אוטומטי אם אין תקשורת תוך 6 שניות
+    }
+
+    const res = await fetch(url, fetchOpts);
     if (res.status === 304) return 0;
     
     if (!fromDate) {
@@ -4077,7 +4103,6 @@ async function syncFromSheet(fromDate = '') {
 
     let local = store(K.reps) || [];
 
-    // נרמול תאריכים ושעות
     const normDate = s => {
       if (!s) return ''; const t = String(s).trim();
       if (/^\d{4}-\d{2}-\d{2}/.test(t)) return t.slice(0, 10);
@@ -4091,7 +4116,6 @@ async function syncFromSheet(fromDate = '') {
       if (r.category === 'entry' || r.category === 'exit') r.report_time = normTimeStr(r.report_time); 
     });
 
-    // ✨ מפתח מיון כרונולוגי יורד מדויק (YYYY-MM-DDTHH:MM)
     const getSortKey = r => {
       const d = r.report_date || '0000-00-00';
       const t = (r.report_time && !r.report_time.includes('-')) ? r.report_time : '00:00';
@@ -4099,24 +4123,20 @@ async function syncFromSheet(fromDate = '') {
     };
 
     if (fromDate) {
-      // א. שמירת נתונים היסטוריים הישנים מחלון ה-60 יום
       let olderLocal = local.filter(r => r.report_date < fromDate);
       if (Array.isArray(data.allSheetIds)) {
         const sheetIdsSet = new Set(data.allSheetIds.map(String));
         olderLocal = olderLocal.filter(r => !r.sent || sheetIdsSet.has(String(r.id)));
       }
       
-      // ב. שמירת רשומות אופליין מקומיות שטרם נשלחו בתוך החלון
       const unsentLocalInWindow = local.filter(r => r.report_date >= fromDate && !r.sent);
       const serverReportIds = new Set(data.reports.map(r => String(r.id)));
       const unsentToKeep = unsentLocalInWindow.filter(r => !serverReportIds.has(String(r.id)));
 
-      // ג. מיזוג הנתונים החדשים מהשרת + אופליין שלא נשלח + נתונים ישנים
       const merged = [...data.reports, ...unsentToKeep, ...olderLocal];
       merged.sort((a, b) => getSortKey(b).localeCompare(getSortKey(a)));
       store(K.reps, merged.slice(0, 500));
     } else {
-      // סנכרון מלא
       const sheetIds = new Set(data.reports.map(r => String(r.id)).filter(Boolean));
       const localUnsent = local.filter(r => !r.sent && !sheetIds.has(String(r.id)));
       
@@ -4134,17 +4154,22 @@ async function syncFromSheet(fromDate = '') {
     histRender(); updateSessionBanner();
     return data.reports.length;
   } catch (e) { 
-    console.warn('[syncFromSheet Failure]', e); 
-    return 0; 
+    console.warn('[syncFromSheet Failure/Timeout]', e); 
+    return -1; 
   }
 }
 
-/* משיכת תקן שעות ממוקדת ברקע לחלון ה-60 יום */
+/* משיכת תקן שעות ממוקדת ברקע לחלון ה-60 יום — כולל הגנת Timeout */
 async function syncWStandardDelta(fromDate) {
   const ep = store(K.ep);
   if (!ep || !navigator.onLine) return false;
   try {
-    const res = await fetch(`${ep}?action=getWorkStandard&fromDate=${fromDate}&t=${Date.now()}`, { cache: 'no-store' });
+    const fetchOpts = { cache: 'no-store' };
+    if (typeof AbortSignal !== 'undefined' && AbortSignal.timeout) {
+      fetchOpts.signal = AbortSignal.timeout(6000);
+    }
+
+    const res = await fetch(`${ep}?action=getWorkStandard&fromDate=${fromDate}&t=${Date.now()}`, fetchOpts);
     if (!res.ok) return false;
     const data = await res.json();
     if (!Array.isArray(data.workStandard)) return false;
