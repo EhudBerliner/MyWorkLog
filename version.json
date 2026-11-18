@@ -1,5 +1,5 @@
 {
-  "version": "4.5.3",
-  "buildDate": "2026-10-14",
+  "version": "4.5.4",
+  "buildDate": "2026-11-18",
   "changelog": "v4.4.5: fix sync button — debounce+disable during sync; clear queue before send to prevent duplicate rows"
 }
